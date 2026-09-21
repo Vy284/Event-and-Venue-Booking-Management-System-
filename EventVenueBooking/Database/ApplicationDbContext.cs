@@ -1,14 +1,19 @@
 ﻿using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Migrations;
 
 namespace EventVenueBooking.Database
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext() : base("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=EventVenueBookingDB;Integrated Security=True;TrustServerCertificate=True;")
+        public ApplicationDbContext() : base("name=EventVenueBooking")
         {
             this.Configuration.LazyLoadingEnabled = true;
+
+            System.Data.Entity.Database.SetInitializer(
+        new MigrateDatabaseToLatestVersion<ApplicationDbContext, EventVenueBooking.Migrations.Configuration>()
+    );
         }
 
         public DbSet<User> Users { get; set; }
