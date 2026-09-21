@@ -84,7 +84,7 @@ namespace EventVenueBooking.Entities
         // ---- Navigation properties ----
         public virtual ICollection<BookingAddOn> BookingAddOns { get; set; }
         public virtual ICollection<Payment> Payments { get; set; }
-        public virtual Feedback Feedback { get; set; } // 1 - 0..1
+        //public virtual Feedback Feedback { get; set; } // 1 - 0..1
 
         public Booking()
         {

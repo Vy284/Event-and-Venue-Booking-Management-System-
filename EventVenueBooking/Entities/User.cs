@@ -69,9 +69,3 @@ namespace EventVenueBooking.Entities
 }
 
 
-
-
-
-
-
-

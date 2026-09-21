@@ -128,6 +128,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Database\ApplicationDbContext.cs" />
     <Compile Include="Entities\AddOnService.cs" />
     <Compile Include="Entities\Booking.cs" />
     <Compile Include="Entities\BookingAddOn.cs" />
@@ -137,11 +138,17 @@
     <Compile Include="Entities\Payment.cs" />
     <Compile Include="Entities\User.cs" />
     <Compile Include="Entities\Venue.cs" />
+    <Compile Include="Entities\VenueFacility.cs" />
     <Compile Include="Entities\VenueImage.cs" />
     <Compile Include="Entities\VenueType.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202609211314137_InitialCreate.cs" />
+    <Compile Include="Migrations\202609211314137_InitialCreate.Designer.cs">
+      <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -199,7 +206,6 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="DAL\" />
-    <Folder Include="Database\" />
     <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +234,11 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\202609211314137_InitialCreate.resx">
+      <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
