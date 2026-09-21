@@ -36,7 +36,7 @@ Sau khi **Clone** hoặc **Pull** code mới nhất từ repository về máy c�
 ### 1. Mỗi khi bật project:
 - Luôn luôn dùng lệnh pull để lấy code của banch "Main" mới nhất
 
-### 2. Để luôn có dữ liệu mới và phiên database mới nhất.
+### 2. Để luôn có dữ liệu mới và phiên database mới nhất (chỉ lần đầu tải xuống)
 Kiểm tra cấu hình Chuỗi kết nối (Connection String): Mở file `Web.config` và kiểm tra `connectionString` trong thẻ `DefaultConnection` 
 cho phù hợp với SQL Server Instance trên máy:
 ```xml
