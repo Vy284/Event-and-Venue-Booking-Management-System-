@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Ventixe Event Admin</title>
+    <!-- Boxicons / FontAwesome hỗ trợ Icon -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+
+    <style>
+        :root {
+            --bg-main: #E3EDE6; /* Màu nền tổng thể xám xanh lá nhạt */
+            --bg-card: #FFFFFF; /* Màu nền thẻ trắng */
+            --sidebar-bg: #E3EDE6; /* Màu nền Sidebar */
+            --primary-green: #184A3B; /* Màu xanh lá đậm thương hiệu */
+            --active-item-bg: #FFFFFF; /* Màu nền item đang chọn */
+            --text-dark: #1C2A23;
+            --text-muted: #738A7C;
+            --border-color: #D3E0D7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            padding: 24px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary-green);
+            padding-left: 10px;
+            margin-bottom: 30px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 11px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+            .nav-link i {
+                font-size: 20px;
+            }
+
+            .nav-link:hover, .nav-link.active {
+                background-color: var(--active-item-bg);
+                color: var(--primary-green);
+                box-shadow: 0 4px 12px rgba(24, 74, 59, 0.05);
+            }
+
+        /* Promo Card & Logout Bottom */
+        .sidebar-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .promo-card {
+            background: #FFFFFF;
+            padding: 16px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+            .promo-card p {
+                font-size: 12px;
+                color: var(--text-muted);
+                line-height: 1.4;
+                margin-bottom: 12px;
+            }
+
+        .btn-upgrade {
+            width: 100%;
+            background-color: var(--primary-green);
+            color: #fff;
+            border: none;
+            padding: 9px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-signout {
+            width: 100%;
+            background: transparent;
+            border: 1.5px solid var(--primary-green);
+            color: var(--primary-green);
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* ================= MAIN CONTENT AREA ================= */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 12px 12px 12px 0;
+        }
+
+        /* Canvas container cong góc bao quanh phần nội dung */
+        .content-container {
+            background-color: #F6FAFL;
+            flex-grow: 1;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border: 1px solid #E0EBE3;
+        }
+
+        /* Header */
+        .main-header {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: transparent;
+        }
+
+        .header-title h2 {
+            font-size: 22px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+            .search-box input {
+                background: #FFFFFF;
+                border: 1px solid var(--border-color);
+                padding: 10px 16px 10px 40px;
+                border-radius: 30px;
+                font-size: 13px;
+                width: 260px;
+                outline: none;
+            }
+
+            .search-box i {
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-muted);
+                font-size: 18px;
+            }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-green);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 10px;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info .name {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        .user-info .role {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Vùng nội dung các View chui vào */
+        .page-body {
+            padding: 0 30px 30px 30px;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR BÊN TRÁI -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <i class='bx bxs-shapes'></i> Ventixe
+            </div>
+            <ul class="nav-list">
+                <li>
+                    <a href="@Url.Action("Dashboard", "Home")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
+                        <i class='bx bx-grid-alt'></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Calendar", "Home")" class="nav-link @(ViewBag.ActiveMenu == "Calendar" ? "active" : "")">
+                        <i class='bx bx-calendar'></i> Calendar
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Bookings", "Home")" class="nav-link @(ViewBag.ActiveMenu == "Bookings" ? "active" : "")">
+                        <i class='bx bx-receipt'></i> Bookings
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Venues", "Home")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
+                        <i class='bx bx-building-house'></i> Venues
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Facilities", "Admin")" class="nav-link @(ViewBag.ActiveMenu == "Facilities" ? "active" : "")">
+                        <i class='bx bx-cube'></i> Facilities & Services
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Payments", "Admin")" class="nav-link @(ViewBag.ActiveMenu == "Payments" ? "active" : "")">
+                        <i class='bx bx-wallet'></i> Payments
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Users", "Admin")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
+                        <i class='bx bx-user'></i> Users
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Feedback", "Admin")" class="nav-link @(ViewBag.ActiveMenu == "Feedback" ? "active" : "")">
+                        <i class='bx bx-star'></i> Feedback
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="promo-card">
+                <i class='bx bx-mobile-alt' style="font-size:32px; color:var(--primary-green);"></i>
+                <p>Experience enhanced features and a smoother interface.</p>
+                <button class="btn-upgrade">Try New Version</button>
+            </div>
+            <button class="btn-signout">
+                <i class='bx bx-log-out'></i> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- KHU VỰC CHÍNH (HEADER + BODY) -->
+    <div class="main-wrapper">
+        <div class="content-container">
+
+            <!-- HEADER -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h2>@(ViewBag.Title ?? "Dashboard")</h2>
+                    <p>Hello Orlando, welcome back!</p>
+                </div>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Search anything...">
+                    </div>
+                    <div class="icon-btn"><i class='bx bx-bell'></i></div>
+                    <div class="icon-btn"><i class='bx bx-cog'></i></div>
+                    <div class="user-profile">
+                        <img src="https://i.pravatar.cc/100?img=33" class="avatar" alt="User Avatar">
+                        <div class="user-info">
+                            <div class="name">Orlando Laurentius</div>
+                            <div class="role">Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- NỘI DUNG THAY ĐỔI CỦA TỪNG TRANG CON -->
+            <main class="page-body">
+                @RenderBody()
+            </main>
+
+        </div>
+    </div>
+
+</body>
+</html>
