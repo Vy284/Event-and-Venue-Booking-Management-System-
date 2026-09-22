@@ -1,44 +1,9 @@
-﻿@*@{
-        ViewBag.Title = "Home Page";
-    }
-
-    <main>
-        <section class="row" aria-labelledby="aspnetTitle">
-            <h1 id="title">ASP.NET</h1>
-            <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-            <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-        </section>
-
-        <div class="row">
-            <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-                <h2 id="gettingStartedTitle">Getting started</h2>
-                <p>
-                    ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                    enables a clean separation of concerns and gives you full control over markup
-                    for enjoyable, agile development.
-                </p>
-                <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-            </section>
-            <section class="col-md-4" aria-labelledby="librariesTitle">
-                <h2 id="librariesTitle">Get more libraries</h2>
-                <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-                <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-            </section>
-            <section class="col-md-4" aria-labelledby="hostingTitle">
-                <h2 id="hostingTitle">Web Hosting</h2>
-                <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-                <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-            </section>
-        </div>
-    </main>*@
-
-@model IEnumerable<EventVenueBooking.ViewModels.VenueCardViewModel>
+﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueCardViewModel>
 
 @{
     ViewData["Title"] = "Trang chủ";
 }
 
-<!-- 1. HERO SECTION: Tràn viền 100% chiều ngang màn hình -->
 <div class="hero-wrapper" style="background-image: url('@Url.Content("~/Content/images/bg_landingpage.jpg")');">
     <div class="container">
         <div class="row align-items-center">
@@ -57,7 +22,6 @@
     </div>
 </div>
 
-<!-- 2. NỘI DUNG BÊN DƯỚI: Gom gọn lại vào trong container -->
 <div class="container my-5">
     <div id="venue-gallery" class="pt-3">
         <div class="text-center mb-4">
@@ -65,7 +29,7 @@
             <h2 class="fw-bold" style="color: var(--primary-brown);">Moments We Created</h2>
         </div>
 
-        <!-- Thanh chọn danh mục -->
+
         <div class="d-flex justify-content-center gap-2 mb-5 flex-wrap">
             <button class="btn btn-brown btn-sm px-4">All Events</button>
             <button class="btn btn-outline-secondary rounded-pill btn-sm px-4">Weddings</button>

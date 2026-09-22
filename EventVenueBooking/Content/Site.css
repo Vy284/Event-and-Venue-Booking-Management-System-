@@ -1,28 +1,4 @@
-﻿/* Set padding to keep content from hitting the edges */
-/*.body-content {
-    margin-top: 15px;
-    padding-left: 15px;
-    padding-right: 15px;
-}*/
-
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
-/*.dl-horizontal dt {
-    white-space: normal;
-}*/
-
-/* Set width on the form input elements since they're 100% wide by default */
-/*input,
-select,
-textarea {
-    max-width: 280px;
-}*/
-
-/* ==========================================================================
-   1. KHU VỰC BIẾN MÀU & THIẾT LẬP CHUNG
-   ========================================================================== */
-:root {
+﻿:root {
     --primary-brown: #4A3525; /* Nâu đậm cổ điển */
     --accent-brown: #8C6D53;  /* Nâu hạt dẻ */
     --light-bg: #F8F6F2;      /* Nền kem nhạt */
@@ -39,9 +15,6 @@ body {
     padding: 0;
 }
 
-/* ==========================================================================
-   2. HEADER / NAVBAR TRONG SUỐT (NỔI ĐÈ TRÊN ANH NỀN)
-   ========================================================================== */
 header.site-header {
     position: absolute;
     top: 0;
@@ -51,9 +24,6 @@ header.site-header {
     background: transparent !important;
 }
 
-/* ==========================================================================
-   3. HERO SECTION (TRÀN 100% MÀN HÌNH TỪ ĐỈNH TRÊN CÙNG)
-   ========================================================================== */
 .hero-wrapper {
     background-image: url('/Content/images/bg_landingpage.jpg');
     background-size: cover;
@@ -61,11 +31,10 @@ header.site-header {
     background-repeat: no-repeat;
     
     width: 100%;
-    min-height: 80vh; /* Chiều cao phủ rộng từ đỉnh màn hình */
+    min-height: 80vh;
     margin: 0 !important;
     border-radius: 0 !important;
     
-    /* Padding-top lớn (140px) để đẩy nội dung chữ xuống bên dưới Navbar */
     padding-top: 140px;
     padding-bottom: 80px;
     
@@ -73,9 +42,6 @@ header.site-header {
     align-items: center;
 }
 
-/* ==========================================================================
-   4. BUTTONS & VENUE CARDS CUSTOM
-   ========================================================================== */
 .btn-brown {
     background-color: var(--primary-brown);
     color: #ffffff;
