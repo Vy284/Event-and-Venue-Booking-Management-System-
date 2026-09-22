@@ -42,7 +42,6 @@
             flex-direction: column;
             justify-content: space-between;
             flex-shrink: 0;
-            border-right: 1px solid var(--border-color);
         }
 
         .brand-logo {
@@ -74,10 +73,19 @@
             font-size: 14px;
             border-radius: 10px;
             transition: all 0.2s ease;
+            position: relative; /* THÊM DÒNG NÀY ĐỂ LÀM MẤU XANH */
         }
 
-            .nav-link i {
-                font-size: 20px;
+            .nav-link.active::before {
+                content: "";
+                position: absolute;
+                left: -18px; /* Đẩy mấu xanh ra sát viền trái của sidebar */
+                top: 50%;
+                transform: translateY(-50%);
+                width: 4px;
+                height: 24px;
+                background-color: var(--primary-green);
+                border-radius: 0 4px 4px 0; /* Bo góc phải cho mấu xanh */
             }
 
             .nav-link:hover, .nav-link.active {
@@ -142,18 +150,19 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            padding: 12px 12px 12px 0;
+            padding: 16px 20px 16px 0;
         }
 
-        /* Canvas container cong góc bao quanh phần nội dung */
+        /* Fix lỗi mã màu, tăng bo góc và thêm đổ bóng nhẹ */
         .content-container {
-            background-color: #F6FAFL;
+            background-color: #F4F7F5; /* Đã sửa lỗi chữ L thành mã màu chuẩn */
             flex-grow: 1;
-            border-radius: 20px;
+            border-radius: 24px;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            border: 1px solid #E0EBE3;
+            border: none;
+            box-shadow: -4px 4px 15px rgba(0,0,0,0.02);
         }
 
         /* Header */
