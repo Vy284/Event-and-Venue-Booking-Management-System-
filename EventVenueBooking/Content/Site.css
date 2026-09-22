@@ -1,20 +1,105 @@
 ﻿/* Set padding to keep content from hitting the edges */
-.body-content {
+/*.body-content {
     margin-top: 15px;
     padding-left: 15px;
     padding-right: 15px;
-}
+}*/
 
 /* Override the default bootstrap behavior where horizontal description lists 
    will truncate terms that are too long to fit in the left column 
 */
-.dl-horizontal dt {
+/*.dl-horizontal dt {
     white-space: normal;
-}
+}*/
 
 /* Set width on the form input elements since they're 100% wide by default */
-input,
+/*input,
 select,
 textarea {
     max-width: 280px;
+}*/
+
+/* ==========================================================================
+   1. KHU VỰC BIẾN MÀU & THIẾT LẬP CHUNG
+   ========================================================================== */
+:root {
+    --primary-brown: #4A3525; /* Nâu đậm cổ điển */
+    --accent-brown: #8C6D53;  /* Nâu hạt dẻ */
+    --light-bg: #F8F6F2;      /* Nền kem nhạt */
+    --card-bg: #FFFFFF;      /* Nền thẻ trắng */
+    --text-dark: #2C2C2C;
+    --text-muted: #6C757D;
+}
+
+body {
+    background-color: var(--light-bg);
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==========================================================================
+   2. HEADER / NAVBAR TRONG SUỐT (NỔI ĐÈ TRÊN ANH NỀN)
+   ========================================================================== */
+header.site-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: transparent !important;
+}
+
+/* ==========================================================================
+   3. HERO SECTION (TRÀN 100% MÀN HÌNH TỪ ĐỈNH TRÊN CÙNG)
+   ========================================================================== */
+.hero-wrapper {
+    background-image: url('/Content/images/bg_landingpage.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    width: 100%;
+    min-height: 80vh; /* Chiều cao phủ rộng từ đỉnh màn hình */
+    margin: 0 !important;
+    border-radius: 0 !important;
+    
+    /* Padding-top lớn (140px) để đẩy nội dung chữ xuống bên dưới Navbar */
+    padding-top: 140px;
+    padding-bottom: 80px;
+    
+    display: flex;
+    align-items: center;
+}
+
+/* ==========================================================================
+   4. BUTTONS & VENUE CARDS CUSTOM
+   ========================================================================== */
+.btn-brown {
+    background-color: var(--primary-brown);
+    color: #ffffff;
+    border-radius: 25px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-brown:hover {
+    background-color: var(--accent-brown);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.venue-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--card-bg);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.venue-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using System.ComponentModel.DataAnnotations;
 
 namespace EventVenueBooking.ViewModels
 {
@@ -20,5 +21,20 @@ namespace EventVenueBooking.ViewModels
         public List<string> FacilityNames { get; set; }
         public List<AddOnServiceViewModel> AvailableAddOns { get; set; }
         public List<EventTypeViewModel> EventTypes { get; set; }
+    }
+
+    public class AddOnServiceViewModel
+    {
+        public int AddOnId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string Category { get; set; }
+    }
+
+    public class EventTypeViewModel
+    {
+        public int EventTypeId { get; set; }
+        public string TypeName { get; set; }
     }
 }
