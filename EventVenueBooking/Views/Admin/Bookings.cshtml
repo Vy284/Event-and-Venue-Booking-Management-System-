@@ -1,0 +1,717 @@
+﻿@{
+    ViewBag.Title = "Bookings Management";
+    ViewBag.ActiveMenu = "Bookings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* THỐNG KÊ NHANH */
+    .booking-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-mini-card {
+        background: #FFFFFF;
+        padding: 16px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .stat-mini-info p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .stat-mini-info h3 {
+        font-size: 20px;
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .stat-mini-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .icon-pending {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .icon-confirmed {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .icon-completed {
+        background: #EBF4EE;
+        color: var(--primary-green);
+    }
+
+    .icon-cancelled {
+        background: #FDE8E8;
+        color: #E53935;
+    }
+
+    /* KHUNG CHÍNH / BẢNG DATA */
+    .crud-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .custom-select, .custom-input {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .btn-create {
+        background: var(--primary-green);
+        color: #FFFFFF;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-create:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+    /* TABLE STYLES */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+        .custom-table th {
+            padding: 14px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            border-bottom: 2px solid #F0F4F1;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+            border-bottom: 1px solid #F0F4F1;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #FAFCFA;
+        }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #184A3B;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    /* BADGES CHO TRẠNG THÁI STATUS (0=Pending, 1=Confirmed, 2=InProgress, 3=Completed, 4=Cancelled) */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-pending {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    .badge-confirmed {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .badge-inprogress {
+        background: #F3E5F5;
+        color: #7B1FA2;
+    }
+
+    .badge-completed {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .badge-cancelled {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    /* ACTION BUTTONS */
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-act {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-view {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .btn-edit {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .btn-cancel-act {
+        background: #FDE8E8;
+        color: #E53935;
+    }
+
+    .btn-act:hover {
+        opacity: 0.8;
+    }
+
+    /* MODAL POPUP (PURE CSS/JS) */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(2px);
+    }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #FFFFFF;
+        width: 100%;
+        max-width: 600px;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #F0F4F1;
+        padding-bottom: 12px;
+    }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .form-control {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .btn-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+</style>
+
+<!-- 1. THỐNG KÊ NHANH -->
+<div class="booking-stats">
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Pending Requests</p>
+            <h3>12</h3>
+        </div>
+        <div class="stat-mini-icon icon-pending"><i class='bx bx-time-five'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Confirmed</p>
+            <h3>45</h3>
+        </div>
+        <div class="stat-mini-icon icon-confirmed"><i class='bx bx-check-circle'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Completed</p>
+            <h3>128</h3>
+        </div>
+        <div class="stat-mini-icon icon-completed"><i class='bx bx-task'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Cancelled</p>
+            <h3>8</h3>
+        </div>
+        <div class="stat-mini-icon icon-cancelled"><i class='bx bx-x-circle'></i></div>
+    </div>
+</div>
+
+<!-- 2. BẢNG DỮ LIỆU CHÍNH -->
+<div class="crud-card">
+    <div class="toolbar">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="custom-input" placeholder="Search Client / Venue..." style="width: 220px;" onkeyup="filterTable()">
+            <select class="custom-select" id="statusFilter" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending (0)</option>
+                <option value="Confirmed">Confirmed (1)</option>
+                <option value="InProgress">InProgress (2)</option>
+                <option value="Completed">Completed (3)</option>
+                <option value="Cancelled">Cancelled (4)</option>
+            </select>
+        </div>
+        <button class="btn-create" onclick="openCreateModal()">
+            <i class='bx bx-plus'></i> New Booking
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="bookingTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Client</th>
+                    <th>Venue</th>
+                    <th>Event Type</th>
+                    <th>Guests</th>
+                    <th>Start Date</th>
+                    <th>Total Cost</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- DỮ LIỆU MẪU DỰA TRÊN DATABASE ENTITY BOOKING -->
+                <tr>
+                    <td><strong>#1001</strong></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">NV</div>
+                            <div>
+                                <div style="font-weight: 700;">Nguyen Van A</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Client #12</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Grand Ballroom A</td>
+                    <td>Wedding</td>
+                    <td>250</td>
+                    <td>25/10/2026 18:00</td>
+                    <td style="font-weight: 700; color: var(--primary-green);">$3,500</td>
+                    <td><span class="status-badge badge-confirmed">Confirmed</span></td>
+                    <td>
+                        <div class="action-btns" style="justify-content: flex-end;">
+                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1001', 'Nguyen Van A', 'Grand Ballroom A', 'Wedding', '250', '25/10/2026 18:00', '25/10/2026 22:00', '$3,000', '$500', '$3,500', 'Confirmed')"><i class='bx bx-show'></i></button>
+                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1001', '12', '1', '2', '250', '2026-10-25T18:00', '2026-10-25T22:00', '1')"><i class='bx bx-edit'></i></button>
+                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1001')"><i class='bx bx-x-circle'></i></button>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><strong>#1002</strong></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm" style="background:#0288D1;">TB</div>
+                            <div>
+                                <div style="font-weight: 700;">Tran Thi B</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Client #15</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Skyline Garden</td>
+                    <td>Birthday Party</td>
+                    <td>80</td>
+                    <td>01/11/2026 14:00</td>
+                    <td style="font-weight: 700; color: var(--primary-green);">$1,200</td>
+                    <td><span class="status-badge badge-pending">Pending</span></td>
+                    <td>
+                        <div class="action-btns" style="justify-content: flex-end;">
+                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1002', 'Tran Thi B', 'Skyline Garden', 'Birthday Party', '80', '01/11/2026 14:00', '01/11/2026 18:00', '$1,000', '$200', '$1,200', 'Pending')"><i class='bx bx-show'></i></button>
+                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1002', '15', '2', '1', '80', '2026-11-01T14:00', '2026-11-01T18:00', '0')"><i class='bx bx-edit'></i></button>
+                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1002')"><i class='bx bx-x-circle'></i></button>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><strong>#1003</strong></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm" style="background:#E53935;">LC</div>
+                            <div>
+                                <div style="font-weight: 700;">Le Van C</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Client #20</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Executive Hall</td>
+                    <td>Conference</td>
+                    <td>150</td>
+                    <td>15/09/2026 08:00</td>
+                    <td style="font-weight: 700; color: var(--primary-green);">$2,100</td>
+                    <td><span class="status-badge badge-cancelled">Cancelled</span></td>
+                    <td>
+                        <div class="action-btns" style="justify-content: flex-end;">
+                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1003', 'Le Van C', 'Executive Hall', 'Conference', '150', '15/09/2026 08:00', '15/09/2026 12:00', '$2,000', '$100', '$2,100', 'Cancelled')"><i class='bx bx-show'></i></button>
+                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1003', '20', '3', '3', '150', '2026-09-15T08:00', '2026-09-15T12:00', '4')"><i class='bx bx-edit'></i></button>
+                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1003')"><i class='bx bx-x-circle'></i></button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3. MODAL CREATE / EDIT BOOKING -->
+<div class="modal-backdrop" id="bookingFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">Create New Booking</h3>
+            <button class="btn-close-modal" onclick="closeModal('bookingFormModal')">&times;</button>
+        </div>
+        <form id="bookingForm" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="bookingId" name="BookingId" value="0">
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Client User ID (*)</label>
+                    <input type="number" class="form-control" id="clientUserId" required placeholder="Ex: 12">
+                </div>
+
+                <div class="form-group">
+                    <label>Venue (*)</label>
+                    <select class="form-control" id="venueId" required>
+                        <option value="1">Grand Ballroom A</option>
+                        <option value="2">Skyline Garden</option>
+                        <option value="3">Executive Hall</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Event Type (*)</label>
+                    <select class="form-control" id="eventTypeId" required>
+                        <option value="1">Birthday Party</option>
+                        <option value="2">Wedding</option>
+                        <option value="3">Conference</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Guest Count (*)</label>
+                    <input type="number" class="form-control" id="guestCount" required placeholder="Ex: 100">
+                </div>
+
+                <div class="form-group">
+                    <label>Event Start DateTime (*)</label>
+                    <input type="datetime-local" class="form-control" id="eventStartDateTime" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Event End DateTime (*)</label>
+                    <input type="datetime-local" class="form-control" id="eventEndDateTime" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Booking Status</label>
+                    <select class="form-control" id="status">
+                        <option value="0">0 - Pending</option>
+                        <option value="1">1 - Confirmed</option>
+                        <option value="2">2 - InProgress</option>
+                        <option value="3">3 - Completed</option>
+                        <option value="4">4 - Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('bookingFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Booking</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. MODAL VIEW DETAILS -->
+<div class="modal-backdrop" id="viewDetailsModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Booking Details <span id="vBookingId" style="color:var(--text-muted);"></span></h3>
+            <button class="btn-close-modal" onclick="closeModal('viewDetailsModal')">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><strong>Client Name:</strong> <span id="vClientName"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Venue:</strong> <span id="vVenue"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Event Type:</strong> <span id="vEventType"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Guest Count:</strong> <span id="vGuestCount"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Start Time:</strong> <span id="vStart"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>End Time:</strong> <span id="vEnd"></span></div>
+            <hr style="border: none; border-top: 1px dashed var(--border-color);">
+            <div style="display: flex; justify-content: space-between;"><span>Venue Cost:</span> <span id="vVenueCost"></span></div>
+            <div style="display: flex; justify-content: space-between;"><span>Add-On Cost:</span> <span id="vAddOnCost"></span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: var(--primary-green);"><span>Total Cost:</span> <span id="vTotalCost"></span></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <strong>Status:</strong> <span id="vStatusBadge"></span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewDetailsModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 5. MODAL CANCEL BOOKING (CANCEL REASON) -->
+<div class="modal-backdrop" id="cancelModal">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 style="color:#C62828;">Cancel Booking</h3>
+            <button class="btn-close-modal" onclick="closeModal('cancelModal')">&times;</button>
+        </div>
+        <form onsubmit="handleCancelSubmit(event)">
+            <input type="hidden" id="cancelBookingId">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Are you sure you want to cancel this booking? Please provide a reason below.</p>
+            <div class="form-group">
+                <label>Cancel Reason (*)</label>
+                <textarea class="form-control" id="cancelReason" rows="3" required placeholder="Enter reason for cancellation..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('cancelModal')">Close</button>
+                <button type="submit" class="btn-primary" style="background:#C62828;">Confirm Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JAVASCRIPT XỬ LÝ SỰ KIỆN CRUD & MODAL -->
+<script>
+// @ts-nocheck
+            function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').innerText = "Create New Booking";
+            document.getElementById('bookingForm').reset();
+            document.getElementById('bookingId').value = "0";
+            openModal('bookingFormModal');
+        }
+
+        function openEditModal(id, clientUser, venue, eventType, guests, start, end, status) {
+            document.getElementById('modalTitle').innerText = "Edit Booking #" + id;
+            document.getElementById('bookingId').value = id;
+            document.getElementById('clientUserId').value = clientUser;
+            document.getElementById('venueId').value = venue;
+            document.getElementById('eventTypeId').value = eventType;
+            document.getElementById('guestCount').value = guests;
+            document.getElementById('eventStartDateTime').value = start;
+            document.getElementById('eventEndDateTime').value = end;
+            document.getElementById('status').value = status;
+            openModal('bookingFormModal');
+        }
+
+        function openViewModal(id, client, venue, type, guests, start, end, venueCost, addonCost, total, status) {
+            document.getElementById('vBookingId').innerText = "#" + id;
+            document.getElementById('vClientName').innerText = client;
+            document.getElementById('vVenue').innerText = venue;
+            document.getElementById('vEventType').innerText = type;
+            document.getElementById('vGuestCount').innerText = guests;
+            document.getElementById('vStart').innerText = start;
+            document.getElementById('vEnd').innerText = end;
+            document.getElementById('vVenueCost').innerText = venueCost;
+            document.getElementById('vAddOnCost').innerText = addonCost;
+            document.getElementById('vTotalCost').innerText = total;
+            document.getElementById('vStatusBadge').innerText = status;
+            openModal('viewDetailsModal');
+        }
+
+        function openCancelModal(id) {
+            document.getElementById('cancelBookingId').value = id;
+            document.getElementById('cancelReason').value = "";
+            openModal('cancelModal');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            alert("Đã lưu Booking thành công!");
+            closeModal('bookingFormModal');
+        }
+
+        function handleCancelSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('cancelBookingId').value;
+            const reason = document.getElementById('cancelReason').value;
+            alert("Đã hủy Booking #" + id + " với lý do: " + reason);
+            closeModal('cancelModal');
+        }
+
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#bookingTable tbody tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rowStatus = row.children[7].innerText.toLowerCase();
+
+                const matchesSearch = text.includes(search);
+                const matchesStatus = status === "" || rowStatus.includes(status);
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+</script>
+   

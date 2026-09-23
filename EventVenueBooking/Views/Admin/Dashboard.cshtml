@@ -1,79 +1,540 @@
 ﻿@{
     ViewBag.Title = "Dashboard";
-    ViewBag.ActiveMenu = "Dashboard"; // Đánh dấu active cho Sidebar
+    ViewBag.ActiveMenu = "Dashboard";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
+<!-- Tải Chart.js để vẽ biểu đồ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-    /* CSS nhanh cho các Card thống kê */
+    /* RESET MÀU NỀN TRONG LAYOUT CHÍNH */
+    .page-body {
+        padding: 0 25px 25px 25px;
+    }
+
+    /* CARD CHUNG */
+    .dash-card {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1C2A23;
+    }
+
+    .dropdown-btn {
+        background: #F4F7FB;
+        color: #5D7285;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+    }
+
+    /* HÀNG TOP - 3 STATS CARDS */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 20px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
-    .stat-card {
-        background: #FFF;
-        padding: 20px;
-        border-radius: 16px;
+    .stat-card-inner {
         display: flex;
         align-items: center;
         gap: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
 
     .stat-icon {
         width: 48px;
         height: 48px;
         border-radius: 12px;
-        background: #EBF4EE;
-        color: #184A3B;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
     }
 
+    .icon-green {
+        background: #EBF4EE;
+        color: #184A3B;
+    }
+
+    .icon-orange {
+        background: #FDF3E7;
+        color: #F2A341;
+    }
+
     .stat-info h5 {
-        font-size: 12px;
+        font-size: 13px;
+        color: #738A7C;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .stat-info h3 {
+        font-size: 24px;
+        color: #1C2A23;
+        font-weight: 700;
+    }
+
+    /* LƯỚI CHÍNH CỦA BẢNG ĐIỀU KHIỂN */
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.8fr;
+        gap: 20px;
+    }
+
+    /* KHU VỰC BÊN TRÁI: BOOKING STATUS (BIỂU ĐỒ TRÒN) */
+    .chart-donut-container {
+        position: relative;
+        height: 220px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .donut-inner-text {
+        position: absolute;
+        text-align: center;
+    }
+
+        .donut-inner-text p {
+            font-size: 12px;
+            color: #738A7C;
+            margin-bottom: 2px;
+        }
+
+        .donut-inner-text h4 {
+            font-size: 22px;
+            color: #1C2A23;
+            font-weight: 700;
+        }
+
+    .status-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .status-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .status-color {
+        width: 4px;
+        height: 24px;
+        border-radius: 4px;
+    }
+
+    .color-green {
+        background: #184A3B;
+    }
+
+    .color-orange {
+        background: #F7C17F;
+    }
+
+    .color-purple {
+        background: #DCE0FA;
+    }
+
+    .status-text h6 {
+        font-size: 13px;
+        color: #738A7C;
+        font-weight: 500;
+    }
+
+    .status-text h4 {
+        font-size: 16px;
+        color: #1C2A23;
+        font-weight: 700;
+    }
+
+    .status-percent {
+        background: #F4F7FB;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1C2A23;
+    }
+
+    /* KHU VỰC BÊN PHẢI */
+    .right-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .revenue-header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 15px;
+    }
+
+    .revenue-total p {
+        font-size: 13px;
         color: #738A7C;
         margin-bottom: 4px;
     }
 
-    .stat-info h3 {
-        font-size: 22px;
+    .revenue-total h3 {
+        font-size: 24px;
         color: #1C2A23;
         font-weight: 700;
     }
+
+    .legend-list {
+        display: flex;
+        gap: 16px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #738A7C;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .chart-bar-container {
+        height: 240px;
+        width: 100%;
+    }
+
+    /* THANH NGANG - POPULAR EVENT TYPES */
+    .event-type-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .event-row {
+        display: grid;
+        grid-template-columns: 80px 1fr 100px;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .event-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #738A7C;
+    }
+
+    .progress-bar-wrapper {
+        background: #F4F7FB;
+        height: 12px;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding-left: 8px;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .fill-purple {
+        background: #DCE0FA;
+        color: #184A3B;
+    }
+
+    .fill-green {
+        background: #184A3B;
+        color: #FFF;
+    }
+
+    .fill-orange {
+        background: #F7C17F;
+        color: #184A3B;
+    }
+
+    .event-count {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1C2A23;
+        text-align: right;
+    }
 </style>
 
-<!-- Thẻ thống kê hàng trên -->
+<!-- 1. HÀNG TOP - CARDS THỐNG KÊ -->
 <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon"><i class='bx bx-calendar-event'></i></div>
-        <div class="stat-info">
-            <h5>Upcoming Events</h5>
-            <h3>345</h3>
+    <div class="dash-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon icon-orange"><i class='bx bx-calendar-event'></i></div>
+            <div class="stat-info">
+                <h5>Upcoming Events</h5>
+                <h3>345</h3>
+            </div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class='bx bx-check-square'></i></div>
-        <div class="stat-info">
-            <h5>Total Bookings</h5>
-            <h3>1,798</h3>
+    <div class="dash-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon icon-orange"><i class='bx bx-check-square'></i></div>
+            <div class="stat-info">
+                <h5>Total Bookings</h5>
+                <h3>1,798</h3>
+            </div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class='bx bx-purchase-tag'></i></div>
-        <div class="stat-info">
-            <h5>Tickets Sold</h5>
-            <h3>1,250</h3>
+    <div class="dash-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon icon-orange"><i class='bx bx-wallet'></i></div>
+            <div class="stat-info">
+                <h5>Total Revenue</h5>
+                <h3>$52,000</h3>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Nơi chứa Bảng hoặc Biểu đồ tiếp theo -->
-<div style="background: #FFF; padding: 25px; border-radius: 16px; min-height: 400px;">
-    <h4 style="color: #184A3B;">Nội dung chi tiết Dashboard sẽ dựng ở đây...</h4>
+<!-- 2. HÀNG CHÍNH - LƯỚI 2 CỘT -->
+<div class="main-grid">
+
+    <!-- CỘT TRÁI: BOOKING STATUS -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">Booking Status</div>
+            <button class="dropdown-btn">This Week <i class='bx bx-chevron-down'></i></button>
+        </div>
+
+        <div class="chart-donut-container">
+            <canvas id="statusChart"></canvas>
+            <div class="donut-inner-text">
+                <p>Total Bookings</p>
+                <h4>2,780</h4>
+            </div>
+        </div>
+
+        <div class="status-list">
+            <div class="status-item">
+                <div class="status-left">
+                    <div class="status-color color-green"></div>
+                    <div class="status-text">
+                        <h6>Confirmed</h6>
+                        <h4>1,251</h4>
+                    </div>
+                </div>
+                <div class="status-percent">45%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-left">
+                    <div class="status-color color-orange"></div>
+                    <div class="status-text">
+                        <h6>Pending</h6>
+                        <h4>834</h4>
+                    </div>
+                </div>
+                <div class="status-percent">30%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-left">
+                    <div class="status-color color-purple"></div>
+                    <div class="status-text">
+                        <h6>Cancelled</h6>
+                        <h4>695</h4>
+                    </div>
+                </div>
+                <div class="status-percent">25%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI -->
+    <div class="right-grid">
+
+        <!-- BIỂU ĐỒ CỘT DOANH THU -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">Revenue Breakdown</div>
+                <button class="dropdown-btn">Last 8 Months <i class='bx bx-chevron-down'></i></button>
+            </div>
+
+            <div class="revenue-header-info">
+                <div class="revenue-total">
+                    <p>Total Revenue</p>
+                    <h3>$52,000</h3>
+                </div>
+                <div class="legend-list">
+                    <div class="legend-item">
+                        <div class="dot color-purple"></div> Venue Cost
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot color-green"></div> Add-on Cost
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-bar-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH LOẠI SỰ KIỆN PHỔ BIẾN -->
+        <div class="dash-card">
+            <div class="card-header" style="margin-bottom: 15px;">
+                <div class="card-title">Top Event Types</div>
+                <button class="dropdown-btn">Popular <i class='bx bx-chevron-down'></i></button>
+            </div>
+
+            <div class="event-type-list">
+                <div class="event-row">
+                    <div class="event-name">Wedding</div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-fill fill-purple" style="width: 50%;">40%</div>
+                    </div>
+                    <div class="event-count">20,000 Bookings</div>
+                </div>
+
+                <div class="event-row">
+                    <div class="event-name">Conference</div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-fill fill-green" style="width: 42%;">35%</div>
+                    </div>
+                    <div class="event-count">17,500 Bookings</div>
+                </div>
+
+                <div class="event-row">
+                    <div class="event-name">Party</div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-fill fill-orange" style="width: 20%;">15%</div>
+                    </div>
+                    <div class="event-count">12,500 Bookings</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
+
+<!-- SCRIPTS KHỞI TẠO BIỂU ĐỒ BẰNG CHART.JS -->
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
+            const ctxDonut = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Confirmed', 'Pending', 'Cancelled'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: ['#184A3B', '#F7C17F', '#DCE0FA'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%', // Độ rỗng ở giữa
+                    plugins: {
+                        legend: { display: false }, // Ẩn chú thích mặc định
+                        tooltip: { enabled: true }
+                    }
+                }
+            });
+
+            // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
+            const ctxBar = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    datasets: [
+                        {
+                            label: 'Venue Cost',
+                            data: [45000, 38000, 48000, 60000, 45000, 40000, 48000, 42000],
+                            backgroundColor: '#DCE0FA', // Màu tím nhạt
+                            borderRadius: 6,
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.5
+                        },
+                        {
+                            label: 'Add-on Cost',
+                            data: [20000, 15000, 18000, 30000, 20000, 15000, 12000, 22000],
+                            backgroundColor: '#184A3B', // Màu xanh đậm
+                            borderRadius: 6,
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }, // Ẩn chú thích vì đã code bằng HTML
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#738A7C', font: { size: 12 } }
+                        },
+                        y: {
+                            grid: {
+                                color: '#F4F7FB',
+                                drawBorder: false,
+                                borderDash: [5, 5]
+                            },
+                            ticks: {
+                                color: '#738A7C',
+                                font: { size: 12 },
+                                stepSize: 15000,
+                                callback: function(value) {
+                                    if(value === 0) return '0';
+                                    return (value / 1000) + 'K';
+                                }
+                            },
+                            beginAtZero: true,
+                            max: 60000
+                        }
+                    }
+                }
+            });
+        });
+</script>

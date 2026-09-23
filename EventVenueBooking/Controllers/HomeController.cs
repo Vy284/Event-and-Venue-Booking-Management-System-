@@ -12,5 +12,13 @@ namespace EventVenueBooking.Controllers
         {
             return View("~/Views/Admin/Dashboard.cshtml");
         }
+
+        public ActionResult Bookings()
+        {
+            ViewBag.Title = "Bookings Management";
+            ViewBag.ActiveMenu = "Bookings";
+
+            return View("~/Views/Admin/Bookings.cshtml");
+        }
     }
 }
