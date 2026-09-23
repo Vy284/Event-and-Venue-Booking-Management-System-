@@ -6,15 +6,14 @@
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
 }
 
-<!-- HERO BANNER -->
-<div class="hero-wrapper" style="background-image: url('@Url.Content("~/Content/images/bg_landingpage.jpg")');">
+<div class="hero-wrapper" style="background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
                 <h1 class="display-3 fw-bold mb-3" style="color: var(--primary-brown); line-height: 1.1; letter-spacing: -1px;">
                     THE PERFECT <br />EVENT VENUE
                 </h1>
-                <p class="lead text-dark fw-bold mb-4" style="max-width: 600px; opacity: 0.9; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
+                <p class="lead text-dark fw-bold mb-4" style="max-width: 600px; text-shadow: 0 2px 2px rgba(255,255,255,0.8);">
                     Khám phá không gian tổ chức sự kiện đỉnh cao, tiệc cưới sang trọng, sinh nhật rực rỡ và hội thảo chuyên nghiệp với hệ thống đặt sảnh hiện đại.
                 </p>
                 <div>
@@ -25,7 +24,7 @@
     </div>
 </div>
 
-<!-- VENUE GALLERY & SEARCH/FILTER SECTION -->
+<!-- venue gallery -->
 <div class="container my-5">
     <div id="venue-gallery" class="pt-3">
 
@@ -34,7 +33,7 @@
             <h2 class="fw-bold" style="color: var(--primary-brown);">Moments We Created</h2>
         </div>
 
-        <!-- SEARCH BAR -->
+        <!-- search bar -->
         <div class="row justify-content-center mb-4">
             <div class="col-md-7 col-lg-6">
                 <form id="search-form" action="@Url.Action("Index", "Home")" method="get" class="input-group shadow-sm rounded-pill overflow-hidden bg-white p-1 border">
@@ -53,7 +52,7 @@
             </div>
         </div>
 
-        <!-- VENUE BUTTONS -->
+        <!-- filter buttons -->
         <div class="d-flex justify-content-center gap-2 mb-5 flex-wrap">
             <a href="@Url.Action("Index", "Home", new { category = "All", search = currentSearch })"
                data-category="All"
@@ -82,7 +81,7 @@
             </a>
         </div>
 
-        <!-- VENUE CARDS CONTAINER (CHỈ KHUNG NÀY SẼ CẬP NHẬT NỘI DUNG) -->
+        <!-- venue cards -->
         <div id="venue-cards-container" class="row g-4" style="transition: opacity 0.2s ease;">
             @if (Model != null && Model.Any())
             {
@@ -128,7 +127,7 @@
     </div>
 </div>
 
-<!-- SCRIPT JAVASCRIPT THUẦN (KHÔNG CẦN JQUERY, KHÔNG LO LỖI DẤU $) -->
+<!-- javascript to prevent reload page -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
@@ -138,29 +137,23 @@
         const searchForm = document.getElementById('search-form');
         const categoryBtns = document.querySelectorAll('.category-btn');
 
-        // Hàm tải dữ liệu ngầm bằng Fetch API
         function loadVenues(url, selectedCategory) {
-            // 1. Hiệu ứng mờ nhẹ danh sách cũ trong lúc chờ dữ liệu mới
             if (cardsContainer) {
                 cardsContainer.style.opacity = '0.4';
             }
 
-            // 2. Dùng Fetch API để lấy HTML từ C# Controller
             fetch(url)
                 .then(response => response.text())
                 .then(htmlText => {
-                    // Đọc chuỗi HTML trả về từ Server
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(htmlText, 'text/html');
                     const newCards = doc.getElementById('venue-cards-container');
 
-                    // 3. Thay nội dung khung danh sách sảnh và trả lại độ rõ 100%
                     if (newCards && cardsContainer) {
                         cardsContainer.innerHTML = newCards.innerHTML;
                         cardsContainer.style.opacity = '1';
                     }
 
-                    // 4. Cập nhật màu sắc Active cho Nút Danh mục được chọn
                     if (selectedCategory) {
                         if (categoryInput) categoryInput.value = selectedCategory;
 
@@ -176,40 +169,37 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Lỗi khi tải dữ liệu sảnh:', error);
+                    console.error('Lỗi tải dữ liệu:', error);
                     if (cardsContainer) cardsContainer.style.opacity = '1';
                 });
         }
 
-        // 1. Lắng nghe khi người dùng bấm các Nút Danh Mục (Weddings, Corporate...)
+        // Khi chọn nút 
         categoryBtns.forEach(btn => {
-            btn.addEventListener('click', function (this: HTMLElement, e: Event) {
-                e.preventDefault();
-
+            btn.addEventListener('click', function (e) {
+                e.preventDefault(); // Chặn reload trang
                 const url = this.getAttribute('href');
                 const cat = this.getAttribute('data-category');
-
                 loadVenues(url, cat);
             });
         });
 
-        // 2. Lắng nghe khi người dùng bấm nút Tìm Kiếm (Form Submit)
+        // Khi dùng search bar
         if (searchForm) {
             searchForm.addEventListener('submit', function (e) {
-                e.preventDefault(); // CHẶN KHÔNG CHO RELOAD TRANG!
-
+                e.preventDefault(); // Chặn reload trang
                 const searchVal = searchInput ? searchInput.value : '';
                 const currentCat = categoryInput ? categoryInput.value : 'All';
                 const baseUrl = '@Url.Action("Index", "Home")';
                 const url = `${baseUrl}?category=${encodeURIComponent(currentCat)}&search=${encodeURIComponent(searchVal)}`;
-
                 loadVenues(url, currentCat);
             });
         }
 
-        // 3. Lắng nghe khi người dùng bấm nút "Xóa bộ lọc" (Trường hợp không tìm thấy sảnh)
+        // Xóa bộ lọc
         document.addEventListener('click', function (e) {
-            if (e.target && e.target.id === 'reset-filter-btn') {
+            const resetBtn = e.target.closest('#reset-filter-btn');
+            if (resetBtn) {
                 e.preventDefault();
                 if (searchInput) searchInput.value = '';
                 const url = '@Url.Action("Index", "Home")?category=All&search=';
