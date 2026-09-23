@@ -12,9 +12,56 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        public ActionResult Index()
+        public ActionResult Index(string search, string category)
         {
-            var venues = db.Venues.Select(v => new VenueCardViewModel
+            var query = db.Venues.AsQueryable();
+
+            // Lọc theo Tên sảnh hoặc Vị trí
+            if (!string.IsNullOrEmpty(search))
+            {
+                string searchLower = search.Trim().ToLower();
+                query = query.Where(v => v.Name.ToLower().Contains(searchLower) || v.Location.ToLower().Contains(searchLower));
+            }
+
+            // Lọc theo Category dựa trên VenueType và EventType
+            if (!string.IsNullOrEmpty(category) && category != "All")
+            {
+                string categoryLower = category.Trim().ToLower();
+
+                if (categoryLower == "wedding")
+                {
+                    // Đám cưới -> Ballroom / Garden
+                    query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("ballroom")
+                                          || v.VenueType.TypeName.ToLower().Contains("garden")
+                                          || v.Name.ToLower().Contains("wedding"));
+                }
+                else if (categoryLower == "corporate")
+                {
+                    // Hội thảo -> Ballroom / Indoor
+                    query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("ballroom")
+                                          || v.VenueType.TypeName.ToLower().Contains("indoor")
+                                          || v.Name.ToLower().Contains("corporate"));
+                }
+                else if (categoryLower == "birthday")
+                {
+                    // Sinh nhật -> Rooftop / Garden
+                    query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("rooftop")
+                                          || v.VenueType.TypeName.ToLower().Contains("garden"));
+                }
+                else if (categoryLower == "social")
+                {
+                    // Tiệc -> Rooftop / Garden
+                    query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("rooftop")
+                                          || v.VenueType.TypeName.ToLower().Contains("lounge"));
+                }
+                else
+                {
+                    // Trường hợp tìm trực tiếp theo loại DB
+                    query = query.Where(v => v.VenueType.TypeName.ToLower().Contains(category.ToLower()));
+                }
+            }
+
+            var venues = query.Select(v => new VenueCardViewModel
             {
                 VenueId = v.VenueId,
                 Name = v.Name,
@@ -24,8 +71,12 @@ namespace EventVenueBooking.Controllers
                 RentalRate = v.RentalRate,
                 RentalUnit = v.RentalUnit,
                 ImageUrl = db.VenueImages.FirstOrDefault(img => img.VenueId == v.VenueId && img.IsPrimary).ImageUrl
-                           ?? "/Content/images/bg_landingpage.jpg"  // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
+                           ?? "/Content/images/bg_landingpage.jpg" // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
             }).ToList();
+
+            // Lưu lại để giữ trạng thái trên View
+            ViewBag.CurrentSearch = search;
+            ViewBag.CurrentCategory = string.IsNullOrEmpty(category) ? "All" : category;
 
             return View(venues);
         }

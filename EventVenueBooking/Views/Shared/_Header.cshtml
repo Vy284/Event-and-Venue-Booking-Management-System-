@@ -1,0 +1,47 @@
+﻿<header class="site-header">
+    <nav class="navbar navbar-expand-lg navbar-light py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" style="color: var(--primary-brown);" href="/Home/Index">
+                EVENT<span style="color: var(--accent-brown);">VENUE</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
+                    <li class="nav-item me-3"><a class="nav-link text-dark" href="/Home/Index">Trang chủ</a></li>
+                    <li class="nav-item me-3"><a class="nav-link text-dark" href="#venue-gallery">Danh sách Sảnh</a></li>
+                    <li class="nav-item me-3"><a class="nav-link text-dark" href="#">Dịch vụ Add-on</a></li>
+                    <li class="nav-item"><a class="nav-link text-dark" href="#">Liên hệ</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-2">
+                    @if (Session["User"] == null) //Tránh TypeScript báo lỗi
+                    {
+                        <button class="btn btn-outline-dark rounded-pill px-3 py-1" data-bs-toggle="modal" data-bs-target="#authModal" onclick="document.getElementById('pills-login-tab')?.click();">
+                            Đăng nhập
+                        </button>
+                        <button class="btn btn-brown rounded-pill px-3 py-1 text-white" data-bs-toggle="modal" data-bs-target="#authModal" onclick="document.getElementById('pills-register-tab')?.click();">
+                            Đăng ký
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-outline-dark rounded-pill dropdown-toggle px-3 py-1" type="button" data-bs-toggle="dropdown">
+                                <i class="fa-regular fa-user me-1"></i> @Session["UserName"]
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3">
+                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-clock-rotate-left me-2"></i>Lịch sử đặt sảnh</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="/Account/Logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>

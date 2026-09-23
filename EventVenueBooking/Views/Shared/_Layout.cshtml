@@ -9,43 +9,19 @@
     <link rel="stylesheet" href="/Content/Site.css" />
 </head>
 <body>
-    <header class="site-header">
-        <nav class="navbar navbar-expand-lg navbar-light py-3">
-            <div class="container">
-                <a class="navbar-brand fw-bold fs-3" style="color: var(--primary-brown);" href="/Home/Index">
-                    EVENT<span style="color: var(--accent-brown);">VENUE</span>
-                </a>
+    <!-- Header Partial -->
+    @Html.Partial("_Header")
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarContent">
-                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
-                        <li class="nav-item me-3"><a class="nav-link text-dark" href="/Home/Index">Trang chủ</a></li>
-                        <li class="nav-item me-3"><a class="nav-link text-dark" href="#venue-gallery">Danh sách Sảnh</a></li>
-                        <li class="nav-item me-3"><a class="nav-link text-dark" href="#">Dịch vụ Add-on</a></li>
-                        <li class="nav-item"><a class="nav-link text-dark" href="#">Liên hệ</a></li>
-                    </ul>
-
-                    <div class="d-flex align-items-center gap-2">
-                        <a class="btn btn-outline-dark rounded-pill px-3" href="/Account/Login">Đăng nhập</a>
-                        <a class="btn btn-brown px-3" href="/Account/Register">Đăng ký</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
-
+    <!-- Main Content -->
     <main role="main">
         @RenderBody()
     </main>
 
-    <footer class="mt-5 py-4 text-center text-muted border-top">
-        <div class="container">
-            <p class="mb-0">&copy; 2026 Event & Venue Booking Management System. All rights reserved.</p>
-        </div>
-    </footer>
+    <!-- Footer Partial -->
+    @Html.Partial("_Footer")
+
+    <!-- Auth Modal Partial -->
+    @Html.Partial("_AuthModal")
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @RenderSection("Scripts", required: false)

@@ -30,7 +30,6 @@ namespace EventVenueBooking.Controllers
                 return HttpNotFound();
             }
 
-            // Lấy danh sách Dịch vụ đi kèm (Add-ons) và Ảnh của sảnh
             ViewBag.Images = db.VenueImages.Where(img => img.VenueId == id).ToList();
             ViewBag.AddOnServices = db.AddOnServices.Where(a => a.IsActive).ToList();
 

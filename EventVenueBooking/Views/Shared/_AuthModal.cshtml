@@ -1,0 +1,107 @@
+﻿<style>
+    #authModal .nav-pills .nav-link {
+        color: #5A4E46;
+        transition: all 0.3s ease;
+    }
+
+    #authModal .nav-pills .nav-link.active {
+        background-color: #C2A682 !important;
+        color: #ffffff !important;
+
+    }
+
+    #authModal .form-control {
+        height: 50px;
+        font-size: 1rem;
+    }
+
+    #authModal .form-control:focus {
+        border-color: #C2A682 !important;
+        box-shadow: 0 0 0 0.25rem rgba(194, 166, 130, 0.2) !important;
+    }
+</style>
+
+<div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 70%;">
+        <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-body p-0">
+                <div class="row g-0">
+
+                    <div class="col-md-5 d-none d-md-block position-relative"
+                         style="background: url('https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?q=80&w=1170') center/cover no-repeat; min-height: 560px;">
+                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.12);"></div>
+                    </div>
+
+                    <div class="col-md-7 p-4 p-lg-5 d-flex flex-column justify-content-center" style="background-color: #FAF8F5;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fs-4 fw-bold text-uppercase" style="color: #4A3B32; font-family: 'Playfair Display', serif; letter-spacing: 2px;">EVENTVENUE</span>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <!-- Tab Login - Register -->
+                        <ul class="nav nav-pills nav-justified mb-4 p-1" style="background-color: #EFECE6;">
+                            <li class="nav-item">
+                                <button class="nav-link active fw-bold py-2" id="pills-login-tab" data-bs-toggle="pill" data-bs-target="#pills-login" type="button">Đăng Nhập</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link fw-bold py-2" id="pills-register-tab" data-bs-toggle="pill" data-bs-target="#pills-register" type="button">Đăng Ký</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="pills-tabContent">
+                            <!-- Login -->
+                            <div class="tab-pane fade show active" id="pills-login">
+                                <h2 class="fw-normal mb-1" style="font-family: 'Playfair Display', serif; color: #2B2623; font-size: 2.2rem;">Welcome Back!</h2>
+                                <p class="text-muted small mb-4 text-uppercase" style="font-size: 1rem; letter-spacing: 1px;">Nhập thông tin tài khoản của bạn</p>
+
+                                @using (Html.BeginForm("Login", "Account", FormMethod.Post))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <div class="mb-4">
+                                        <input type="text" name="usernameOrEmail" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
+                                    </div>
+                                    <div class="mb-4">
+                                        <input type="password" name="password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 fs-5 fst-italic">
+                                        <div class="form-check">
+                                            <input class="form-check-input border-secondary" type="checkbox" id="rememberMe">
+                                            <label class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                                        </div>
+                                        <a href="#" class="text-decoration-none text-muted">Quên mật khẩu?</a>
+                                    </div>
+                                    <button type="submit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-4" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">ĐĂNG NHẬP</button>
+                                }
+                            </div>
+
+                            <!-- Register -->
+                            <div class="tab-pane fade" id="pills-register">
+                                <h2 class="fw-normal mb-1" style="font-family: 'Playfair Display', serif; color: #2B2623; font-size: 2.2rem;">Create Account</h2>
+                                <p class="text-muted small mb-4 text-uppercase" style="font-size: 1rem; letter-spacing: 1px;">Trở thành thành viên để nhận ưu đãi</p>
+
+                                @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <div class="mb-3">
+                                        <input type="text" name="FullName" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Họ và tên" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="email" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="tel" name="PhoneNumber" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Số điện thoại" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="password" name="PasswordHash" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                    </div>
+                                    <button type="submit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-4" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
