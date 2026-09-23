@@ -82,6 +82,14 @@
             );
 
             context.SaveChanges();
+
+            //Temporary images for venues, có thể thay thế lại sau nếu cần
+            context.VenueImages.AddOrUpdate(img => img.ImageId,
+                new VenueImage { ImageId = 1, VenueId = 1, ImageUrl = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800", IsPrimary = true },
+                new VenueImage { ImageId = 2, VenueId = 2, ImageUrl = "https://images.unsplash.com/photo-1587271407850-8d438ca9fdf2?w=800", IsPrimary = true },
+                new VenueImage { ImageId = 3, VenueId = 3, ImageUrl = "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800", IsPrimary = true },
+                new VenueImage { ImageId = 4, VenueId = 4, ImageUrl = "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=800", IsPrimary = true }
+            );
         }
     }
 }

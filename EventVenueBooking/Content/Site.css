@@ -1,8 +1,8 @@
 ﻿:root {
-    --primary-brown: #4A3525; /* Nâu đậm cổ điển */
-    --accent-brown: #8C6D53;  /* Nâu hạt dẻ */
-    --light-bg: #F8F6F2;      /* Nền kem nhạt */
-    --card-bg: #FFFFFF;      /* Nền thẻ trắng */
+    --primary-brown: #4A3525;
+    --accent-brown: #8C6D53; 
+    --light-bg: #F8F6F2;
+    --card-bg: #FFFFFF;
     --text-dark: #2C2C2C;
     --text-muted: #6C757D;
 }
