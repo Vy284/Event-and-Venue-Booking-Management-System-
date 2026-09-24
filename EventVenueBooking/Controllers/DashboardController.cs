@@ -53,7 +53,7 @@ namespace EventVenueBooking.Controllers
                     }).ToList()
             };
 
-            return View(model);
+            return View("~/Views/Admin/Dashboard.cshtml", model);
         }
 
         // GET: Dashboard/Calendar
