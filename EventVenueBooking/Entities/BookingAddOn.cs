@@ -16,6 +16,7 @@ namespace EventVenueBooking.Entities
         public virtual AddOnService AddOnService { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
         // Snapshot giá add-on tại thời điểm đặt — không đổi dù AddOnService.Price đổi sau này

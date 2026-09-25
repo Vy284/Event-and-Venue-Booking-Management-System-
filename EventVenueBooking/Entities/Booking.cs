@@ -29,6 +29,7 @@ namespace EventVenueBooking.Entities
         public virtual EventType EventType { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue)]
         public int GuestCount { get; set; }
 
         [Required]
@@ -49,6 +50,7 @@ namespace EventVenueBooking.Entities
         public byte RentalUnitAtBooking { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue)]
         public int RentalQuantity { get; set; }
 
         [Required]

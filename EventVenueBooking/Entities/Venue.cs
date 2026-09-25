@@ -21,6 +21,7 @@ namespace EventVenueBooking.Entities
         public virtual VenueType VenueType { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue)]
         public int Capacity { get; set; }
 
         public string Description { get; set; }
