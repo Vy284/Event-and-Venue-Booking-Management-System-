@@ -53,15 +53,14 @@ namespace EventVenueBooking.Entities
         // ---- Navigation properties ----
         public virtual ICollection<VenueImage> VenueImages { get; set; }
 
-        // N-N với Facility, EF6 tự tạo bảng nối VenueFacilities (cấu hình ở DbContext)
-        public virtual ICollection<Facility> Facilities { get; set; }
+        public virtual ICollection<VenueFacility> VenueFacilities { get; set; }
 
         public virtual ICollection<Booking> Bookings { get; set; }
 
         public Venue()
         {
             VenueImages = new HashSet<VenueImage>();
-            Facilities = new HashSet<Facility>();
+            VenueFacilities = new HashSet<VenueFacility>();
             Bookings = new HashSet<Booking>();
         }
     }
