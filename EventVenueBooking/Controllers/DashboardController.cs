@@ -56,30 +56,53 @@ namespace EventVenueBooking.Controllers
             return View("~/Views/Admin/Dashboard.cshtml", model);
         }
 
-        // GET: Dashboard/Calendar
-        public ActionResult Calendar()
-        {
-            var events = db.Bookings
-                .Include(b => b.Venue)
-                .Select(b => new CalendarEventViewModel
-                {
-                    BookingId = b.BookingId,
-                    VenueName = b.Venue.Name,
-                    StartDate = b.EventStartDateTime,
-                    EndDate = b.EventEndDateTime,
-                    EventStatus = b.Status == 0 ? "Pending" :
-                                  b.Status == 1 ? "Confirmed" :
-                                  b.Status == 2 ? "InProgress" :
-                                  b.Status == 3 ? "Completed" : "Cancelled"
-                }).ToList();
 
-            return View(events);
+
+        public ActionResult Calendar(string weekDate)
+        {
+            DateTime today = DateTime.Today;
+
+            // Tự parse chuỗi yyyy-MM-dd từ JS gửi lên
+            if (!string.IsNullOrEmpty(weekDate))
+            {
+                DateTime.TryParse(weekDate, out today);
+            }
+
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+            DateTime endOfWeek = startOfWeek.AddDays(7);
+
+            ViewBag.WeekStartDate = startOfWeek;
+
+            // Các đoạn query db.Bookings ở dưới m GIỮ NGUYÊN...
+            var bookings = db.Bookings
+                .Include("Venue")
+                .Where(b => b.EventStartDateTime >= startOfWeek && b.EventStartDateTime < endOfWeek)
+                .ToList();
+
+            var model = bookings.Select(b => new CalendarEventViewModel
+            {
+                BookingId = b.BookingId,
+                VenueName = b.Venue != null ? b.Venue.Name : "N/A",
+                StartDate = b.EventStartDateTime,
+                EndDate = b.EventEndDateTime,
+                EventStatus = GetStatusString(b.Status)
+            }).ToList();
+
+            return View("~/Views/Admin/Calendar.cshtml", model);
         }
 
-        protected override void Dispose(bool disposing)
+        // Hàm phụ trợ map Status (byte) ra String theo thiết kế Booking.cs
+        private string GetStatusString(byte statusByte)
         {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+            switch (statusByte)
+            {
+                case 0: return "Pending";
+                case 1: return "Confirmed";
+                case 2: return "InProgress";
+                case 3: return "Completed";
+                case 4: return "Cancelled";
+                default: return "Unknown";
+            }
         }
     }
 }

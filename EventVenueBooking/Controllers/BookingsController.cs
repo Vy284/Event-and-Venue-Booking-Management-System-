@@ -33,7 +33,7 @@ namespace EventVenueBooking.Controllers
                     PaymentStatus = b.Payments.Any(p => p.PaymentStatus == 1) ? "Paid" : "Unpaid"
                 }).ToList();
 
-            return View(bookings);
+            return View("~/Views/Admin/Bookings.cshtml", bookings);
         }
 
         protected override void Dispose(bool disposing)

@@ -1,0 +1,417 @@
+﻿@model IEnumerable<EventVenueBooking.ViewModels.CalendarEventViewModel>
+@{
+    ViewBag.Title = "Calendar";
+    ViewBag.ActiveMenu = "Calendar";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    // 1. TỰ ĐỘNG ĐỌC QUERYSTRING 'weekDate' TRÊN URL (Độc lập với Controller)
+    DateTime weekStart;
+    string weekDateQuery = Request.QueryString["weekDate"];
+
+    if (ViewBag.WeekStartDate != null)
+    {
+        weekStart = (DateTime)ViewBag.WeekStartDate;
+    }
+    else if (!string.IsNullOrEmpty(weekDateQuery) && DateTime.TryParse(weekDateQuery, out DateTime parsedDate))
+    {
+        // Nhảy về ngày Chủ Nhật của tuần đó
+        weekStart = parsedDate.AddDays(-(int)parsedDate.DayOfWeek);
+    }
+    else
+    {
+        // Mặc định lấy ngày hôm nay
+        weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+    }
+
+    // 2. Tính ngày tuần trước để gán vào nút Back
+    string prevWeekStr = weekStart.AddDays(-7).ToString("yyyy-MM-dd");
+
+    // 3. Tính Tháng và Tuần hiện tại để đồng bộ Dropdown
+    DateTime refDate = weekStart.AddDays(3); // Dùng Thứ 4 làm mốc chuẩn
+    string currentMonth = refDate.ToString("yyyy-MM");
+    int currentWeekNum = ((refDate.Day - 1) / 7) + 1;
+    if (currentWeekNum > 5) { currentWeekNum = 5; }
+}
+
+<style>
+    /* 1. ĐÈ CSS CỦA ADMIN LAYOUT ĐỂ TRIỆT TIÊU THANH CUỘN NGOÀI */
+    html, body {
+        overflow: hidden !important;
+        height: 100vh !important;
+    }
+
+    .content-container {
+        overflow: hidden !important;
+    }
+
+    .page-body {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        padding: 0 30px 20px 30px !important;
+    }
+
+    /* 2. KHUNG CONTAINER LỊCH */
+    .calendar-container {
+        background-color: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .calendar-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-shrink: 0;
+    }
+
+        /* PHÓNG TO TIÊU ĐỀ */
+        .calendar-header-top h3 {
+            font-size: 26px;
+            color: #1C2A23;
+            font-weight: 700;
+            margin: 0;
+        }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    /* PHÓNG TO NÚT CHỌN THÁNG/TUẦN */
+    .month-nav-input, .week-select {
+        background-color: var(--primary-green, #184A3B);
+        color: #FFFFFF;
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(24, 74, 59, 0.2);
+    }
+
+        .month-nav-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+    .week-select-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .week-select {
+        padding: 12px 42px 12px 20px;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .week-select-wrapper .custom-arrow {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #FFFFFF;
+        pointer-events: none;
+        font-size: 22px;
+    }
+
+    /* 3. KHUNG GRID LỊCH */
+    .calendar-body-scroll {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #D3E0D7;
+        border-radius: 12px;
+        background: #FFFFFF;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: 100px repeat(7, minmax(120px, 1fr)); /* Nới rộng cột */
+    }
+
+    .header-cell {
+        background-color: #E3EDE6;
+        text-align: center;
+        padding: 16px 0; /* Padding to hơn */
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #D3E0D7;
+        border-right: 1px solid #D3E0D7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-nav-week {
+        background: #FFFFFF;
+        border: 1px solid #D3E0D7;
+        color: var(--primary-green, #184A3B);
+        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 22px;
+    }
+
+    /* PHÓNG TO CHỮ NGÀY TRONG TUẦN */
+    .day-name {
+        font-weight: 700;
+        font-size: 15px;
+        color: #738A7C;
+        text-transform: uppercase;
+    }
+
+    .day-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: #184A3B;
+        display: block;
+        margin-top: 4px;
+    }
+
+    /* PHÓNG TO CỘT GIỜ */
+    .time-cell {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: #3E5347;
+        border-right: 1px solid #D3E0D7;
+        border-bottom: 1px solid #D3E0D7;
+        background: #FAFAFA;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* LÀM Ô LỊCH TO VÀ RỘNG HƠN */
+    .calendar-cell {
+        border-right: 1px solid #D3E0D7;
+        border-bottom: 1px solid #D3E0D7;
+        min-height: 100px;
+        padding: 12px;
+        position: relative;
+        background: #FFFFFF;
+        transition: background-color 0.2s;
+    }
+
+        .calendar-cell:hover {
+            background-color: #F4F7F5;
+        }
+
+    .events-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* PHÓNG TO CỤC DẤU CHẤM EVENT */
+    .event-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .type-meeting {
+        background-color: #4361EE;
+    }
+
+    .type-party {
+        background-color: #2ECC71;
+    }
+
+    .type-wedding {
+        background-color: #9B59B6;
+    }
+
+    /* PHÓNG TO TOOLTIP */
+    .tooltip {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 150%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #FFFFFF;
+        border: 1px solid #D3E0D7;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        padding: 16px;
+        border-radius: 10px;
+        width: max-content;
+        min-width: 240px;
+        z-index: 100;
+        transition: all 0.2s ease;
+        pointer-events: none;
+        text-align: left;
+    }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: #FFFFFF transparent transparent transparent;
+        }
+
+    .event-dot:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+        bottom: 130%;
+    }
+
+    .tooltip p {
+        margin: 6px 0;
+        font-size: 14px; /* Chữ trong tooltip to hơn */
+        color: #738A7C;
+    }
+
+        .tooltip p strong {
+            color: #1C2A23;
+        }
+</style>
+
+<div class="calendar-container">
+    <div class="calendar-header-top">
+        <h3>Bookings Calendar</h3>
+        <span style="color:red; font-weight:bold;">Debug: Đã tìm thấy @Model.Count() events tuần này</span>
+        <div class="header-actions">
+            <!-- XỔ CHỌN THÁNG -->
+            <input type="month" id="monthPicker" class="month-nav-input" value="@currentMonth" />
+
+            <!-- XỔ CHỌN TUẦN -->
+            <div class="week-select-wrapper">
+                <select id="weekSelect" class="week-select">
+                    <option value="1" @(currentWeekNum == 1 ? "selected" : "")>Week 1</option>
+                    <option value="2" @(currentWeekNum == 2 ? "selected" : "")>Week 2</option>
+                    <option value="3" @(currentWeekNum == 3 ? "selected" : "")>Week 3</option>
+                    <option value="4" @(currentWeekNum == 4 ? "selected" : "")>Week 4</option>
+                    <option value="5" @(currentWeekNum == 5 ? "selected" : "")>Week 5</option>
+                </select>
+                <i class='bx bx-chevron-down custom-arrow'></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-body-scroll">
+        <div class="calendar-grid">
+
+            <div class="header-cell">
+                <!-- Nút Back lùi tuần truyền thẳng ngảy đã trừ 7 ngày từ C# -->
+                <button id="prevWeekBtn" class="btn-nav-week" data-date="@prevWeekStr" title="Previous Week">
+                    <i class='bx bx-left-arrow-alt'></i>
+                </button>
+            </div>
+
+            <!-- RENDER HEADER 7 NGÀY -->
+            @for (int d = 0; d < 7; d++)
+            {
+                var currentDate = weekStart.AddDays(d);
+                <div class="header-cell">
+                    <span class="day-name">@currentDate.ToString("dddd")</span>
+                    <span class="day-number">@currentDate.ToString("dd")</span>
+                </div>
+            }
+
+            <!-- RENDER GIỜ VÀ EVENT -->
+            @for (int i = 0; i <= 23; i++)
+            {
+                string timeLabel = $"{i:D2}:00";
+
+                <div class="time-cell">@timeLabel</div>
+
+                for (int j = 0; j < 7; j++)
+                {
+                    DateTime currentCellDateTime = weekStart.AddDays(j).AddHours(i);
+                    var eventsInThisCell = Model != null
+                        ? Model.Where(e => e.StartDate.Date == currentCellDateTime.Date && e.StartDate.Hour == currentCellDateTime.Hour).ToList()
+                        : new List<EventVenueBooking.ViewModels.CalendarEventViewModel>();
+
+                    <div class="calendar-cell">
+                        @if (eventsInThisCell.Any())
+                        {
+                            <div class="events-wrapper">
+                                @foreach (var ev in eventsInThisCell)
+                                {
+                                    string dotColorClass = "type-meeting";
+                                    if (ev.EventStatus == "Confirmed" || ev.EventStatus == "1") { dotColorClass = "type-meeting"; }
+                                    else if (ev.EventStatus == "Pending" || ev.EventStatus == "0") { dotColorClass = "type-party"; }
+                                    else if (ev.EventStatus == "Completed" || ev.EventStatus == "3") { dotColorClass = "type-wedding"; }
+
+                                    <div class="event-dot @dotColorClass">
+                                        <div class="tooltip">
+                                            <p><strong>Booking ID:</strong> #@ev.BookingId</p>
+                                            <p><strong>Địa điểm:</strong> @ev.VenueName</p>
+                                            <p><strong>Trạng thái:</strong> @ev.EventStatus</p>
+                                            <p><strong>Bắt đầu:</strong> @ev.StartDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                            <p><strong>Kết thúc:</strong> @ev.EndDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function goToDate(dateString) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('weekDate', dateString);
+            window.location.href = url.toString();
+        }
+
+        // 1. Nút Back về tuần trước
+        document.getElementById('prevWeekBtn').addEventListener('click', function () {
+            var targetDate = this.getAttribute('data-date');
+            goToDate(targetDate);
+        });
+
+        // 2. Chọn Tháng/Năm mới
+        document.getElementById('monthPicker').addEventListener('change', function () {
+            if (!this.value) return;
+            // Chuyển tới ngày mùng 1 của tháng được chọn
+            goToDate(this.value + '-01');
+        });
+
+        // 3. Chọn Tuần (Week 1 -> Week 5)
+        document.getElementById('weekSelect').addEventListener('change', function () {
+            var selectedWeek = parseInt(this.value);
+            var monthVal = document.getElementById('monthPicker').value;
+
+            if (!monthVal) return;
+
+            // Tính số ngày tương ứng của tuần
+            var day = (selectedWeek - 1) * 7 + 1;
+            var dayStr = day.toString().padStart(2, '0');
+
+            goToDate(monthVal + '-' + dayStr);
+        });
+    });
+</script>
