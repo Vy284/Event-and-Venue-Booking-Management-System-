@@ -1,5 +1,4 @@
 ﻿using System.Data.Entity;
-using System.Data.Entity.ModelConfiguration.Conventions;
 using EventVenueBooking.Entities;
 using EventVenueBooking.Migrations;
 
@@ -33,9 +32,6 @@ namespace EventVenueBooking.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // Giữ nguyên tên bảng theo class (không tự động đổi thành số nhiều)
-            modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
-
             //Cấu hình mối quan hệ 1 - 0..1 giữa Booking và Feedback
             modelBuilder.Entity<Feedback>()
                 .HasRequired(f => f.Booking)
@@ -50,17 +46,6 @@ namespace EventVenueBooking.Database
             // Khóa chính phức hợp cho VenueFacility
             modelBuilder.Entity<VenueFacility>()
                 .HasKey(vf => new { vf.VenueId, vf.FacilityId });
-
-            // Cấu hình N-N trực tiếp giữa Venue và Facility (Map vào bảng VenueFacilities)
-            modelBuilder.Entity<Venue>()
-                .HasMany(v => v.Facilities)
-                .WithMany(f => f.Venues)
-                .Map(cs =>
-                {
-                    cs.MapLeftKey("VenueId");
-                    cs.MapRightKey("FacilityId");
-                    cs.ToTable("VenueFacilities");
-                });
 
             // Tắt Cascade Delete cho các quan hệ multiple-path tới User để tránh lỗi SQL Server
             modelBuilder.Entity<Booking>()
@@ -79,6 +64,18 @@ namespace EventVenueBooking.Database
                 .HasOptional(b => b.CancelledByUser)
                 .WithMany(u => u.CancelledBookings)
                 .HasForeignKey(b => b.CancelledByUserId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<VenueFacility>()
+                .HasRequired(vf => vf.Venue)
+                .WithMany(v => v.VenueFacilities)
+                .HasForeignKey(vf => vf.VenueId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<VenueFacility>()
+                .HasRequired(vf => vf.Facility)
+                .WithMany(f => f.VenueFacilities)
+                .HasForeignKey(vf => vf.FacilityId)
                 .WillCascadeOnDelete(false);
 
             modelBuilder.Entity<Venue>()

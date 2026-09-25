@@ -17,12 +17,11 @@ namespace EventVenueBooking.Entities
         [Required]
         public bool IsActive { get; set; } = true;
 
-        // N-N với Venue, EF6 tự tạo bảng nối VenueFacilities (cấu hình ở DbContext)
-        public virtual ICollection<Venue> Venues { get; set; }
+        public virtual ICollection<VenueFacility> VenueFacilities { get; set; }
 
         public Facility()
         {
-            Venues = new HashSet<Venue>();
+            VenueFacilities = new HashSet<VenueFacility>();
         }
     }
 }

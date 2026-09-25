@@ -148,6 +148,10 @@
     <Compile Include="Migrations\202609211314137_InitialCreate.Designer.cs">
       <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.cs" />
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.Designer.cs">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -238,6 +242,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202609211314137_InitialCreate.resx">
       <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609251500110_FixVenueFacilityMapping.resx">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
