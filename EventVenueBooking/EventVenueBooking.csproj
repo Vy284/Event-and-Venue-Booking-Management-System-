@@ -128,6 +128,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\VenueTypesController.cs" />
     <Compile Include="Database\ApplicationDbContext.cs" />
     <Compile Include="Entities\AddOnService.cs" />
     <Compile Include="Entities\Booking.cs" />
@@ -206,6 +207,9 @@
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Create.cshtml" />
+    <Content Include="Views\VenueTypes\Edit.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
