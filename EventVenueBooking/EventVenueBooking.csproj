@@ -127,6 +127,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AddOnServicesController.cs" />
     <Compile Include="Controllers\EventTypesController.cs" />
     <Compile Include="Controllers\FacilitiesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -224,6 +225,11 @@
     <Content Include="Views\EventTypes\Details.cshtml" />
     <Content Include="Views\EventTypes\Edit.cshtml" />
     <Content Include="Views\EventTypes\Index.cshtml" />
+    <Content Include="Views\AddOnServices\Create.cshtml" />
+    <Content Include="Views\AddOnServices\Delete.cshtml" />
+    <Content Include="Views\AddOnServices\Details.cshtml" />
+    <Content Include="Views\AddOnServices\Edit.cshtml" />
+    <Content Include="Views\AddOnServices\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
