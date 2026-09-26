@@ -131,6 +131,7 @@
     <Compile Include="Controllers\EventTypesController.cs" />
     <Compile Include="Controllers\FacilitiesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\VenuesController.cs" />
     <Compile Include="Controllers\VenueTypesController.cs" />
     <Compile Include="Database\ApplicationDbContext.cs" />
     <Compile Include="Entities\AddOnService.cs" />
@@ -230,6 +231,11 @@
     <Content Include="Views\AddOnServices\Details.cshtml" />
     <Content Include="Views\AddOnServices\Edit.cshtml" />
     <Content Include="Views\AddOnServices\Index.cshtml" />
+    <Content Include="Views\Venues\Create.cshtml" />
+    <Content Include="Views\Venues\Delete.cshtml" />
+    <Content Include="Views\Venues\Details.cshtml" />
+    <Content Include="Views\Venues\Edit.cshtml" />
+    <Content Include="Views\Venues\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -75,10 +75,10 @@
             context.SaveChanges();
 
             context.Venues.AddOrUpdate(v => v.VenueId,
-                new Venue { VenueId = 1, Name = "Sảnh Grand Ballroom", VenueTypeId = 1, Capacity = 500, Description = "Sảnh tiệc sang trọng trần cao.", RentalRate = 15000000, RentalUnit = 1, Location = "Tầng 1 - Khu A", Status = 0, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
-                new Venue { VenueId = 2, Name = "Sân Vườn Garden Eden", VenueTypeId = 2, Capacity = 300, Description = "Không gian sân vườn thoáng đãng.", RentalRate = 12000000, RentalUnit = 1, Location = "Khu Sân Vườn", Status = 0, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
-                new Venue { VenueId = 3, Name = "Rooftop Sky Lounge", VenueTypeId = 3, Capacity = 150, Description = "Tầng thượng view thành phố.", RentalRate = 2000000, RentalUnit = 0, Location = "Tầng 12", Status = 0, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
-                new Venue { VenueId = 4, Name = "Phòng Hội Nghị Lotus", VenueTypeId = 4, Capacity = 100, Description = "Phòng họp trang bị hiện đại.", RentalRate = 800000, RentalUnit = 0, Location = "Tầng 2", Status = 0, CreatedAt = DateTime.Now, CreatedByUserId = 1 }
+                new Venue { VenueId = 1, Name = "Sảnh Grand Ballroom", VenueTypeId = 1, Capacity = 500, Description = "Sảnh tiệc sang trọng trần cao.", RentalRate = 15000000, RentalUnit = 1, Location = "Tầng 1 - Khu A", Status = 1, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
+                new Venue { VenueId = 2, Name = "Sân Vườn Garden Eden", VenueTypeId = 2, Capacity = 300, Description = "Không gian sân vườn thoáng đãng.", RentalRate = 12000000, RentalUnit = 1, Location = "Khu Sân Vườn", Status = 1, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
+                new Venue { VenueId = 3, Name = "Rooftop Sky Lounge", VenueTypeId = 3, Capacity = 150, Description = "Tầng thượng view thành phố.", RentalRate = 2000000, RentalUnit = 0, Location = "Tầng 12", Status = 1, CreatedAt = DateTime.Now, CreatedByUserId = 1 },
+                new Venue { VenueId = 4, Name = "Phòng Hội Nghị Lotus", VenueTypeId = 4, Capacity = 100, Description = "Phòng họp trang bị hiện đại.", RentalRate = 800000, RentalUnit = 0, Location = "Tầng 2", Status = 1, CreatedAt = DateTime.Now, CreatedByUserId = 1 }
             );
 
             context.SaveChanges();
