@@ -9,8 +9,8 @@ namespace EventVenueBooking.Entities
         [Key]
         public int EventTypeId { get; set; }
 
-        [Required]
-        [MaxLength(100)]
+        [Required(ErrorMessage = "Vui lòng nhập tên loại sự kiện.")]
+        [MaxLength(100, ErrorMessage = "Tên loại sự kiện không được vượt quá 100 ký tự.")]
         [Index(IsUnique = true)]
         public string TypeName { get; set; }
 

@@ -13,11 +13,27 @@ namespace EventVenueBooking.Controllers
     public class VenueTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
-        // GET: VenueTypes
+        // GET
         public ActionResult Index()
         {
             List<VenueType> venueTypes = db.VenueTypes.ToList();
             return View(venueTypes);
+        }
+
+        // Detail
+        public ActionResult Details(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            VenueType venueType = db.VenueTypes.Find(id);
+            if (venueType == null)
+            {
+                return HttpNotFound();
+            }
+
+            return View(venueType);
         }
 
         // GET: VenueTypes/Create
@@ -68,7 +84,35 @@ namespace EventVenueBooking.Controllers
             return View(venueType);
         }
 
+        //delete
+        public ActionResult Delete(int? id)
+        {
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            VenueType venueType = db.VenueTypes.Find(id);
+            if(venueType == null) return HttpNotFound();
+            return View(venueType);
+        }
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteConfirm(int id)
+        {
+            VenueType venueType = db.VenueTypes.Find(id);
+            if (venueType == null)
+            {
+                return HttpNotFound();
+            }
+            venueType.IsActive = false;
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
 
-
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
 }
