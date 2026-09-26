@@ -1,0 +1,653 @@
+﻿@model IEnumerable<EventVenueBooking.ViewModels.PaymentListViewModel>
+
+@{
+    ViewBag.Title = "Payments Management";
+    ViewBag.ActiveMenu = "Payments";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* THỐNG KÊ NHANH */
+    .venue-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-mini-card {
+        background: #FFFFFF;
+        padding: 16px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .stat-mini-info p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .stat-mini-info h3 {
+        font-size: 20px;
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .stat-mini-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .icon-revenue {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .icon-trans {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .icon-pending {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .icon-refund {
+        background: #FEEBEB;
+        color: #E53935;
+    }
+
+    /* BẢNG DATA & TOOLBAR */
+    .crud-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .custom-input, .custom-select {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .btn-create {
+        background: var(--primary-green);
+        color: #FFFFFF;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-create:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+        .custom-table th {
+            padding: 14px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            border-bottom: 2px solid #F0F4F1;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+            border-bottom: 1px solid #F0F4F1;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #FAFCFA;
+        }
+
+    /* BADGES */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    /* Payment Status Badges */
+    .badge-completed {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .badge-pending {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    .badge-refunded {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    /* Payment Type Badges */
+    .badge-type-deposit {
+        background: #E8F4FD;
+        color: #1976D2;
+        border: 1px solid #BBDEFB;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+    }
+
+    .badge-type-final {
+        background: #F3E5F5;
+        color: #7B1FA2;
+        border: 1px solid #E1BEE7;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+    }
+
+    /* ACTIONS */
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+
+    .btn-act {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-view {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .btn-edit {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .btn-refund {
+        background: #FDE8E8;
+        color: #E53935;
+    }
+
+    .btn-act:hover {
+        opacity: 0.8;
+    }
+
+    /* MODAL CHUNG */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(2px);
+    }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #FFFFFF;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #F0F4F1;
+        padding-bottom: 12px;
+    }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .form-control {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .btn-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 13px;
+        border-bottom: 1px dashed #F0F4F1;
+        padding-bottom: 8px;
+    }
+</style>
+
+<!-- 1. THỐNG KÊ DOANH THU (TỪ VIEWBAG) -->
+<div class="venue-stats">
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Total Revenue</p><h3>$@ViewBag.TotalRevenue.ToString("N2")</h3></div>
+        <div class="stat-mini-icon icon-revenue"><i class='bx bx-money'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Transactions</p><h3>@ViewBag.TotalTransactions</h3></div>
+        <div class="stat-mini-icon icon-trans"><i class='bx bx-transfer'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Pending Payments</p><h3>@ViewBag.PendingPayments</h3></div>
+        <div class="stat-mini-icon icon-pending"><i class='bx bx-time-five'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Refunded</p><h3>@ViewBag.RefundedPayments</h3></div>
+        <div class="stat-mini-icon icon-refund"><i class='bx bx-refresh'></i></div>
+    </div>
+</div>
+
+<div class="crud-card">
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="custom-input" placeholder="Search Customer / Booking ID..." style="width: 250px;" onkeyup="filterTable()">
+            <select class="custom-select" id="statusFilter" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+                <option value="Refunded">Refunded</option>
+            </select>
+        </div>
+        <button class="btn-create" onclick="openPaymentModal()">
+            <i class='bx bx-plus'></i> Record Payment
+        </button>
+    </div>
+
+    <!-- BẢNG DỮ LIỆU -->
+    <div class="table-responsive">
+        <table class="custom-table" id="paymentsTable">
+            <thead>
+                <tr>
+                    <th>TRX ID</th>
+                    <th>Booking Ref</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-muted);">#@item.PaymentId</td>
+                        <td style="font-weight: 700; color: #2196F3;">B-@item.BookingId</td>
+                        <td style="font-weight: 600;">@item.CustomerName</td>
+                        <td style="font-weight: 700; color: var(--primary-green);">$@item.Amount.ToString("N2")</td>
+                        <td>
+                            @if (item.PaymentType == 0)
+                            {
+                                <span class="badge-type-deposit">Deposit</span>
+                            }
+                            else
+                            {
+                                <span class="badge-type-final">Final Pmt</span>
+                            }
+                        </td>
+                        <td style="font-size: 12px;">@item.PaymentMethod</td>
+                        <td style="font-size: 12px; color:var(--text-muted);">
+                            @(item.PaymentDate.HasValue ? item.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
+                        </td>
+                        <td>
+                            @if (item.PaymentStatus == 1)
+                            {
+                                <span class="status-badge badge-completed">Completed</span>
+                            }
+                            else if (item.PaymentStatus == 0)
+                            {
+                                <span class="status-badge badge-pending">Pending</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge badge-refunded">Refunded</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.PaymentId', '@item.BookingId', '@item.CustomerName', '@item.Amount', '@item.PaymentType', '@item.PaymentMethod', '@(item.PaymentDate.HasValue ? item.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "")', '@item.PaymentStatus', '@item.RecordedBy')">
+                                    <i class='bx bx-show'></i>
+                                </button>
+                                <button class="btn-act btn-edit" title="Edit Status" onclick="openEditModal('@item.PaymentId', '@item.PaymentStatus', '@item.PaymentMethod')">
+                                    <i class='bx bx-edit'></i>
+                                </button>
+                                @if (item.PaymentStatus != 2) // Không hiện nút Refund nếu đã Refund
+                                {
+                                    <button class="btn-act btn-refund" title="Issue Refund" onclick="openRefundModal('@item.PaymentId', '@item.Amount')">
+                                        <i class='bx bx-undo'></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================== MODALS ================== -->
+<!-- 1. MODAL CREATE / EDIT PAYMENT -->
+<div class="modal-backdrop" id="paymentFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="pmtModalTitle">Record Payment</h3>
+            <button class="btn-close-modal" onclick="closeModal('paymentFormModal')">&times;</button>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Lưu giao dịch thành công!'); closeModal('paymentFormModal');">
+            <input type="hidden" id="pmtId" value="0">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group" id="bookingRefGroup">
+                    <label>Booking Ref ID (*)</label>
+                    <input type="number" class="form-control" id="pmtBookingId" required placeholder="Ex: 102">
+                </div>
+                <div class="form-group" id="pmtAmountGroup">
+                    <label>Amount ($) (*)</label>
+                    <input type="number" step="0.01" class="form-control" id="pmtAmount" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group" id="pmtTypeGroup">
+                    <label>Payment Type</label>
+                    <select class="form-control" id="pmtType">
+                        <option value="0">0 - Deposit</option>
+                        <option value="1">1 - Final Payment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select class="form-control" id="pmtMethod">
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Paypal">Paypal</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Payment Status</label>
+                <select class="form-control" id="pmtStatus">
+                    <option value="0">0 - Pending</option>
+                    <option value="1">1 - Completed</option>
+                    <option value="2">2 - Refunded</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('paymentFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. MODAL VIEW PAYMENT DETAILS -->
+<div class="modal-backdrop" id="viewPmtModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Transaction Details</h3>
+            <button class="btn-close-modal" onclick="closeModal('viewPmtModal')">&times;</button>
+        </div>
+        <div>
+            <div class="detail-row"><strong>Transaction ID:</strong> <span id="vPmtId" style="color:var(--text-muted); font-weight:600;"></span></div>
+            <div class="detail-row"><strong>Booking Ref:</strong> <span id="vPmtRef" style="color:#2196F3; font-weight:700;"></span></div>
+            <div class="detail-row"><strong>Customer:</strong> <span id="vPmtCust"></span></div>
+            <div class="detail-row"><strong>Amount:</strong> <span id="vPmtAmt" style="color:var(--primary-green); font-weight:700; font-size: 15px;"></span></div>
+            <div class="detail-row"><strong>Type:</strong> <span id="vPmtType"></span></div>
+            <div class="detail-row"><strong>Method:</strong> <span id="vPmtMethod"></span></div>
+            <div class="detail-row"><strong>Date:</strong> <span id="vPmtDate"></span></div>
+            <div class="detail-row"><strong>Status:</strong> <span id="vPmtStatus"></span></div>
+            <div class="detail-row" style="border:none; margin-top:8px;"><strong>Recorded By:</strong> <span id="vPmtRecorder"></span></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewPmtModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL REFUND CONFIRMATION -->
+<div class="modal-backdrop" id="refundModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class='bx bx-undo' style="font-size: 60px; color: #E53935; margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px;">Issue Refund?</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+            Are you sure you want to refund <strong id="refAmount" style="color:var(--text-dark);"></strong> for transaction <strong id="refId"></strong>?<br />
+            This action will mark the payment status as <strong>Refunded</strong>.
+        </p>
+        <input type="hidden" id="refundPmtId">
+
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button type="button" class="btn-secondary" onclick="closeModal('refundModal')">Cancel</button>
+            <button type="button" class="btn-primary" style="background:#C62828;" onclick="handleRefund()">Yes, Process Refund</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Đóng mở modal cơ bản
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // Tạo mới Payment
+    function openPaymentModal() {
+        document.getElementById('pmtModalTitle').innerText = "Record New Payment";
+        document.getElementById('pmtId').value = "0";
+        document.getElementById('pmtBookingId').value = "";
+        document.getElementById('pmtAmount').value = "";
+        document.getElementById('pmtStatus').value = "1"; // Mặc định Completed
+
+        // Hiện các field nhập liệu
+        document.getElementById('bookingRefGroup').style.display = 'flex';
+        document.getElementById('pmtAmountGroup').style.display = 'flex';
+        document.getElementById('pmtTypeGroup').style.display = 'flex';
+
+        openModal('paymentFormModal');
+    }
+
+    // Chỉnh sửa (Thường admin chỉ sửa Trạng thái hoặc Phương thức, cấm sửa Tiền/BookingId để tránh lỗi dòng tiền)
+    function openEditModal(id, status, method) {
+        document.getElementById('pmtModalTitle').innerText = "Update Payment Status #" + id;
+        document.getElementById('pmtId').value = id;
+        document.getElementById('pmtStatus').value = status;
+
+        // Ẩn các field không được phép sửa
+        document.getElementById('bookingRefGroup').style.display = 'none';
+        document.getElementById('pmtAmountGroup').style.display = 'none';
+        document.getElementById('pmtTypeGroup').style.display = 'none';
+
+        // Select method tương ứng
+        let methodSelect = document.getElementById('pmtMethod');
+        for (let i = 0; i < methodSelect.options.length; i++) {
+            if (methodSelect.options[i].value === method) {
+                methodSelect.selectedIndex = i;
+                break;
+            }
+        }
+
+        openModal('paymentFormModal');
+    }
+
+    // Xem chi tiết
+    function openViewModal(id, ref, cust, amt, type, method, date, status, recorder) {
+        document.getElementById('vPmtId').innerText = "#" + id;
+        document.getElementById('vPmtRef').innerText = "B-" + ref;
+        document.getElementById('vPmtCust').innerText = cust;
+        document.getElementById('vPmtAmt').innerText = "$" + parseFloat(amt).toFixed(2);
+        document.getElementById('vPmtType').innerText = type == '0' ? "Deposit" : "Final Payment";
+        document.getElementById('vPmtMethod').innerText = method;
+        document.getElementById('vPmtDate').innerText = date || "N/A";
+        document.getElementById('vPmtRecorder').innerText = recorder;
+
+        let statusHtml = "";
+        if(status == '1') statusHtml = "<span class='status-badge badge-completed'>Completed</span>";
+        else if(status == '0') statusHtml = "<span class='status-badge badge-pending'>Pending</span>";
+        else statusHtml = "<span class='status-badge badge-refunded'>Refunded</span>";
+
+        document.getElementById('vPmtStatus').innerHTML = statusHtml;
+        openModal('viewPmtModal');
+    }
+
+    // Hoàn tiền
+    function openRefundModal(id, amount) {
+        document.getElementById('refundPmtId').value = id;
+        document.getElementById('refId').innerText = "#" + id;
+        document.getElementById('refAmount').innerText = "$" + parseFloat(amount).toFixed(2);
+        openModal('refundModal');
+    }
+
+    function handleRefund() {
+        const id = document.getElementById('refundPmtId').value;
+        alert("Đã xử lý hoàn tiền cho giao dịch #" + id + " thành công!");
+        closeModal('refundModal');
+    }
+
+    // Bộ lọc Table
+    function filterTable() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+        const rows = document.querySelectorAll('#paymentsTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const statusCell = row.children[7].innerText.toLowerCase(); // Cột Status
+
+            const matchesSearch = text.includes(search);
+            const matchesStatus = statusFilter === "" || statusCell.includes(statusFilter);
+
+            row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+        });
+    }
+</script>

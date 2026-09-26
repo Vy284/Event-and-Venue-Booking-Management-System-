@@ -1,11 +1,12 @@
 ﻿using EventVenueBooking.Database;
+using EventVenueBooking.Entities;
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using System.Data.Entity;
 
 namespace EventVenueBooking.Controllers
 {
@@ -21,11 +22,14 @@ namespace EventVenueBooking.Controllers
                 UserId = u.UserId,
                 FullName = u.FullName,
                 Email = u.Email,
-                Role = u.Role == 2 ? "Admin" : u.Role == 1 ? "Coordinator" : "Client",
-                IsActive = u.IsActive
+                Phone = u.Phone,
+                RoleCode = u.Role,
+                Role = u.Role == 2 ? "Admin" : (u.Role == 1 ? "Coordinator" : "Client"),
+                IsActive = u.IsActive,
+                CreatedAt = u.CreatedAt
             }).ToList();
 
-            return View(users);
+            return View("~/Views/Admin/Users.cshtml", users);
         }
 
         // GET: Users/Feedback

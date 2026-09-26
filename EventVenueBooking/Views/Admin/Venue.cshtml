@@ -1,0 +1,721 @@
+﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueListViewModel>
+
+@{
+    ViewBag.Title = "Venues Management";
+    ViewBag.ActiveMenu = "Venues";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* THỐNG KÊ NHANH */
+    .venue-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-mini-card {
+        background: #FFFFFF;
+        padding: 16px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .stat-mini-info p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .stat-mini-info h3 {
+        font-size: 20px;
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .stat-mini-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .icon-total {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .icon-active {
+        background: #EBF4EE;
+        color: var(--primary-green);
+    }
+
+    .icon-maintenance {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .icon-inactive {
+        background: #FEEBEB;
+        color: #E53935;
+    }
+
+    /* KHUNG CHÍNH / BẢNG DATA */
+    .crud-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .custom-select, .custom-input {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .btn-create {
+        background: var(--primary-green);
+        color: #FFFFFF;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-create:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+    /* TABLE STYLES */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+        .custom-table th {
+            padding: 14px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            border-bottom: 2px solid #F0F4F1;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+            border-bottom: 1px solid #F0F4F1;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #FAFCFA;
+        }
+
+    /* VENUE IMAGE & INFO CELL */
+    .venue-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .venue-thumbnail {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        cursor: pointer;
+        border: 1px solid #eee;
+        transition: 0.2s;
+    }
+
+        .venue-thumbnail:hover {
+            opacity: 0.8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+    .rating-star {
+        color: #FFC107;
+        font-size: 14px;
+    }
+
+    /* BADGES CHO TRẠNG THÁI (0=Active, 1=Inactive, 2=Maintenance) */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-active {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .badge-inactive {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .badge-maintenance {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    /* ACTION BUTTONS */
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-act {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-view {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .btn-edit {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .btn-delete {
+        background: #FDE8E8;
+        color: #E53935;
+    }
+
+    .btn-act:hover {
+        opacity: 0.8;
+    }
+
+    /* MODAL POPUP */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(2px);
+    }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #FFFFFF;
+        width: 100%;
+        max-width: 600px;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #F0F4F1;
+        padding-bottom: 12px;
+    }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .form-control {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .btn-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    /* MODAL PHÓNG TO ẢNH */
+    .img-zoom-box {
+        background: transparent;
+        box-shadow: none;
+        max-width: 800px;
+        text-align: center;
+        padding: 0;
+    }
+
+        .img-zoom-box img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+    .btn-close-img {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: white;
+        font-size: 30px;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+
+<!-- 1. THỐNG KÊ NHANH TỪ VIEWBAG -->
+<div class="venue-stats">
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Total Venues</p>
+            <h3>@ViewBag.TotalVenues</h3>
+        </div>
+        <div class="stat-mini-icon icon-total"><i class='bx bx-building-house'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Active</p>
+            <h3>@ViewBag.ActiveVenues</h3>
+        </div>
+        <div class="stat-mini-icon icon-active"><i class='bx bx-check-circle'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Maintenance</p>
+            <h3>@ViewBag.MaintenanceVenues</h3>
+        </div>
+        <div class="stat-mini-icon icon-maintenance"><i class='bx bx-wrench'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info">
+            <p>Inactive</p>
+            <h3>@ViewBag.InactiveVenues</h3>
+        </div>
+        <div class="stat-mini-icon icon-inactive"><i class='bx bx-x-circle'></i></div>
+    </div>
+</div>
+
+<!-- 2. BẢNG DỮ LIỆU ĐỘNG TỪ MODEL -->
+<div class="crud-card">
+    <div class="toolbar">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="custom-input" placeholder="Search Venue / Location..." style="width: 250px;" onkeyup="filterTable()">
+            <select class="custom-select" id="statusFilter" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="Active">Active (0)</option>
+                <option value="Inactive">Inactive (1)</option>
+                <option value="Maintenance">Maintenance (2)</option>
+            </select>
+        </div>
+        <button class="btn-create" onclick="openCreateModal()">
+            <i class='bx bx-plus'></i> New Venue
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="venueTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Venue</th>
+                    <th>Type</th>
+                    <th>Capacity</th>
+                    <th>Rate / Unit</th>
+                    <th>Rating</th>
+                    <th>Last Booking</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-muted);">#@item.VenueId</td>
+                        <td>
+                            <div class="venue-cell">
+                                <img src="@item.PrimaryImageUrl" class="venue-thumbnail" onclick="zoomImage(this.src)" alt="@item.VenueName" />
+                                <div>
+                                    <div style="font-weight: 700; color: var(--text-dark);">@item.VenueName</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);"><i class='bx bx-map'></i> @item.Location</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@item.TypeName</td>
+                        <td><i class='bx bx-group'></i> @item.Capacity</td>
+                        <td style="font-weight: 600;">
+                            $@item.PricePerHour
+                            <span style="font-size: 11px; color:var(--text-muted);">
+                                / @(item.RentalUnit == 0 ? "Hour" : item.RentalUnit == 1 ? "Session" : "Day")
+                            </span>
+                        </td>
+                        <td><i class='bx bxs-star rating-star'></i> @item.Rating</td>
+                        <td style="font-size: 12px; color:var(--text-muted);">
+                            @(item.LastBooking.HasValue ? item.LastBooking.Value.ToString("dd/MM/yyyy") : "N/A")
+                        </td>
+                        <td>
+                            @if (item.Status == 0)
+                            {
+                                <span class="status-badge badge-active">Active</span>
+                            }
+                            else if (item.Status == 1)
+                            {
+                                <span class="status-badge badge-inactive">Inactive</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge badge-maintenance">Maintenance</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="action-btns" style="justify-content: flex-end;">
+                                <button class="btn-act btn-view" title="Details"
+                                        onclick="openViewModal('@item.VenueName', '@item.TypeName', '@item.Capacity', '$@item.PricePerHour', '@item.Location', '@(item.Status == 0 ? "Active" : item.Status == 1 ? "Inactive" : "Maintenance")', '@item.Rating', '@item.Description')">
+                                    <i class='bx bx-show'></i>
+                                </button>
+                                <button class="btn-act btn-edit" title="Edit"
+                                        onclick="openEditModal('@item.VenueId', '@item.VenueName', '@item.TypeName', '@item.Capacity', '@item.PricePerHour', '@item.RentalUnit', '@item.Location', '@item.Status', '@item.Description')">
+                                    <i class='bx bx-edit'></i>
+                                </button>
+                                <button class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal('@item.VenueId', '@item.VenueName')">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3. MODAL CREATE / EDIT VENUE -->
+<div class="modal-backdrop" id="venueFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">Create New Venue</h3>
+            <button class="btn-close-modal" onclick="closeModal('venueFormModal')">&times;</button>
+        </div>
+        <form id="venueForm" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="venueId" name="VenueId" value="0">
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Venue Name (*)</label>
+                    <input type="text" class="form-control" id="venueName" required placeholder="Ex: Grand Ballroom">
+                </div>
+
+                <div class="form-group">
+                    <label>Venue Type (*)</label>
+                    <select class="form-control" id="venueTypeId" required>
+                        <option value="1">Banquet Hall</option>
+                        <option value="2">Outdoor / Garden</option>
+                        <option value="3">Meeting Room</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Capacity (Guests) (*)</label>
+                    <input type="number" class="form-control" id="capacity" required placeholder="Ex: 500">
+                </div>
+
+                <div class="form-group">
+                    <label>Rental Rate ($) (*)</label>
+                    <input type="number" step="0.01" class="form-control" id="rentalRate" required placeholder="Ex: 200.00">
+                </div>
+
+                <div class="form-group">
+                    <label>Rental Unit (*)</label>
+                    <select class="form-control" id="rentalUnit" required>
+                        <option value="0">0 - Per Hour</option>
+                        <option value="1">1 - Per Session</option>
+                        <option value="2">2 - Per Day</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Location / Address (*)</label>
+                    <input type="text" class="form-control" id="location" required placeholder="Venue address...">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Status</label>
+                    <select class="form-control" id="status">
+                        <option value="0">0 - Active</option>
+                        <option value="1">1 - Inactive</option>
+                        <option value="2">2 - Under Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Description</label>
+                    <textarea class="form-control" id="description" rows="3" placeholder="Brief details about the venue..."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('venueFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Venue</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. MODAL VIEW DETAILS -->
+<div class="modal-backdrop" id="viewDetailsModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Venue Details</h3>
+            <button class="btn-close-modal" onclick="closeModal('viewDetailsModal')">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><strong>Name:</strong> <span id="vName"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Type:</strong> <span id="vType"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Capacity:</strong> <span id="vCapacity"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Rate:</strong> <span id="vRate"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Location:</strong> <span id="vLoc"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Overall Rating:</strong> <span><i class='bx bxs-star rating-star'></i> <span id="vRating"></span></span></div>
+            <hr style="border: none; border-top: 1px dashed var(--border-color);">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <strong>Description:</strong>
+                <p id="vDesc" style="color: var(--text-muted); line-height: 1.5;"></p>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <strong>Status:</strong> <span id="vStatus"></span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewDetailsModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 5. MODAL ZOOM IMAGE -->
+<div class="modal-backdrop" id="imageZoomModal" onclick="closeModal('imageZoomModal')">
+    <div class="modal-box img-zoom-box" onclick="event.stopPropagation()">
+        <button class="btn-close-img" onclick="closeModal('imageZoomModal')">&times;</button>
+        <img id="zoomedImg" src="" alt="Zoomed Venue Image">
+    </div>
+</div>
+
+<!-- 6. MODAL DELETE / DEACTIVATE -->
+<div class="modal-backdrop" id="deleteModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class='bx bx-error-circle' style="font-size: 60px; color: #E53935; margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px;">Deactivate Venue?</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Are you sure you want to deactivate <strong id="delVenueName"></strong>? This will prevent new bookings.</p>
+        <input type="hidden" id="deleteVenueId">
+
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button type="button" class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+            <button type="button" class="btn-primary" style="background:#C62828;" onclick="handleDelete()">Yes, Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+
+    function zoomImage(src) {
+        document.getElementById('zoomedImg').src = src;
+        openModal('imageZoomModal');
+    }
+
+    function openCreateModal() {
+        document.getElementById('modalTitle').innerText = "Create New Venue";
+        document.getElementById('venueForm').reset();
+        document.getElementById('venueId').value = "0";
+        openModal('venueFormModal');
+    }
+
+    function openEditModal(id, name, type, capacity, rate, unit, location, status, desc) {
+        document.getElementById('modalTitle').innerText = "Edit Venue: " + name;
+        document.getElementById('venueId').value = id;
+        document.getElementById('venueName').value = name;
+        document.getElementById('capacity').value = capacity;
+        document.getElementById('rentalRate').value = rate;
+        document.getElementById('rentalUnit').value = unit;
+        document.getElementById('location').value = location;
+        document.getElementById('status').value = status;
+        document.getElementById('description').value = desc;
+        openModal('venueFormModal');
+    }
+
+    function openViewModal(name, type, cap, rate, loc, status, rating, desc) {
+        document.getElementById('vName').innerText = name;
+        document.getElementById('vType').innerText = type;
+        document.getElementById('vCapacity').innerText = cap;
+        document.getElementById('vRate').innerText = rate;
+        document.getElementById('vLoc').innerText = loc;
+        document.getElementById('vStatus').innerText = status;
+        document.getElementById('vRating').innerText = rating;
+        document.getElementById('vDesc').innerText = desc;
+        openModal('viewDetailsModal');
+    }
+
+    function openDeleteModal(id, name) {
+        document.getElementById('deleteVenueId').value = id;
+        document.getElementById('delVenueName').innerText = name;
+        openModal('deleteModal');
+    }
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        alert("Đã lưu Venue thành công!");
+        closeModal('venueFormModal');
+    }
+
+    function handleDelete() {
+        const id = document.getElementById('deleteVenueId').value;
+        alert("Đã chuyển Venue #" + id + " sang trạng thái Inactive!");
+        closeModal('deleteModal');
+    }
+
+    function filterTable() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value.toLowerCase();
+        const rows = document.querySelectorAll('#venueTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const rowStatus = row.children[7].innerText.toLowerCase(); // Cột Status chuyển sang index 7 do thêm cột ID
+
+            const matchesSearch = text.includes(search);
+            const matchesStatus = status === "" || rowStatus.includes(status);
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+</script>

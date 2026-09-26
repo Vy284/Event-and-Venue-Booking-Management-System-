@@ -18,4 +18,17 @@ namespace EventVenueBooking.ViewModels
         public string PaymentMethod { get; set; }
         public string PaymentStatus { get; set; } // "Paid", "Unpaid", "Refunded"
     }
+
+    public class PaymentListViewModel
+    {
+        public int PaymentId { get; set; }
+        public int BookingId { get; set; }
+        public string CustomerName { get; set; }
+        public decimal Amount { get; set; }
+        public byte PaymentType { get; set; } // 0 = Deposit, 1 = FinalPayment
+        public string PaymentMethod { get; set; }
+        public byte PaymentStatus { get; set; } // 0 = Pending, 1 = Completed, 2 = Refunded
+        public DateTime? PaymentDate { get; set; }
+        public string RecordedBy { get; set; }
+    }
 }

@@ -16,25 +16,33 @@ namespace EventVenueBooking.Controllers
         // GET: Payments
         public ActionResult Index()
         {
-            // Tái sử dụng BookingManagementViewModel để quản lý bảng thanh toán
-            var paymentsList = db.Bookings
-                .Include(b => b.ClientUser)
-                .Include(b => b.Venue)
-                .Include(b => b.Payments)
-                .OrderByDescending(b => b.CreatedAt)
-                .ToList()
-                .Select(b => new BookingManagementViewModel
-                {
-                    BookingId = b.BookingId,
-                    CustomerName = b.ClientUser?.FullName ?? "N/A",
-                    VenueName = b.Venue?.Name ?? "N/A",
-                    BookingDate = b.EventStartDateTime,
-                    TotalAmount = b.TotalCost,
-                    PaymentMethod = b.Payments.FirstOrDefault()?.PaymentMethod ?? "Tiền mặt / Chuyển khoản",
-                    PaymentStatus = b.Payments.Any(p => p.PaymentStatus == 1) ? "Paid" : "Unpaid"
-                }).ToList();
+            var payments = db.Payments
+                .Include(p => p.Booking)
+                .Include(p => p.Booking.ClientUser)
+                .Include(p => p.RecordedByUser)
+                .OrderByDescending(p => p.PaymentDate ?? p.Booking.CreatedAt)
+                .ToList();
 
-            return View(paymentsList);
+            var viewModelList = payments.Select(p => new PaymentListViewModel
+            {
+                PaymentId = p.PaymentId,
+                BookingId = p.BookingId,
+                CustomerName = p.Booking?.ClientUser?.FullName ?? "Unknown",
+                Amount = p.Amount,
+                PaymentType = p.PaymentType, // 0 = Deposit, 1 = FinalPayment
+                PaymentMethod = string.IsNullOrEmpty(p.PaymentMethod) ? "N/A" : p.PaymentMethod,
+                PaymentStatus = p.PaymentStatus, // 0 = Pending, 1 = Completed, 2 = Refunded
+                PaymentDate = p.PaymentDate,
+                RecordedBy = p.RecordedByUser?.FullName ?? "System"
+            }).ToList();
+
+            // Tính toán nhanh cho các thẻ Thống kê (ViewBag)
+            ViewBag.TotalRevenue = payments.Where(p => p.PaymentStatus == 1).Sum(p => (decimal?)p.Amount) ?? 0;
+            ViewBag.TotalTransactions = payments.Count;
+            ViewBag.PendingPayments = payments.Count(p => p.PaymentStatus == 0);
+            ViewBag.RefundedPayments = payments.Count(p => p.PaymentStatus == 2);
+
+            return View("~/Views/Admin/Payments.cshtml", viewModelList);
         }
 
         protected override void Dispose(bool disposing)

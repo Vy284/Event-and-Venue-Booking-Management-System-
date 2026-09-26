@@ -206,6 +206,10 @@
     <Content Include="Views\Admin\Dashboard.cshtml" />
     <Content Include="Views\Admin\Bookings.cshtml" />
     <Content Include="Views\Admin\Calendar.cshtml" />
+    <Content Include="Views\Admin\Venue.cshtml" />
+    <Content Include="Views\Admin\Facilities_Services.cshtml" />
+    <Content Include="Views\Admin\Payments.cshtml" />
+    <Content Include="Views\Admin\Users.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

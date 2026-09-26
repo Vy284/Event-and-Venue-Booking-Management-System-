@@ -1,0 +1,735 @@
+﻿@model EventVenueBooking.ViewModels.FacilitiesServicesViewModel
+
+@{
+    ViewBag.Title = "Facilities & Services Management";
+    ViewBag.ActiveMenu = "Facilities";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* THỐNG KÊ NHANH */
+    .venue-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-mini-card {
+        background: #FFFFFF;
+        padding: 16px 20px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .stat-mini-info p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .stat-mini-info h3 {
+        font-size: 20px;
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .stat-mini-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .icon-fac {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .icon-fac-active {
+        background: #EBF4EE;
+        color: var(--primary-green);
+    }
+
+    .icon-svc {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .icon-svc-active {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    /* KHUNG CHÍNH & TABS */
+    .crud-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .tabs-header {
+        display: flex;
+        gap: 20px;
+        border-bottom: 2px solid #F0F4F1;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: 0.3s;
+    }
+
+        .tab-btn.active {
+            color: var(--primary-green);
+            border-bottom-color: var(--primary-green);
+        }
+
+    .tab-content {
+        display: none;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    /* BẢNG VÀ TOOLBAR */
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .custom-input {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+        width: 250px;
+    }
+
+    .btn-create {
+        background: var(--primary-green);
+        color: #FFFFFF;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-create:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+        .custom-table th {
+            padding: 14px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            border-bottom: 2px solid #F0F4F1;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+            border-bottom: 1px solid #F0F4F1;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #FAFCFA;
+        }
+
+    /* BADGES & ACTIONS */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-active {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .badge-inactive {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+
+    .btn-act {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-view {
+        background: #E8F4FD;
+        color: #2196F3;
+    }
+
+    .btn-edit {
+        background: #FFF4E5;
+        color: #FF9800;
+    }
+
+    .btn-delete {
+        background: #FDE8E8;
+        color: #E53935;
+    }
+
+    .btn-act:hover {
+        opacity: 0.8;
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(2px);
+    }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #FFFFFF;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #F0F4F1;
+        padding-bottom: 12px;
+    }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .form-control {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .btn-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 13px;
+    }
+</style>
+
+<!-- 1. THỐNG KÊ NHANH TỪ VIEWBAG -->
+<div class="venue-stats">
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Total Facilities</p><h3>@ViewBag.TotalFacilities</h3></div>
+        <div class="stat-mini-icon icon-fac"><i class='bx bx-hive'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Active Facilities</p><h3>@ViewBag.ActiveFacilities</h3></div>
+        <div class="stat-mini-icon icon-fac-active"><i class='bx bx-check-shield'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Total Services</p><h3>@ViewBag.TotalServices</h3></div>
+        <div class="stat-mini-icon icon-svc"><i class='bx bx-spa'></i></div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-info"><p>Active Services</p><h3>@ViewBag.ActiveServices</h3></div>
+        <div class="stat-mini-icon icon-svc-active"><i class='bx bx-check-circle'></i></div>
+    </div>
+</div>
+
+<div class="crud-card">
+    <!-- TABS HEADER -->
+    <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('facilitiesTab', this)">Facilities</button>
+        <button class="tab-btn" onclick="switchTab('servicesTab', this)">Add-On Services</button>
+    </div>
+
+    <!-- TAB 1: FACILITIES -->
+    <div id="facilitiesTab" class="tab-content active">
+        <div class="toolbar">
+            <div class="filter-group">
+                <input type="text" id="searchFac" class="custom-input" placeholder="Search Facility..." onkeyup="filterTable('facTable', 'searchFac')">
+            </div>
+            <button class="btn-create" onclick="openFacModal()">
+                <i class='bx bx-plus'></i> New Facility
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="custom-table" id="facTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Facility Name</th>
+                        <th>Linked Venues</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Facilities)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; color: var(--text-muted);">#@item.FacilityId</td>
+                            <td style="font-weight: 700; color: var(--text-dark);">@item.FacilityName</td>
+                            <td><i class='bx bx-link'></i> @item.LinkedVenuesCount venues</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="status-badge badge-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge badge-inactive">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-act btn-view" title="Details" onclick="openViewFacModal('@item.FacilityName', '@item.LinkedVenuesCount', '@item.IsActive.ToString().ToLower()')">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="btn-act btn-edit" title="Edit" onclick="openEditFacModal('@item.FacilityId', '@item.FacilityName', '@item.IsActive.ToString().ToLower()')">
+                                        <i class='bx bx-edit'></i>
+                                    </button>
+                                    <button class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal('@item.FacilityId', '@item.FacilityName', 'Facility')">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 2: SERVICES -->
+    <div id="servicesTab" class="tab-content">
+        <div class="toolbar">
+            <div class="filter-group">
+                <input type="text" id="searchSvc" class="custom-input" placeholder="Search Service..." onkeyup="filterTable('svcTable', 'searchSvc')">
+            </div>
+            <button class="btn-create" onclick="openSvcModal()">
+                <i class='bx bx-plus'></i> New Service
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="custom-table" id="svcTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Service Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Services)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; color: var(--text-muted);">#@item.AddOnId</td>
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-dark);">@item.Name</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">@item.Description</div>
+                            </td>
+                            <td><span style="background: #F4F7FB; padding: 4px 8px; border-radius: 6px; font-size:12px;">@item.Category</span></td>
+                            <td style="font-weight: 600; color: var(--primary-green);">$@item.Price</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="status-badge badge-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge badge-inactive">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-act btn-view" title="Details" onclick="openViewSvcModal('@item.Name', '@item.Category', '@item.Price', '@item.IsActive.ToString().ToLower()', '@item.Description')">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="btn-act btn-edit" title="Edit" onclick="openEditSvcModal('@item.AddOnId', '@item.Name', '@item.Category', '@item.Price', '@item.IsActive.ToString().ToLower()', '@item.Description')">
+                                        <i class='bx bx-edit'></i>
+                                    </button>
+                                    <button class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal('@item.AddOnId', '@item.Name', 'Service')">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================== MODALS ================== -->
+<!-- 1. MODAL FORM FACILITY (CREATE/EDIT) -->
+<div class="modal-backdrop" id="facFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="facModalTitle">Create Facility</h3>
+            <button class="btn-close-modal" onclick="closeModal('facFormModal')">&times;</button>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Lưu Facility thành công!'); closeModal('facFormModal');">
+            <input type="hidden" id="facId" value="0">
+            <div class="form-group">
+                <label>Facility Name (*)</label>
+                <input type="text" class="form-control" id="facName" required placeholder="Ex: WiFi, Projector...">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select class="form-control" id="facStatus">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('facFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Facility</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. MODAL FORM SERVICE (CREATE/EDIT) -->
+<div class="modal-backdrop" id="svcFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="svcModalTitle">Create Add-On Service</h3>
+            <button class="btn-close-modal" onclick="closeModal('svcFormModal')">&times;</button>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Lưu Service thành công!'); closeModal('svcFormModal');">
+            <input type="hidden" id="svcId" value="0">
+            <div class="form-group">
+                <label>Service Name (*)</label>
+                <input type="text" class="form-control" id="svcName" required placeholder="Ex: Catering, Decor...">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" class="form-control" id="svcCat" placeholder="Ex: Food & Bev">
+                </div>
+                <div class="form-group">
+                    <label>Price ($) (*)</label>
+                    <input type="number" step="0.01" class="form-control" id="svcPrice" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select class="form-control" id="svcStatus">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea class="form-control" id="svcDesc" rows="3" placeholder="Service details..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('svcFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Service</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. MODAL VIEW FACILITY DETAILS -->
+<div class="modal-backdrop" id="viewFacModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Facility Details</h3>
+            <button class="btn-close-modal" onclick="closeModal('viewFacModal')">&times;</button>
+        </div>
+        <div>
+            <div class="detail-row"><strong>Name:</strong> <span id="vFacName"></span></div>
+            <div class="detail-row"><strong>Linked Venues:</strong> <span><i class='bx bx-link'></i> <span id="vFacLink"></span></span></div>
+            <div class="detail-row"><strong>Status:</strong> <span id="vFacStatus"></span></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewFacModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL VIEW SERVICE DETAILS -->
+<div class="modal-backdrop" id="viewSvcModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Service Details</h3>
+            <button class="btn-close-modal" onclick="closeModal('viewSvcModal')">&times;</button>
+        </div>
+        <div>
+            <div class="detail-row"><strong>Name:</strong> <span id="vSvcName"></span></div>
+            <div class="detail-row"><strong>Category:</strong> <span id="vSvcCat"></span></div>
+            <div class="detail-row"><strong>Price:</strong> <span id="vSvcPrice" style="font-weight:bold; color:var(--primary-green);"></span></div>
+            <div class="detail-row"><strong>Status:</strong> <span id="vSvcStatus"></span></div>
+            <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 12px 0;">
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size:13px;">
+                <strong>Description:</strong>
+                <p id="vSvcDesc" style="color: var(--text-muted); line-height: 1.5;"></p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewSvcModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 5. MODAL DELETE (DÙNG CHUNG CHO CẢ FACILITY VÀ SERVICE) -->
+<div class="modal-backdrop" id="deleteModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class='bx bx-error-circle' style="font-size: 60px; color: #E53935; margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px;">Deactivate Item?</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+            Are you sure you want to deactivate <strong id="delItemName"></strong>?<br />
+            This will hide the <span id="delItemType" style="text-transform:lowercase;"></span> from new bookings.
+        </p>
+        <input type="hidden" id="deleteItemId">
+        <input type="hidden" id="deleteItemType">
+
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button type="button" class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+            <button type="button" class="btn-primary" style="background:#C62828;" onclick="handleDelete()">Yes, Deactivate</button>
+        </div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+    // Chuyển tab
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // Đóng mở modal cơ bản
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // ================= FACILITIES =================
+    function openFacModal() {
+        document.getElementById('facModalTitle').innerText = "Create New Facility";
+        document.getElementById('facId').value = "0";
+        document.getElementById('facName').value = "";
+        document.getElementById('facStatus').value = "true";
+        openModal('facFormModal');
+    }
+
+    function openEditFacModal(id, name, status) {
+        document.getElementById('facModalTitle').innerText = "Edit Facility";
+        document.getElementById('facId').value = id;
+        document.getElementById('facName').value = name;
+        document.getElementById('facStatus').value = status;
+        openModal('facFormModal');
+    }
+
+    function openViewFacModal(name, linked, status) {
+        document.getElementById('vFacName').innerText = name;
+        document.getElementById('vFacLink').innerText = linked + " venues";
+        document.getElementById('vFacStatus').innerHTML = status === 'true'
+            ? "<span class='status-badge badge-active'>Active</span>"
+            : "<span class='status-badge badge-inactive'>Inactive</span>";
+        openModal('viewFacModal');
+    }
+
+    // ================= SERVICES =================
+    function openSvcModal() {
+        document.getElementById('svcModalTitle').innerText = "Create Add-On Service";
+        document.getElementById('svcId').value = "0";
+        document.getElementById('svcName').value = "";
+        document.getElementById('svcCat').value = "";
+        document.getElementById('svcPrice').value = "";
+        document.getElementById('svcStatus').value = "true";
+        document.getElementById('svcDesc').value = "";
+        openModal('svcFormModal');
+    }
+
+    function openEditSvcModal(id, name, cat, price, status, desc) {
+        document.getElementById('svcModalTitle').innerText = "Edit Add-On Service";
+        document.getElementById('svcId').value = id;
+        document.getElementById('svcName').value = name;
+        document.getElementById('svcCat').value = cat;
+        document.getElementById('svcPrice').value = price;
+        document.getElementById('svcStatus').value = status;
+        document.getElementById('svcDesc').value = desc;
+        openModal('svcFormModal');
+    }
+
+    function openViewSvcModal(name, cat, price, status, desc) {
+        document.getElementById('vSvcName').innerText = name;
+        document.getElementById('vSvcCat').innerText = cat;
+        document.getElementById('vSvcPrice').innerText = "$" + price;
+        document.getElementById('vSvcDesc').innerText = desc || "No description provided.";
+        document.getElementById('vSvcStatus').innerHTML = status === 'true'
+            ? "<span class='status-badge badge-active'>Active</span>"
+            : "<span class='status-badge badge-inactive'>Inactive</span>";
+        openModal('viewSvcModal');
+    }
+
+    // ================= XÓA CHUNG (DEACTIVATE) =================
+    function openDeleteModal(id, name, type) {
+        document.getElementById('deleteItemId').value = id;
+        document.getElementById('delItemName').innerText = name;
+        document.getElementById('delItemType').innerText = type; // Truyền chữ 'Facility' hoặc 'Service'
+        document.getElementById('deleteItemType').value = type;
+        openModal('deleteModal');
+    }
+
+    function handleDelete() {
+        const id = document.getElementById('deleteItemId').value;
+        const type = document.getElementById('deleteItemType').value;
+        alert("Đã vô hiệu hóa " + type + " #" + id + " thành công!");
+        closeModal('deleteModal');
+    }
+
+    // ================= SEARCH =================
+    function filterTable(tableId, inputId) {
+        const search = document.getElementById(inputId).value.toLowerCase();
+        const rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(search) ? "" : "none";
+        });
+    }
+</script>
