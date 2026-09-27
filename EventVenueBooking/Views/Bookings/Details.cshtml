@@ -1,0 +1,170 @@
+﻿@model EventVenueBooking.Entities.Booking
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Booking</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.CancelledByUser.FullName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.CancelledByUser.FullName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.ClientUser.FullName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.ClientUser.FullName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.EventType.TypeName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.EventType.TypeName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.LastModifiedByUser.FullName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.LastModifiedByUser.FullName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Venue.Name)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Venue.Name)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.GuestCount)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.GuestCount)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.EventStartDateTime)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.EventStartDateTime)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.EventEndDateTime)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.EventEndDateTime)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Status)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Status)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.VenueRateAtBooking)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.VenueRateAtBooking)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.RentalUnitAtBooking)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.RentalUnitAtBooking)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.RentalQuantity)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.RentalQuantity)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.VenueCost)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.VenueCost)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.AddOnCost)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.AddOnCost)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.TotalCost)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.TotalCost)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.CreatedAt)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.CreatedAt)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.LastModifiedAt)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.LastModifiedAt)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.CancelledAt)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.CancelledAt)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.CancelReason)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.CancelReason)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.BookingId }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>
