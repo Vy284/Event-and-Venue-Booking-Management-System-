@@ -9,14 +9,15 @@ namespace EventVenueBooking.Entities
         [Key]
         public int AddOnId { get; set; }
 
-        [Required]
-        [MaxLength(150)]
+        [Required(ErrorMessage = "Vui lòng nhập tên dịch vụ.")]
+        [MaxLength(150, ErrorMessage = "Tên dịch vụ không được vượt quá 150 ký tự.")]
         [Index(IsUnique = true)]
         public string Name { get; set; }
 
         public string Description { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập giá dịch vụ.")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá dịch vụ không được nhỏ hơn 0.")]
         public decimal Price { get; set; }
 
         [MaxLength(100)]

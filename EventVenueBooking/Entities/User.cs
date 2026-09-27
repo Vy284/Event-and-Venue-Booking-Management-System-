@@ -16,6 +16,7 @@ namespace EventVenueBooking.Entities
 
         [Required]
         [MaxLength(255)]
+        [EmailAddress]
         [Index(IsUnique = true)]
         public string Email { get; set; }
 
