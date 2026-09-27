@@ -103,6 +103,19 @@ namespace EventVenueBooking.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (venueImage.IsPrimary)
+                {
+                    var oldPrimaryImages = db.VenueImages
+                        .Where(x => x.VenueId == venueImage.VenueId
+                                 && x.IsPrimary
+                                 && x.ImageId != venueImage.ImageId)
+                        .ToList();
+
+                    foreach (var image in oldPrimaryImages)
+                    {
+                        image.IsPrimary = false;
+                    }
+                }
                 db.Entry(venueImage).State = EntityState.Modified;
                 db.SaveChanges();
                 return RedirectToAction("Index");
@@ -111,7 +124,7 @@ namespace EventVenueBooking.Controllers
             return View(venueImage);
         }
 
-        // GET: VenueImages/Delete/5
+        // GET: Delete
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -126,7 +139,7 @@ namespace EventVenueBooking.Controllers
             return View(venueImage);
         }
 
-        // POST: VenueImages/Delete/5
+        // POST: Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
