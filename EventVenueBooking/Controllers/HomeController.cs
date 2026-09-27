@@ -12,9 +12,9 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        public ActionResult Index(string search, string category)
+        public ActionResult Index(string search, string category, string eventDate)
         {
-            var query = db.Venues.AsQueryable();
+            var query = db.Venues.Where(v => v.Status == 0).AsQueryable();
 
             // Lọc theo Tên sảnh hoặc Vị trí
             if (!string.IsNullOrEmpty(search))
@@ -61,6 +61,20 @@ namespace EventVenueBooking.Controllers
                 }
             }
 
+            // Lọc tìm theo ngày
+            if (!string.IsNullOrEmpty(eventDate) && DateTime.TryParse(eventDate, out DateTime selectedDate))
+            {
+                DateTime startOfDay = selectedDate.Date;
+                DateTime endOfDay = startOfDay.AddDays(1);
+
+                // Loại bỏ những sảnh đã có Booking vướng vào ngày này (Status != 4)
+                query = query.Where(v => !v.Bookings.Any(b =>
+                    b.Status != 4 &&
+                    b.EventStartDateTime < endOfDay &&
+                    b.EventEndDateTime > startOfDay
+                ));
+            }
+
             var venues = query.Select(v => new VenueCardViewModel
             {
                 VenueId = v.VenueId,
@@ -74,9 +88,12 @@ namespace EventVenueBooking.Controllers
                            ?? "/Content/images/bg_landingpage.jpg" // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
             }).ToList();
 
+            ViewBag.VenueSelectList = new SelectList(db.Venues.Where(v => v.Status == 0).Select(v => new { v.VenueId, v.Name }), "VenueId", "Name");
+
             // Lưu lại để giữ trạng thái trên View
             ViewBag.CurrentSearch = search;
             ViewBag.CurrentCategory = string.IsNullOrEmpty(category) ? "All" : category;
+            ViewBag.CurrentDate = eventDate;
 
             return View(venues);
         }

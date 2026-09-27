@@ -36,6 +36,26 @@ namespace EventVenueBooking.Controllers
             return View(venue);
         }
 
+        // GET: /Venue/GetVenueBookings?venueId
+        [HttpGet]
+        public JsonResult GetVenueBookings(int venueId)
+        {
+            // Lấy tất cả các Booking của sảnh này ngoại trừ các đơn đã bị Hủy (Status = 4)
+            var bookings = db.Bookings
+                .Where(b => b.VenueId == venueId && b.Status != 4)
+                .Select(b => new
+                {
+                    title = "Đã được đặt",
+                    start = b.EventStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    end = b.EventEndDateTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    color = "#dc3545", // Màu đỏ cho bận
+                    textColor = "#ffffff"
+                })
+                .ToList();
+
+            return Json(bookings, JsonRequestBehavior.AllowGet);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();

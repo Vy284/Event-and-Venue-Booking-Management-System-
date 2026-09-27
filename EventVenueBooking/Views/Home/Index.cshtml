@@ -4,7 +4,11 @@
     ViewData["Title"] = "Trang chủ";
     string activeCategory = ViewBag.CurrentCategory as string ?? "All";
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
+    string currentDate = ViewBag.CurrentDate as string ?? "";
+    var venueList = ViewBag.VenueSelectList as IEnumerable<SelectListItem>;
 }
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
 <style>
     .venue-card-editorial {
@@ -116,6 +120,49 @@
         font-weight: 700;
         color: #2b2b2b;
     }
+
+    /* FullCalendar custom styles */
+    .calendar-dark-card {
+        background-color: #3b2e27;
+        border: 1px solid #524237;
+    }
+
+    .fc {
+        --fc-page-bg-color: #3b2e27;
+        --fc-border-color: #524237;
+        --fc-neutral-bg-color: #483930;
+        --fc-button-bg-color: #5c493e;
+        --fc-button-border-color: #6b5549;
+        --fc-button-hover-bg-color: #7a6254;
+        --fc-button-hover-border-color: #7a6254;
+        --fc-button-active-bg-color: #2a201b;
+        --fc-button-active-border-color: #2a201b;
+        font-family: inherit;
+        color: #f5efe6 !important;
+    }
+
+        .fc .fc-scrollgrid,
+        .fc .fc-daygrid-day,
+        .fc .fc-col-header-cell,
+        .fc .fc-toolbar-title {
+            background-color: #3b2e27 !important;
+            color: #f5efe6 !important;
+        }
+
+        .fc .fc-day-today {
+            background-color: #524237 !important;
+        }
+
+        .fc a {
+            color: #f5efe6 !important;
+            text-decoration: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #d4a373 !important;
+            font-weight: 600;
+            padding: 10px 0 !important;
+        }
 </style>
 
 <div class="hero-wrapper" style="background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');">
@@ -147,19 +194,31 @@
 
         <!-- search bar -->
         <div class="row justify-content-center mb-4">
-            <div class="col-md-7 col-lg-6">
-                <form id="search-form" action="@Url.Action("Index", "Home")" method="get" class="input-group shadow-sm rounded-pill overflow-hidden bg-white p-1 border">
+            <div class="col-lg-9 col-xl-8">
+                <form id="search-form" action="@Url.Action("Index", "Home")" method="get" class="shadow-sm rounded-pill overflow-hidden bg-white p-2 border">
                     <input type="hidden" name="category" id="current-category-input" value="@activeCategory" />
 
-                    <span class="input-group-text border-0 bg-transparent ps-3 text-muted">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input type="text" name="search" id="search-input" class="form-control border-0 shadow-none ps-2"
-                           placeholder="Tìm kiếm theo tên sảnh, vị trí..."
-                           value="@currentSearch" />
-                    <button type="submit" class="btn btn-brown text-white rounded-pill px-4 fw-medium d-inline-flex align-items-center justify-content-center">
-                        Tìm kiếm
-                    </button>
+                    <div class="row g-0 align-items-center">
+                        <!-- Ô tìm từ khóa -->
+                        <div class="col-md-6 d-flex align-items-center ps-3 pe-2 border-end border-md-0">
+                            <i class="fa-solid fa-magnifying-glass text-muted me-2"></i>
+                            <input type="text" name="search" id="search-input" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Tên sảnh, vị trí..."
+                                   value="@currentSearch" />
+                        </div>
+
+                        <!-- Lịch mini -->
+                        <div class="col-md-4 d-flex align-items-center px-3 border-start">
+                            <input type="date" name="eventDate" id="date-input" value="@currentDate" />
+                        </div>
+
+                        <!-- Nút tìm kiếm -->
+                        <div class="col-md-2 text-end">
+                            <button type="submit" class="btn btn-brown text-white rounded-pill w-100 py-2 fw-medium">
+                                Tìm kiếm
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -238,6 +297,36 @@
     </div>
 </div>
 
+<!-- calendar -->
+<div class="bg-light py-sm-3 mt-5 border-top">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h6 class="text-uppercase tracking-wider text-muted fw-bold small">LỊCH TRẠNG THÁI SỰ KIỆN</h6>
+            <h2 class="fw-bold" style="color: var(--primary-brown);">Venue Availability Calendar</h2>
+            <p class="text-muted">Chọn sảnh bên dưới để kiểm tra các ngày/giờ đã được đặt trước</p>
+        </div>
+
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6 col-lg-4">
+                <select id="calendar-venue-select" class="form-select form-select-lg rounded-pill border-secondary shadow-sm fs-6">
+                    <option value="0">-- Chọn sảnh để xem lịch --</option>
+                    @if (venueList != null)
+                    {
+                        foreach (var v in venueList)
+                        {
+                            <option value="@v.Value">@v.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="calendar-dark-card p-4 rounded-4 shadow-lg">
+            <div id="index-availability-calendar" style="min-height: 450px;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- javascript to prevent reload page -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -245,13 +334,12 @@
         const cardsContainer = document.getElementById('venue-cards-container');
         const categoryInput = document.getElementById('current-category-input');
         const searchInput = document.getElementById('search-input');
+        const dateInput = document.getElementById('date-input');
         const searchForm = document.getElementById('search-form');
         const categoryBtns = document.querySelectorAll('.category-btn');
 
-        function loadVenues(url, selectedCategory) {
-            if (cardsContainer) {
-                cardsContainer.style.opacity = '0.4';
-            }
+    function loadVenues(url, selectedCategory) {
+            if (cardsContainer) cardsContainer.style.opacity = '0.4';
 
             fetch(url)
                 .then(response => response.text())
@@ -267,7 +355,6 @@
 
                     if (selectedCategory) {
                         if (categoryInput) categoryInput.value = selectedCategory;
-
                         categoryBtns.forEach(btn => {
                             if (btn.getAttribute('data-category') === selectedCategory) {
                                 btn.classList.remove('btn-outline-secondary');
@@ -279,44 +366,60 @@
                         });
                     }
                 })
-                .catch(error => {
-                    console.error('Lỗi tải dữ liệu:', error);
+                .catch(err => {
+                    console.error(err);
                     if (cardsContainer) cardsContainer.style.opacity = '1';
                 });
         }
 
-        // Khi chọn nút
+        // Tìm theo buttons
         categoryBtns.forEach(btn => {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                const url = this.getAttribute('href');
-                const cat = this.getAttribute('data-category');
-                loadVenues(url, cat);
+                loadVenues(this.getAttribute('href'), this.getAttribute('data-category'));
             });
         });
 
-        // Khi dùng search bar
+        // Tìm theo search bar
         if (searchForm) {
             searchForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 const searchVal = searchInput ? searchInput.value : '';
+                const dateVal = dateInput ? dateInput.value : '';
                 const currentCat = categoryInput ? categoryInput.value : 'All';
                 const baseUrl = '@Url.Action("Index", "Home")';
-                const url = `${baseUrl}?category=${encodeURIComponent(currentCat)}&search=${encodeURIComponent(searchVal)}`;
+                const url = `${baseUrl}?category=${encodeURIComponent(currentCat)}&search=${encodeURIComponent(searchVal)}&eventDate=${encodeURIComponent(dateVal)}`;
                 loadVenues(url, currentCat);
             });
         }
 
-        // Xóa bộ lọc
-        document.addEventListener('click', function (e) {
-            const resetBtn = e.target.closest('#reset-filter-btn');
-            if (resetBtn) {
-                e.preventDefault();
-                if (searchInput) searchInput.value = '';
-                const url = '@Url.Action("Index", "Home")?category=All&search=';
-                loadVenues(url, 'All');
-            }
+        // calendar initialization
+        var calendarEl = document.getElementById('index-availability-calendar');
+        var calendarSelect = document.getElementById('calendar-venue-select');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            buttonText: { today: 'Hôm nay', month: 'Tháng', week: 'Tuần' },
+            locale: 'vi',
+            events: []
         });
+        calendar.render();
+
+        // khi chọn 1 sảnh từ Dropdown
+        if (calendarSelect) {
+            calendarSelect.addEventListener('change', function () {
+                var selectedVenueId = this.value;
+                calendar.removeAllEventSources();
+                if (selectedVenueId && selectedVenueId !== "0") {
+                    calendar.addEventSource('/Venue/GetVenueBookings?venueId=' + selectedVenueId);
+                }
+            });
+        }
 
     });
 </script>

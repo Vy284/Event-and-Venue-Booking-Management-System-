@@ -7,12 +7,60 @@
 
     // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
     var primaryImage = images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
-                       ?? images?.FirstOrDefault()?.ImageUrl
-                       ?? "/Content/images/bg_landingpage.jpg";
+               ?? images?.FirstOrDefault()?.ImageUrl
+               ?? "/Content/images/bg_landingpage.jpg";
 }
 
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<style>
+    .calendar-dark-card {
+        background-color: #3b2e27;
+        border: 1px solid #524237;
+    }
+
+    .fc {
+        --fc-page-bg-color: #3b2e27;
+        --fc-border-color: #524237;
+        --fc-neutral-bg-color: #483930;
+        --fc-button-bg-color: #5c493e;
+        --fc-button-border-color: #6b5549;
+        --fc-button-hover-bg-color: #7a6254;
+        --fc-button-hover-border-color: #7a6254;
+        --fc-button-active-bg-color: #2a201b;
+        --fc-button-active-border-color: #2a201b;
+        font-family: inherit;
+        color: #f5efe6 !important;
+    }
+
+        .fc .fc-scrollgrid,
+        .fc .fc-daygrid-day {
+            background-color: #3b2e27 !important;
+            color: #f5efe6 !important;
+        }
+
+        .fc .fc-day-today {
+            background-color: #524237 !important;
+        }
+
+        .fc a {
+            color: #f5efe6 !important;
+            text-decoration: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #d4a373 !important;
+            font-weight: 600;
+            padding: 10px 0 !important;
+        }
+
+        .fc .fc-toolbar-title {
+            color: #3b2e27 !important;
+        }
+</style>
+
 <div class="container py-5 mt-4">
-    <!-- Breadcrumb điều hướng -->
+    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/Home/Index" class="text-decoration-none text-muted">Trang chủ</a></li>
@@ -23,6 +71,7 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
+            <!-- Feature Image -->
             <div class="rounded-4 overflow-hidden shadow-sm mb-4" style="height: 420px;">
                 <img src="@primaryImage" alt="@Model.Name" class="w-100 h-100" style="object-fit: cover;" />
             </div>
@@ -55,6 +104,23 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Lịch trống của sảnh -->
+            <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0" style="color: var(--primary-brown);">
+                        <i class="fa-regular fa-calendar-days me-2"></i>Lịch trống của sảnh
+                    </h4>
+                    <div class="small">
+                        <span class="badge bg-danger me-1">■ Đã được đặt</span>
+                        <span class="badge bg-success">■ Còn trống</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Vui lòng kiểm tra lịch bên dưới để chọn ngày giờ tổ chức sự kiện phù hợp.</p>
+
+                <!-- Khung chứa Lịch -->
+                <div id="venue-calendar" style="min-height: 400px;"></div>
             </div>
 
             <!-- Facilities -->
@@ -104,7 +170,7 @@
             </div>
         </div>
 
-        <!-- Venue Card -->
+        <!-- Price & Booking Sidebar -->
         <div class="col-lg-4">
             <div class="bg-white p-4 rounded-4 shadow-sm sticky-top" style="top: 100px;">
                 <h5 class="text-muted small text-uppercase fw-bold">Giá thuê sảnh</h5>
@@ -116,7 +182,7 @@
                 <hr />
 
                 <div class="d-grid gap-3 mt-4">
-                    <a href="#" class="btn btn-brown py-3 fs-6 fw-bold shadow">
+                    <a href="/Booking/Create?venueId=@Model.VenueId" class="btn btn-brown py-3 fs-6 fw-bold shadow">
                         <i class="fa-regular fa-calendar-check me-2"></i>ĐẶT SẢNH NGAY
                     </a>
                     <a href="tel:0901234567" class="btn btn-outline-dark py-2 rounded-pill">
@@ -131,3 +197,33 @@
         </div>
     </div>
 </div>
+
+<!-- script khởi tạo FullCalendar -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('venue-calendar');
+        var venueId = @Model.VenueId;
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            buttonText: {
+                today: 'Hôm nay',
+                month: 'Tháng',
+                week: 'Tuần'
+            },
+            locale: 'vi',
+            // Load các đơn đặt của sảnh này từ Controller API
+            events: '/Venue/GetVenueBookings?venueId=' + venueId,
+            eventClick: function(info) {
+                alert('Khung giờ này đã được đặt: ' + info.event.title);
+            }
+        });
+
+        calendar.render();
+    });
+</script>
