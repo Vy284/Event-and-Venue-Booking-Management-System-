@@ -12,41 +12,43 @@ namespace EventVenueBooking.Entities
         public int BookingId { get; set; }
 
         // ---- Ai đặt ----
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn khách hàng.")]
         [ForeignKey("ClientUser")]
         public int ClientUserId { get; set; }
         [InverseProperty("Bookings")]
         public virtual User ClientUser { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn địa điểm.")]
         [ForeignKey("Venue")]
         public int VenueId { get; set; }
         public virtual Venue Venue { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn loại sự kiện.")]
         [ForeignKey("EventType")]
         public int EventTypeId { get; set; }
         public virtual EventType EventType { get; set; }
 
-        [Required]
-        [Range(1, int.MaxValue)]
+        [Required(ErrorMessage = "Vui lòng nhập số lượng khách.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Số lượng khách phải lớn hơn 0.")]
         public int GuestCount { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn thời gian bắt đầu.")]
         public DateTime EventStartDateTime { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn thời gian kết thúc.")]
         public DateTime EventEndDateTime { get; set; }
 
         // 0=Pending, 1=Confirmed, 2=InProgress, 3=Completed, 4=Cancelled
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn trạng thái.")]
+        [Range(0, 4, ErrorMessage = "Trạng thái booking không hợp lệ.")]
         public byte Status { get; set; }
 
         // ---- Snapshot giá tại thời điểm đặt ----
         [Required]
         public decimal VenueRateAtBooking { get; set; }
 
-        [Required]
+        [Required] //RentalUnit: 0 = Hour, 1 = Session = 4 hour, 2 = Day = 8 hour
+
         public byte RentalUnitAtBooking { get; set; }
 
         [Required]
