@@ -14,9 +14,11 @@ namespace EventVenueBooking.ViewModels
         public DateTime BookingDate { get; set; }
         public decimal TotalAmount { get; set; }
 
-        // Gom luôn trạng thái payment vào đây
         public string PaymentMethod { get; set; }
         public string PaymentStatus { get; set; } // "Paid", "Unpaid", "Refunded"
+
+        // --- BỔ SUNG THÊM TRƯỜNG NÀY ĐỂ HIỂN THỊ DỊCH VỤ ĐI KÈM ---
+        public List<string> AddOnServices { get; set; } = new List<string>();
     }
 
     public class PaymentListViewModel

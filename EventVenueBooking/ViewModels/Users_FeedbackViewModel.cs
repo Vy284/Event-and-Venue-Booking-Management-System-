@@ -20,6 +20,7 @@ namespace EventVenueBooking.ViewModels
     public class FeedbackViewModel
     {
         public int FeedbackId { get; set; }
+        public int BookingId { get; set; }
         public string CustomerName { get; set; }
         public string VenueName { get; set; }
         public int Rating { get; set; }

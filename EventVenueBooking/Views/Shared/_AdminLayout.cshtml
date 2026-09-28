@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - Ventixe Event Admin</title>
+    <title>@ViewBag.Title - VenueHub Event Admin</title>
     <!-- Boxicons / FontAwesome hỗ trợ Icon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
 
@@ -73,19 +73,19 @@
             font-size: 14px;
             border-radius: 10px;
             transition: all 0.2s ease;
-            position: relative; /* THÊM DÒNG NÀY ĐỂ LÀM MẤU XANH */
+            position: relative;
         }
 
             .nav-link.active::before {
                 content: "";
                 position: absolute;
-                left: -18px; /* Đẩy mấu xanh ra sát viền trái của sidebar */
+                left: -18px;
                 top: 50%;
                 transform: translateY(-50%);
                 width: 4px;
                 height: 24px;
                 background-color: var(--primary-green);
-                border-radius: 0 4px 4px 0; /* Bo góc phải cho mấu xanh */
+                border-radius: 0 4px 4px 0;
             }
 
             .nav-link:hover, .nav-link.active {
@@ -94,38 +94,11 @@
                 box-shadow: 0 4px 12px rgba(24, 74, 59, 0.05);
             }
 
-        /* Promo Card & Logout Bottom */
+        /* Sign Out Bottom */
         .sidebar-bottom {
             display: flex;
             flex-direction: column;
             gap: 12px;
-        }
-
-        .promo-card {
-            background: #FFFFFF;
-            padding: 16px;
-            border-radius: 14px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-
-            .promo-card p {
-                font-size: 12px;
-                color: var(--text-muted);
-                line-height: 1.4;
-                margin-bottom: 12px;
-            }
-
-        .btn-upgrade {
-            width: 100%;
-            background-color: var(--primary-green);
-            color: #fff;
-            border: none;
-            padding: 9px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
         }
 
         .btn-signout {
@@ -153,9 +126,8 @@
             padding: 16px 20px 16px 0;
         }
 
-        /* Fix lỗi mã màu, tăng bo góc và thêm đổ bóng nhẹ */
         .content-container {
-            background-color: #F4F7F5; /* Đã sửa lỗi chữ L thành mã màu chuẩn */
+            background-color: #F4F7F5;
             flex-grow: 1;
             border-radius: 24px;
             display: flex;
@@ -267,7 +239,7 @@
     <aside class="sidebar">
         <div>
             <div class="brand-logo">
-                <i class='bx bxs-shapes'></i> Ventixe
+                <i class='bx bxs-shapes'></i> VenueHub
             </div>
             <ul class="nav-list">
                 <li>
@@ -306,7 +278,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="@Url.Action("Feedback", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Feedback" ? "active" : "")">
+                    <a href="@Url.Action("Feedback", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Feedback" ? "active" : "")">
                         <i class='bx bx-star'></i> Feedback
                     </a>
                 </li>
@@ -314,11 +286,6 @@
         </div>
 
         <div class="sidebar-bottom">
-            <div class="promo-card">
-                <i class='bx bx-mobile-alt' style="font-size:32px; color:var(--primary-green);"></i>
-                <p>Experience enhanced features and a smoother interface.</p>
-                <button class="btn-upgrade">Try New Version</button>
-            </div>
             <button class="btn-signout">
                 <i class='bx bx-log-out'></i> Sign Out
             </button>

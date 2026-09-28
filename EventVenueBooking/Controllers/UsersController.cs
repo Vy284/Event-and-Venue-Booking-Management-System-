@@ -42,16 +42,18 @@ namespace EventVenueBooking.Controllers
                 .Select(f => new FeedbackViewModel
                 {
                     FeedbackId = f.FeedbackId,
+                    BookingId = f.BookingId,
                     CustomerName = f.Booking.ClientUser.FullName,
                     VenueName = f.Booking.Venue.Name,
                     Rating = f.Rating,
                     Comment = f.Comment,
                     SubmittedAt = f.CreatedAt
-                }).ToList();
+                })
+                .OrderByDescending(f => f.SubmittedAt)
+                .ToList();
 
-            return View(feedbacks);
+            return View("~/Views/Admin/Feedback.cshtml", feedbacks);
         }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();

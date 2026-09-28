@@ -1,4 +1,5 @@
-﻿@{
+﻿@model IEnumerable<EventVenueBooking.ViewModels.BookingManagementViewModel>
+@{
     ViewBag.Title = "Bookings Management";
     ViewBag.ActiveMenu = "Bookings";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -169,7 +170,7 @@
         font-weight: 700;
     }
 
-    /* BADGES CHO TRẠNG THÁI STATUS (0=Pending, 1=Confirmed, 2=InProgress, 3=Completed, 4=Cancelled) */
+    /* BADGES CHO TRẠNG THÁI STATUS */
     .status-badge {
         padding: 5px 12px;
         border-radius: 20px;
@@ -186,11 +187,6 @@
     .badge-confirmed {
         background: #E3F2FD;
         color: #1565C0;
-    }
-
-    .badge-inprogress {
-        background: #F3E5F5;
-        color: #7B1FA2;
     }
 
     .badge-completed {
@@ -242,7 +238,7 @@
         opacity: 0.8;
     }
 
-    /* MODAL POPUP (PURE CSS/JS) */
+    /* MODAL POPUP */
     .modal-backdrop {
         position: fixed;
         top: 0;
@@ -264,7 +260,7 @@
     .modal-box {
         background: #FFFFFF;
         width: 100%;
-        max-width: 600px;
+        max-width: 650px;
         border-radius: 20px;
         padding: 24px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -362,31 +358,19 @@
 <!-- 1. THỐNG KÊ NHANH -->
 <div class="booking-stats">
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Pending Requests</p>
-            <h3>12</h3>
-        </div>
+        <div class="stat-mini-info"><p>Pending Requests</p><h3>12</h3></div>
         <div class="stat-mini-icon icon-pending"><i class='bx bx-time-five'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Confirmed</p>
-            <h3>45</h3>
-        </div>
+        <div class="stat-mini-info"><p>Confirmed</p><h3>45</h3></div>
         <div class="stat-mini-icon icon-confirmed"><i class='bx bx-check-circle'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Completed</p>
-            <h3>128</h3>
-        </div>
+        <div class="stat-mini-info"><p>Completed</p><h3>128</h3></div>
         <div class="stat-mini-icon icon-completed"><i class='bx bx-task'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Cancelled</p>
-            <h3>8</h3>
-        </div>
+        <div class="stat-mini-info"><p>Cancelled</p><h3>8</h3></div>
         <div class="stat-mini-icon icon-cancelled"><i class='bx bx-x-circle'></i></div>
     </div>
 </div>
@@ -398,11 +382,8 @@
             <input type="text" id="searchInput" class="custom-input" placeholder="Search Client / Venue..." style="width: 220px;" onkeyup="filterTable()">
             <select class="custom-select" id="statusFilter" onchange="filterTable()">
                 <option value="">All Statuses</option>
-                <option value="Pending">Pending (0)</option>
-                <option value="Confirmed">Confirmed (1)</option>
-                <option value="InProgress">InProgress (2)</option>
-                <option value="Completed">Completed (3)</option>
-                <option value="Cancelled">Cancelled (4)</option>
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid</option>
             </select>
         </div>
         <button class="btn-create" onclick="openCreateModal()">
@@ -417,99 +398,93 @@
                     <th>ID</th>
                     <th>Client</th>
                     <th>Venue</th>
-                    <th>Event Type</th>
-                    <th>Guests</th>
-                    <th>Start Date</th>
+                    <th>Add-On Services</th>
+                    <th>Booking Date</th>
                     <th>Total Cost</th>
-                    <th>Status</th>
+                    <th>Payment</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- DỮ LIỆU MẪU DỰA TRÊN DATABASE ENTITY BOOKING -->
-                <tr>
-                    <td><strong>#1001</strong></td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm">NV</div>
-                            <div>
-                                <div style="font-weight: 700;">Nguyen Van A</div>
-                                <div style="font-size: 11px; color: var(--text-muted);">Client #12</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Grand Ballroom A</td>
-                    <td>Wedding</td>
-                    <td>250</td>
-                    <td>25/10/2026 18:00</td>
-                    <td style="font-weight: 700; color: var(--primary-green);">$3,500</td>
-                    <td><span class="status-badge badge-confirmed">Confirmed</span></td>
-                    <td>
-                        <div class="action-btns" style="justify-content: flex-end;">
-                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1001', 'Nguyen Van A', 'Grand Ballroom A', 'Wedding', '250', '25/10/2026 18:00', '25/10/2026 22:00', '$3,000', '$500', '$3,500', 'Confirmed')"><i class='bx bx-show'></i></button>
-                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1001', '12', '1', '2', '250', '2026-10-25T18:00', '2026-10-25T22:00', '1')"><i class='bx bx-edit'></i></button>
-                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1001')"><i class='bx bx-x-circle'></i></button>
-                        </div>
-                    </td>
-                </tr>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        string initials = "NV";
+                        if (!string.IsNullOrEmpty(item.CustomerName) && item.CustomerName != "N/A")
+                        {
+                            var parts = item.CustomerName.Trim().Split(' ');
+                            if (parts.Length >= 2)
+                            {
+                                initials = (parts[0][0] + parts[parts.Length - 1][0]).ToString().ToUpper();
+                            }
+                            else if (parts.Length == 1 && parts[0].Length > 0)
+                            {
+                                initials = parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+                            }
+                        }
 
-                <tr>
-                    <td><strong>#1002</strong></td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm" style="background:#0288D1;">TB</div>
-                            <div>
-                                <div style="font-weight: 700;">Tran Thi B</div>
-                                <div style="font-size: 11px; color: var(--text-muted);">Client #15</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Skyline Garden</td>
-                    <td>Birthday Party</td>
-                    <td>80</td>
-                    <td>01/11/2026 14:00</td>
-                    <td style="font-weight: 700; color: var(--primary-green);">$1,200</td>
-                    <td><span class="status-badge badge-pending">Pending</span></td>
-                    <td>
-                        <div class="action-btns" style="justify-content: flex-end;">
-                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1002', 'Tran Thi B', 'Skyline Garden', 'Birthday Party', '80', '01/11/2026 14:00', '01/11/2026 18:00', '$1,000', '$200', '$1,200', 'Pending')"><i class='bx bx-show'></i></button>
-                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1002', '15', '2', '1', '80', '2026-11-01T14:00', '2026-11-01T18:00', '0')"><i class='bx bx-edit'></i></button>
-                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1002')"><i class='bx bx-x-circle'></i></button>
-                        </div>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><strong>#1003</strong></td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm" style="background:#E53935;">LC</div>
-                            <div>
-                                <div style="font-weight: 700;">Le Van C</div>
-                                <div style="font-size: 11px; color: var(--text-muted);">Client #20</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Executive Hall</td>
-                    <td>Conference</td>
-                    <td>150</td>
-                    <td>15/09/2026 08:00</td>
-                    <td style="font-weight: 700; color: var(--primary-green);">$2,100</td>
-                    <td><span class="status-badge badge-cancelled">Cancelled</span></td>
-                    <td>
-                        <div class="action-btns" style="justify-content: flex-end;">
-                            <button class="btn-act btn-view" title="Details" onclick="openViewModal('1003', 'Le Van C', 'Executive Hall', 'Conference', '150', '15/09/2026 08:00', '15/09/2026 12:00', '$2,000', '$100', '$2,100', 'Cancelled')"><i class='bx bx-show'></i></button>
-                            <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('1003', '20', '3', '3', '150', '2026-09-15T08:00', '2026-09-15T12:00', '4')"><i class='bx bx-edit'></i></button>
-                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('1003')"><i class='bx bx-x-circle'></i></button>
-                        </div>
-                    </td>
-                </tr>
+                        <tr>
+                            <td><strong>#@item.BookingId</strong></td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-sm">@initials</div>
+                                    <div>
+                                        <div style="font-weight: 700;">@item.CustomerName</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">Payment: @item.PaymentMethod</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@item.VenueName</td>
+                            <td>
+                                @if (item.AddOnServices != null && item.AddOnServices.Any())
+                                {
+                                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                        @foreach (var service in item.AddOnServices)
+                                        {
+                                            <span class="status-badge" style="background: #E8F4FD; color: #2196F3; font-weight: 600;">@service</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size: 12px;">Không có</span>
+                                }
+                            </td>
+                            <td>@item.BookingDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td style="font-weight: 700; color: var(--primary-green);">@item.TotalAmount.ToString("N0") VNĐ</td>
+                            <td>
+                                @if (item.PaymentStatus == "Paid")
+                                {
+                                    <span class="status-badge badge-completed">Paid</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge badge-pending">Unpaid</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="action-btns" style="justify-content: flex-end;">
+                                    <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.BookingId', '@item.CustomerName', '@item.VenueName', '@item.BookingDate.ToString("dd/MM/yyyy HH:mm")', '@item.TotalAmount.ToString("N0") VNĐ', '@item.PaymentStatus')"><i class='bx bx-show'></i></button>
+                                    <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('@item.BookingId')"><i class='bx bx-edit'></i></button>
+                                    <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('@item.BookingId')"><i class='bx bx-x-circle'></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu đặt chỗ nào.</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- 3. MODAL CREATE / EDIT BOOKING -->
+<!-- 3. MODAL CREATE / EDIT BOOKING (ĐÃ ĐỒNG BỘ CÁC CỘT) -->
 <div class="modal-backdrop" id="bookingFormModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -521,8 +496,8 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Client User ID (*)</label>
-                    <input type="number" class="form-control" id="clientUserId" required placeholder="Ex: 12">
+                    <label>Client Name (*)</label>
+                    <input type="text" class="form-control" id="clientName" required placeholder="Ex: Nguyen Van A">
                 </div>
 
                 <div class="form-group">
@@ -531,15 +506,6 @@
                         <option value="1">Grand Ballroom A</option>
                         <option value="2">Skyline Garden</option>
                         <option value="3">Executive Hall</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Event Type (*)</label>
-                    <select class="form-control" id="eventTypeId" required>
-                        <option value="1">Birthday Party</option>
-                        <option value="2">Wedding</option>
-                        <option value="3">Conference</option>
                     </select>
                 </div>
 
@@ -554,19 +520,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Event End DateTime (*)</label>
-                    <input type="datetime-local" class="form-control" id="eventEndDateTime" required>
+                    <label>Payment Method (*)</label>
+                    <select class="form-control" id="paymentMethod" required>
+                        <option value="Transfer">Transfer (Chuyển khoản)</option>
+                        <option value="Cash">Cash (Tiền mặt)</option>
+                        <option value="Credit Card">Credit Card</option>
+                    </select>
                 </div>
 
-                <div class="form-group full-width">
-                    <label>Booking Status</label>
-                    <select class="form-control" id="status">
-                        <option value="0">0 - Pending</option>
-                        <option value="1">1 - Confirmed</option>
-                        <option value="2">2 - InProgress</option>
-                        <option value="3">3 - Completed</option>
-                        <option value="4">4 - Cancelled</option>
+                <div class="form-group">
+                    <label>Payment Status (*)</label>
+                    <select class="form-control" id="paymentStatus" required>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Paid">Paid</option>
                     </select>
+                </div>
+
+                <!-- Đồng bộ thêm phần chọn Add-On Services -->
+                <div class="form-group full-width">
+                    <label>Add-On Services</label>
+                    <div style="display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap;">
+                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="AddOnServices" value="Decoration"> Decoration
+                        </label>
+                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="AddOnServices" value="Sound & Light"> Sound & Light
+                        </label>
+                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="AddOnServices" value="MC / Singer"> MC / Singer
+                        </label>
+                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="AddOnServices" value="Buffet Setup"> Buffet Setup
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -588,13 +574,8 @@
         <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
             <div style="display: flex; justify-content: space-between;"><strong>Client Name:</strong> <span id="vClientName"></span></div>
             <div style="display: flex; justify-content: space-between;"><strong>Venue:</strong> <span id="vVenue"></span></div>
-            <div style="display: flex; justify-content: space-between;"><strong>Event Type:</strong> <span id="vEventType"></span></div>
-            <div style="display: flex; justify-content: space-between;"><strong>Guest Count:</strong> <span id="vGuestCount"></span></div>
             <div style="display: flex; justify-content: space-between;"><strong>Start Time:</strong> <span id="vStart"></span></div>
-            <div style="display: flex; justify-content: space-between;"><strong>End Time:</strong> <span id="vEnd"></span></div>
             <hr style="border: none; border-top: 1px dashed var(--border-color);">
-            <div style="display: flex; justify-content: space-between;"><span>Venue Cost:</span> <span id="vVenueCost"></span></div>
-            <div style="display: flex; justify-content: space-between;"><span>Add-On Cost:</span> <span id="vAddOnCost"></span></div>
             <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: var(--primary-green);"><span>Total Cost:</span> <span id="vTotalCost"></span></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                 <strong>Status:</strong> <span id="vStatusBadge"></span>
@@ -606,7 +587,7 @@
     </div>
 </div>
 
-<!-- 5. MODAL CANCEL BOOKING (CANCEL REASON) -->
+<!-- 5. MODAL CANCEL BOOKING -->
 <div class="modal-backdrop" id="cancelModal">
     <div class="modal-box" style="max-width: 450px;">
         <div class="modal-header">
@@ -628,90 +609,54 @@
     </div>
 </div>
 
-<!-- JAVASCRIPT XỬ LÝ SỰ KIỆN CRUD & MODAL -->
+<!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
 <script>
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
 
-            function openModal(id) {
-            document.getElementById(id).classList.add('show');
-        }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show');
-        }
+    function openCreateModal() {
+        document.getElementById('modalTitle').innerText = "Create New Booking";
+        document.getElementById('bookingForm').reset();
+        document.getElementById('bookingId').value = "0";
+        openModal('bookingFormModal');
+    }
 
-        function openCreateModal() {
-            document.getElementById('modalTitle').innerText = "Create New Booking";
-            document.getElementById('bookingForm').reset();
-            document.getElementById('bookingId').value = "0";
-            openModal('bookingFormModal');
-        }
+    function openEditModal(id) {
+        document.getElementById('modalTitle').innerText = "Edit Booking #" + id;
+        document.getElementById('bookingId').value = id;
+        openModal('bookingFormModal');
+    }
 
-        function openEditModal(id, clientUser, venue, eventType, guests, start, end, status) {
-            document.getElementById('modalTitle').innerText = "Edit Booking #" + id;
-            document.getElementById('bookingId').value = id;
-            document.getElementById('clientUserId').value = clientUser;
-            document.getElementById('venueId').value = venue;
-            document.getElementById('eventTypeId').value = eventType;
-            document.getElementById('guestCount').value = guests;
-            document.getElementById('eventStartDateTime').value = start;
-            document.getElementById('eventEndDateTime').value = end;
-            document.getElementById('status').value = status;
-            openModal('bookingFormModal');
-        }
+    function openViewModal(id, client, venue, start, total, status) {
+        document.getElementById('vBookingId').innerText = "#" + id;
+        document.getElementById('vClientName').innerText = client;
+        document.getElementById('vVenue').innerText = venue;
+        document.getElementById('vStart').innerText = start;
+        document.getElementById('vTotalCost').innerText = total;
+        document.getElementById('vStatusBadge').innerText = status;
+        openModal('viewDetailsModal');
+    }
 
-        function openViewModal(id, client, venue, type, guests, start, end, venueCost, addonCost, total, status) {
-            document.getElementById('vBookingId').innerText = "#" + id;
-            document.getElementById('vClientName').innerText = client;
-            document.getElementById('vVenue').innerText = venue;
-            document.getElementById('vEventType').innerText = type;
-            document.getElementById('vGuestCount').innerText = guests;
-            document.getElementById('vStart').innerText = start;
-            document.getElementById('vEnd').innerText = end;
-            document.getElementById('vVenueCost').innerText = venueCost;
-            document.getElementById('vAddOnCost').innerText = addonCost;
-            document.getElementById('vTotalCost').innerText = total;
-            document.getElementById('vStatusBadge').innerText = status;
-            openModal('viewDetailsModal');
-        }
+    function openCancelModal(id) {
+        document.getElementById('cancelBookingId').value = id;
+        document.getElementById('cancelReason').value = "";
+        openModal('cancelModal');
+    }
 
-        function openCancelModal(id) {
-            document.getElementById('cancelBookingId').value = id;
-            document.getElementById('cancelReason').value = "";
-            openModal('cancelModal');
-        }
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        alert("Lưu booking thành công!");
+        closeModal('bookingFormModal');
+    }
 
-        function handleFormSubmit(e) {
-            e.preventDefault();
-            alert("Đã lưu Booking thành công!");
-            closeModal('bookingFormModal');
-        }
-
-        function handleCancelSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('cancelBookingId').value;
-            const reason = document.getElementById('cancelReason').value;
-            alert("Đã hủy Booking #" + id + " với lý do: " + reason);
-            closeModal('cancelModal');
-        }
-
-        function filterTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value.toLowerCase();
-            const rows = document.querySelectorAll('#bookingTable tbody tr');
-
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                const rowStatus = row.children[7].innerText.toLowerCase();
-
-                const matchesSearch = text.includes(search);
-                const matchesStatus = status === "" || rowStatus.includes(status);
-
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        }
+    function handleCancelSubmit(e) {
+        e.preventDefault();
+        alert("Đã hủy booking!");
+        closeModal('cancelModal');
+    }
 </script>
-   

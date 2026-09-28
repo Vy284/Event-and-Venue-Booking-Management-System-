@@ -442,8 +442,7 @@
                     <th>Type</th>
                     <th>Capacity</th>
                     <th>Rate / Unit</th>
-                    <th>Rating</th>
-                    <th>Last Booking</th>
+                    <th>Description</th>
                     <th>Status</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
@@ -470,9 +469,8 @@
                                 / @(item.RentalUnit == 0 ? "Hour" : item.RentalUnit == 1 ? "Session" : "Day")
                             </span>
                         </td>
-                        <td><i class='bx bxs-star rating-star'></i> @item.Rating</td>
-                        <td style="font-size: 12px; color:var(--text-muted);">
-                            @(item.LastBooking.HasValue ? item.LastBooking.Value.ToString("dd/MM/yyyy") : "N/A")
+                        <td style="font-size: 12px; color: var(--text-muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="@item.Description">
+                            @(string.IsNullOrEmpty(item.Description) ? "N/A" : item.Description)
                         </td>
                         <td>
                             @if (item.Status == 0)
@@ -491,7 +489,7 @@
                         <td>
                             <div class="action-btns" style="justify-content: flex-end;">
                                 <button class="btn-act btn-view" title="Details"
-                                        onclick="openViewModal('@item.VenueName', '@item.TypeName', '@item.Capacity', '$@item.PricePerHour', '@item.Location', '@(item.Status == 0 ? "Active" : item.Status == 1 ? "Inactive" : "Maintenance")', '@item.Rating', '@item.Description')">
+                                        onclick="openViewModal('@item.VenueName', '@item.TypeName', '@item.Capacity', '$@item.PricePerHour', '@item.Location', '@(item.Status == 0 ? "Active" : item.Status == 1 ? "Inactive" : "Maintenance")', '@item.Description')">
                                     <i class='bx bx-show'></i>
                                 </button>
                                 <button class="btn-act btn-edit" title="Edit"
@@ -669,14 +667,13 @@
         openModal('venueFormModal');
     }
 
-    function openViewModal(name, type, cap, rate, loc, status, rating, desc) {
+    function openViewModal(name, type, cap, rate, loc, status, desc) {
         document.getElementById('vName').innerText = name;
         document.getElementById('vType').innerText = type;
         document.getElementById('vCapacity').innerText = cap;
         document.getElementById('vRate').innerText = rate;
         document.getElementById('vLoc').innerText = loc;
         document.getElementById('vStatus').innerText = status;
-        document.getElementById('vRating').innerText = rating;
         document.getElementById('vDesc').innerText = desc;
         openModal('viewDetailsModal');
     }
@@ -689,8 +686,11 @@
 
     function handleFormSubmit(e) {
         e.preventDefault();
+        // Đoạn này có thể viết AJAX gọi về Controller để lưu vào DB
+        // Sau khi lưu xong thì gọi:
         alert("Đã lưu Venue thành công!");
         closeModal('venueFormModal');
+        location.reload(); // Reload lại trang để dữ liệu mới nhất từ CSDL đổ ra Model lên màn hình
     }
 
     function handleDelete() {

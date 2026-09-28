@@ -20,6 +20,7 @@ namespace EventVenueBooking.Controllers
                 .Include(b => b.ClientUser)
                 .Include(b => b.Venue)
                 .Include(b => b.Payments)
+                .Include(b => b.BookingAddOns.Select(ba => ba.AddOnService)) // Include thêm bảng dịch vụ đi kèm nếu có quan hệ
                 .OrderByDescending(b => b.CreatedAt)
                 .ToList()
                 .Select(b => new BookingManagementViewModel
@@ -30,7 +31,12 @@ namespace EventVenueBooking.Controllers
                     BookingDate = b.EventStartDateTime,
                     TotalAmount = b.TotalCost,
                     PaymentMethod = b.Payments.FirstOrDefault()?.PaymentMethod ?? "Chưa chọn",
-                    PaymentStatus = b.Payments.Any(p => p.PaymentStatus == 1) ? "Paid" : "Unpaid"
+                    PaymentStatus = b.Payments.Any(p => p.PaymentStatus == 1) ? "Paid" : "Unpaid",
+
+                    // Map danh sách tên dịch vụ đi kèm vào ViewModel
+                    AddOnServices = b.BookingAddOns != null
+                        ? b.BookingAddOns.Select(ba => ba.AddOnService.Name).ToList()
+                        : new List<string>()
                 }).ToList();
 
             return View("~/Views/Admin/Bookings.cshtml", bookings);
