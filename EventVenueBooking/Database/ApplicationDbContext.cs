@@ -11,8 +11,7 @@ namespace EventVenueBooking.Database
             this.Configuration.LazyLoadingEnabled = true;
 
             System.Data.Entity.Database.SetInitializer(
-        new MigrateDatabaseToLatestVersion<ApplicationDbContext, EventVenueBooking.Migrations.Configuration>()
-    );
+        new MigrateDatabaseToLatestVersion<ApplicationDbContext, EventVenueBooking.Migrations.Configuration>());
         }
 
         public DbSet<User> Users { get; set; }
