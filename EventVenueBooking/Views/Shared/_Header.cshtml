@@ -34,9 +34,31 @@
                                 <i class="fa-regular fa-user me-1"></i> @Session["UserName"]
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3">
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-clock-rotate-left me-2"></i>Lịch sử đặt sảnh</a></li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="@Url.Action("Profile", "Account")">
+                                        <i class="fa-regular fa-id-card me-2 text-secondary"></i>Thông tin cá nhân
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="@Url.Action("Profile", "Account")">
+                                        <i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Lịch sử đặt sảnh
+                                    </a>
+                                </li>
+                                @if (Session["UserRole"] != null && Convert.ToInt32(Session["UserRole"]) != 0)
+                                {
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item py-2 text-primary fw-medium" href="/Admin/Dashboard">
+                                            <i class="fa-solid fa-user-shield me-2"></i>Trang Quản Trị
+                                        </a>
+                                    </li>
+                                }
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="/Account/Logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                                <li>
+                                    <a class="dropdown-item py-2 text-danger" href="@Url.Action("Logout", "Account")">
+                                        <i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     }

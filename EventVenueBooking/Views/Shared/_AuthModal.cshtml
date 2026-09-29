@@ -1,24 +1,28 @@
-﻿<style>
+﻿@{
+    var oldRegister = TempData["RegisterData"] as EventVenueBooking.Entities.User;
+    var shouldOpenRegister = TempData["OpenRegisterModal"] != null;
+}
+
+<style>
     #authModal .nav-pills .nav-link {
         color: #5A4E46;
         transition: all 0.3s ease;
     }
 
-    #authModal .nav-pills .nav-link.active {
-        background-color: #C2A682 !important;
-        color: #ffffff !important;
-
-    }
+        #authModal .nav-pills .nav-link.active {
+            background-color: #C2A682 !important;
+            color: #ffffff !important;
+        }
 
     #authModal .form-control {
         height: 50px;
         font-size: 1rem;
     }
 
-    #authModal .form-control:focus {
-        border-color: #C2A682 !important;
-        box-shadow: 0 0 0 0.25rem rgba(194, 166, 130, 0.2) !important;
-    }
+        #authModal .form-control:focus {
+            border-color: #C2A682 !important;
+            box-shadow: 0 0 0 0.25rem rgba(194, 166, 130, 0.2) !important;
+        }
 </style>
 
 <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
@@ -83,13 +87,13 @@
                                 {
                                     @Html.AntiForgeryToken()
                                     <div class="mb-3">
-                                        <input type="text" name="FullName" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Họ và tên" required />
+                                        <input type="text" name="FullName" value="@(oldRegister != null ? oldRegister.FullName : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Họ và tên" required />
                                     </div>
                                     <div class="mb-3">
-                                        <input type="email" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
+                                        <input type="email" name="Email" value="@(oldRegister != null ? oldRegister.Email : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
                                     </div>
                                     <div class="mb-3">
-                                        <input type="tel" name="PhoneNumber" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Số điện thoại" />
+                                        <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Số điện thoại" />
                                     </div>
                                     <div class="mb-3">
                                         <input type="password" name="PasswordHash" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
@@ -105,3 +109,22 @@
         </div>
     </div>
 </div>
+
+@if (shouldOpenRegister)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var authModalElement = document.getElementById('authModal');
+            if (authModalElement) {
+                var myModal = new bootstrap.Modal(authModalElement);
+                myModal.show();
+
+                // Chuyển sang tab Register
+                var registerTab = document.getElementById('pills-register-tab');
+                if (registerTab) {
+                    var tab = new bootstrap.Tab(registerTab);
+                    tab.show();
+                }
+            }
+        });</script>
+}
