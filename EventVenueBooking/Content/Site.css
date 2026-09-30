@@ -1,20 +1,71 @@
-﻿/* Set padding to keep content from hitting the edges */
-.body-content {
-    margin-top: 15px;
-    padding-left: 15px;
-    padding-right: 15px;
+﻿:root {
+    --primary-brown: #4A3525;
+    --accent-brown: #8C6D53; 
+    --light-bg: #F8F6F2;
+    --card-bg: #FFFFFF;
+    --text-dark: #2C2C2C;
+    --text-muted: #6C757D;
 }
 
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
-.dl-horizontal dt {
-    white-space: normal;
+body {
+    background-color: var(--light-bg);
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
-input,
-select,
-textarea {
-    max-width: 280px;
+header.site-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: transparent !important;
+}
+
+.hero-wrapper {
+    background-image: url('/Content/images/bg_landingpage.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    width: 100%;
+    min-height: 80vh;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    
+    padding-top: 140px;
+    padding-bottom: 80px;
+    
+    display: flex;
+    align-items: center;
+}
+
+.btn-brown {
+    background-color: var(--primary-brown);
+    color: #ffffff;
+    border-radius: 25px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-brown:hover {
+    background-color: var(--accent-brown);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.venue-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--card-bg);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.venue-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
 }

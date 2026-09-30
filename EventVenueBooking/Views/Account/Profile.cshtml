@@ -1,0 +1,188 @@
+﻿@model EventVenueBooking.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Thông Tin Tài Khoản";
+}
+
+<style>
+    /* cover banner dùng ảnh từ Index */
+    .cover {
+        height: 220px;
+        background-image: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .profile-header {
+        margin-top: 20px;
+        margin-bottom: 30px;
+    }
+
+    .avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 24px;
+        background-color: #3b2e27;
+        color: #f5efe6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        font-weight: 700;
+        border: 4px solid #ffffff;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    .card {
+        background-color: #ffffff;
+        border: 1px solid #eae2d8;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .info-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #8c7a6b;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 1.05rem;
+        color: #2b2b2b;
+        font-weight: 500;
+    }
+
+    .booking-history-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #eae2d8;
+    }
+
+    .booking-history-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+</style>
+
+<div class="cover"></div>
+
+<div class="container mb-5">
+    <!-- Profile Header -->
+    <div class="profile-header d-flex align-items-end gap-3 px-3">
+        <div class="avatar">
+            @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1).ToUpper())
+        </div>
+        <div class="pb-1">
+            <h2 class="fw-bold mb-1" style="color: #3b2e27;">Thông Tin Tài Khoản</h2>
+            <span class="badge rounded-pill px-3 py-2" style="background-color: #e8ded1; color: #4a3b32;">
+                <i class="fa-solid fa-shield-halved me-1"></i> @Model.RoleName
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h5 class="fw-bold mb-0" style="color: #3b2e27;"><i class="fa-regular fa-id-card me-2"></i>Chi Tiết Lý Lịch</h5>
+                </div>
+
+                <form action="@Url.Action("UpdateProfile", "Account")" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="info-label">Họ và Tên</label>
+                        <input type="text" name="fullName" class="form-control rounded-3" value="@Model.FullName" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="info-label">Địa chỉ Email (Chỉ đọc)</label>
+                        <input type="email" class="form-control rounded-3 bg-light text-muted" value="@Model.Email" readonly />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="info-label">Số Điện Thoại</label>
+                        <input type="tel" name="phone" class="form-control rounded-3" value="@Model.Phone" placeholder="Chưa cập nhật SĐT" />
+                    </div>
+
+                    <button type="submit" class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h5 class="fw-bold mb-0" style="color: #3b2e27;">
+                        <i class="fa-solid fa-calendar-check me-2"></i>Lịch Sử Đặt Sảnh (@Model.Bookings.Count)
+                    </h5>
+                    <a href="@Url.Action("Index", "Home")#venue-gallery" class="text-decoration-none small fw-bold" style="color: #8c6239;">
+                        + Đặt Sảnh Mới
+                    </a>
+                </div>
+
+                @if (Model.Bookings != null && Model.Bookings.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var b in Model.Bookings)
+                        {
+                            <div class="booking-history-card bg-white p-3">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-3 col-md-2">
+                                        <img src="@b.VenueImageUrl" alt="@b.VenueName" class="img-fluid rounded-3 object-fit-cover" style="aspect-ratio: 1/1;" />
+                                    </div>
+                                    <div class="col-9 col-md-6">
+                                        <h6 class="fw-bold mb-1 text-dark">@b.VenueName</h6>
+                                        <div class="small text-muted mb-1">
+                                            <i class="fa-regular fa-clock me-1"></i>@b.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                        <div class="small text-muted">
+                                            <i class="fa-solid fa-users me-1"></i>@b.GuestCount Khách • <span class="fw-semibold">@b.EventTypeName</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4 text-md-end border-top border-md-0 pt-2 pt-md-0">
+                                        <div class="fw-bold text-dark mb-1">@b.TotalCost.ToString("N0") VNĐ</div>
+                                        @if (b.Status == 0)
+                                        {
+                                            <span class="badge bg-warning text-dark">Chờ Xác Nhận</span>
+                                        }
+                                        else if (b.Status == 1)
+                                        {
+                                            <span class="badge bg-primary">Đã Xác Nhận</span>
+                                        }
+                                        else if (b.Status == 2)
+                                        {
+                                            <span class="badge bg-info text-dark">Đang Diễn Ra</span>
+                                        }
+                                        else if (b.Status == 3)
+                                        {
+                                            <span class="badge bg-success">Hoàn Thành</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Đã Hủy</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-regular fa-folder-open fs-1 mb-2 opacity-50"></i>
+                        <p class="mb-0">Bạn chưa có đơn đặt sảnh nào.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
