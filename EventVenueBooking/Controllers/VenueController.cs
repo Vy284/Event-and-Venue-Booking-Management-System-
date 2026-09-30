@@ -21,9 +21,9 @@ namespace EventVenueBooking.Controllers
             }
 
             var venue = db.Venues
-                .Include(v => v.VenueType)
-                .Include(v => v.Facilities)
-                .FirstOrDefault(v => v.VenueId == id);
+               .Include(v => v.VenueType)
+               .Include(v => v.VenueFacilities.Select(vf => vf.Facility))
+               .FirstOrDefault(v => v.VenueId == id);
 
             if (venue == null)
             {
