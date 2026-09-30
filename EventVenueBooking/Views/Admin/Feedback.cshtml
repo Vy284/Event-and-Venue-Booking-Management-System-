@@ -1,0 +1,436 @@
+﻿@{
+    ViewBag.Title = "Feedback";
+    ViewBag.ActiveMenu = "Feedback";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    // --- FAKE DATA ---
+    var fakeFeedbacks = new List<FakeFeedback>
+    {
+        new FakeFeedback { FeedbackId = 1, CustomerName = "Nguyễn Văn A", BookingId = 101, VenueName = "Grand Ballroom", Rating = 5, Comment = "Tuyệt vời, không gian rộng rãi!", SubmittedAt = DateTime.Now.AddDays(-1) },
+        new FakeFeedback { FeedbackId = 2, CustomerName = "Trần Thị B", BookingId = 102, VenueName = "Grand Ballroom", Rating = 4, Comment = "Rất tốt, nhân viên nhiệt tình.", SubmittedAt = DateTime.Now.AddDays(-2) },
+        new FakeFeedback { FeedbackId = 3, CustomerName = "Lê Văn C", BookingId = 103, VenueName = "Grand Ballroom", Rating = 5, Comment = "Sẽ quay lại lần sau.", SubmittedAt = DateTime.Now.AddDays(-3) },
+        new FakeFeedback { FeedbackId = 4, CustomerName = "Phạm Thị D", BookingId = 104, VenueName = "Grand Ballroom", Rating = 3, Comment = "Hơi nóng một chút.", SubmittedAt = DateTime.Now.AddDays(-4) },
+        new FakeFeedback { FeedbackId = 5, CustomerName = "Hoàng Văn E", BookingId = 105, VenueName = "Grand Ballroom", Rating = 5, Comment = "Sân khấu đẹp.", SubmittedAt = DateTime.Now.AddDays(-5) },
+
+        new FakeFeedback { FeedbackId = 6, CustomerName = "Vũ Thị F", BookingId = 106, VenueName = "Rooftop Garden", Rating = 2, Comment = "Trời mưa không có mái che tốt.", SubmittedAt = DateTime.Now.AddDays(-1) },
+        new FakeFeedback { FeedbackId = 7, CustomerName = "Đặng Văn G", BookingId = 107, VenueName = "Rooftop Garden", Rating = 3, Comment = "Tạm được.", SubmittedAt = DateTime.Now.AddDays(-2) },
+        new FakeFeedback { FeedbackId = 8, CustomerName = "Bùi Thị H", BookingId = 108, VenueName = "Rooftop Garden", Rating = 1, Comment = "Dịch vụ quá tệ, đồ ăn nguội.", SubmittedAt = DateTime.Now.AddDays(-3) },
+        new FakeFeedback { FeedbackId = 9, CustomerName = "Đỗ Văn I", BookingId = 109, VenueName = "Rooftop Garden", Rating = 4, Comment = "View đẹp.", SubmittedAt = DateTime.Now.AddDays(-4) },
+
+        new FakeFeedback { FeedbackId = 10, CustomerName = "Ngô Thị K", BookingId = 110, VenueName = "Crystal Room", Rating = 5, Comment = "Sang trọng, đẳng cấp.", SubmittedAt = DateTime.Now.AddDays(-1) },
+        new FakeFeedback { FeedbackId = 11, CustomerName = "Dương Văn L", BookingId = 111, VenueName = "Crystal Room", Rating = 4, Comment = "Đẹp nhưng giá hơi cao.", SubmittedAt = DateTime.Now.AddDays(-2) },
+
+        new FakeFeedback { FeedbackId = 12, CustomerName = "Lý Thị M", BookingId = 112, VenueName = "Ocean View", Rating = 5, Comment = "Gió biển mát mẻ, view đẹp.", SubmittedAt = DateTime.Now.AddDays(-1) },
+        new FakeFeedback { FeedbackId = 13, CustomerName = "Hồ Văn N", BookingId = 113, VenueName = "Sunset Lounge", Rating = 3, Comment = "Chỗ ngồi hơi ít.", SubmittedAt = DateTime.Now.AddDays(-2) }
+    };
+
+    var ModelData = fakeFeedbacks;
+
+    // Gom nhóm và tính điểm trung bình gốc cho từng Venue
+    var venueStats = ModelData
+        .GroupBy(f => f.VenueName)
+        .Select(g => new {
+            Name = g.Key,
+            List = g.ToList(),
+            Total = g.Count(),
+            Avg = g.Average(f => f.Rating)
+        })
+        .OrderByDescending(v => v.Avg)
+        .ToList();
+}
+
+<style>
+    .quad-card-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        scroll-behavior: smooth;
+    }
+
+    .quad-card-grid::-webkit-scrollbar { height: 6px; }
+    .quad-card-grid::-webkit-scrollbar-track { background: #F4F7FB; border-radius: 8px; }
+    .quad-card-grid::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 8px; }
+    .quad-card-grid::-webkit-scrollbar-thumb:hover { background: #A0AEC0; }
+
+    .quad-card {
+        flex: 0 0 320px;
+        background: #FFFFFF;
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #E8EFEA;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .quad-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .quad-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2D3748;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+
+    .quad-main-label {
+        font-size: 11px;
+        color: #718096;
+        font-weight: 600;
+        margin-top: 4px;
+        margin-bottom: 2px;
+    }
+
+    .quad-main-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: #2D3748;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .quad-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid #EEF3EF;
+        margin-top: 14px;
+        padding-top: 4px;
+    }
+
+    .quad-cell {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .quad-cell.top-left { border-bottom: 1px solid #EEF3EF; border-right: 1px solid #EEF3EF; padding-left: 0; }
+    .quad-cell.top-right { border-bottom: 1px solid #EEF3EF; padding-right: 0; }
+    .quad-cell.bottom-left { border-right: 1px solid #EEF3EF; padding-left: 0; }
+    .quad-cell.bottom-right { padding-right: 0; }
+
+    .cell-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #718096;
+        margin-bottom: 4px;
+    }
+
+    .cell-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2D3748;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .mini-progress {
+        width: 100%;
+        height: 4px;
+        background: #E8EFEA;
+        border-radius: 4px;
+        margin-top: 6px;
+        overflow: hidden;
+    }
+    .mini-fill { height: 100%; border-radius: 4px; }
+    .fill-green { background: #2E7D32; }
+    .fill-yellow { background: #F59E0B; }
+    .fill-red { background: #E53935; }
+
+    .crud-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+    .filter-group { display: flex; align-items: center; gap: 12px; }
+    .custom-select, .custom-input {
+        background: #F4F7FB;
+        border: 1px solid #E2E8F0;
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: #2D3748;
+    }
+    .custom-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .custom-table th { padding: 14px 16px; font-size: 12px; font-weight: 700; color: #718096; text-transform: uppercase; border-bottom: 2px solid #F0F4F1; }
+    .custom-table td { padding: 14px 16px; font-size: 13px; color: #2D3748; border-bottom: 1px solid #F0F4F1; vertical-align: middle; }
+    .user-avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: #184A3B; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .comment-text { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #555; }
+    .btn-act { width: 32px; height: 32px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; background: #E8F4FD; color: #2196F3; }
+    .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 999; backdrop-filter: blur(2px); }
+    .modal-backdrop.show { display: flex; }
+    .modal-box { background: #FFFFFF; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #F0F4F1; padding-bottom: 12px; }
+    .modal-header h3 { font-size: 18px; color: #184A3B; font-weight: 700; }
+    .btn-close-modal { background: none; border: none; font-size: 24px; color: #718096; cursor: pointer; }
+    .modal-footer { display: flex; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #F0F4F1; padding-top: 14px; }
+    .btn-secondary { background: #F4F7FB; color: #718096; border: none; padding: 9px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+</style>
+
+<!-- 1. CÁC CARD THỐNG KÊ (Giữ nguyên điểm gốc, thêm data-avg-int để lọc phần nguyên) -->
+<div class="quad-card-grid">
+    @if (venueStats.Any())
+    {
+        foreach (var v in venueStats)
+        {
+            var intAvg = (int)Math.Floor(v.Avg); // Phần nguyên trước dấu chấm (VD: 4.4 hay 4.5 thì intAvg = 4)
+            var vCount5 = v.List.Count(f => f.Rating == 5);
+            var vCount4 = v.List.Count(f => f.Rating == 4);
+            var vCount3 = v.List.Count(f => f.Rating == 3);
+            var vCount2 = v.List.Count(f => f.Rating == 2);
+            var vCount1 = v.List.Count(f => f.Rating == 1);
+
+            var vPromotersPct = v.Total > 0 ? (int)Math.Round((double)vCount5 / v.Total * 100) : 0;
+            var vPassivesPct = v.Total > 0 ? (int)Math.Round((double)(vCount3 + vCount4) / v.Total * 100) : 0;
+            var vDetractorsPct = v.Total > 0 ? (int)Math.Round((double)(vCount1 + vCount2) / v.Total * 100) : 0;
+
+            <div class="quad-card venue-card" data-name="@v.Name.ToLower()" data-avg-int="@intAvg">
+                <div>
+                    <div class="quad-card-header">
+                        <div class="quad-card-title" title="@v.Name">@v.Name</div>
+                    </div>
+                    <div class="quad-main-label">Average Score</div>
+                    <div class="quad-main-value">
+                        @v.Avg.ToString("0.0") 
+                        <span style="color: #FFB800; font-size: 16px; margin-left: 8px; display: inline-flex; align-items: center; gap: 2px;">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= (int)v.Avg) { <i class='bx bxs-star'></i> }
+                                else { <i class='bx bx-star' style="color:#D3E0D7;"></i> }
+                            }
+                        </span>
+                    </div>
+                </div>
+
+                <div class="quad-body">
+                    <div class="quad-cell top-left">
+                        <div class="cell-label">Total Reviews</div>
+                        <div class="cell-value">@v.Total</div>
+                    </div>
+                    <div class="quad-cell top-right">
+                        <div class="cell-label">Promoters (5⭐)</div>
+                        <div class="cell-value" style="color:#2E7D32;">
+                            <i class='bx bx-smile'></i> @(vPromotersPct)%
+                        </div>
+                        <div class="mini-progress">
+                            <div class="mini-fill fill-green" style="width: @(vPromotersPct)%;"></div>
+                        </div>
+                    </div>
+                    <div class="quad-cell bottom-left">
+                        <div class="cell-label">Passive (3-4⭐)</div>
+                        <div class="cell-value" style="color:#F59E0B;">
+                            <i class='bx bx-meh'></i> @(vPassivesPct)%
+                        </div>
+                        <div class="mini-progress">
+                            <div class="mini-fill fill-yellow" style="width: @(vPassivesPct)%;"></div>
+                        </div>
+                    </div>
+                    <div class="quad-cell bottom-right">
+                        <div class="cell-label">Detractors (1-2⭐)</div>
+                        <div class="cell-value" style="color:#E53935;">
+                            <i class='bx bx-sad'></i> @(vDetractorsPct)%
+                        </div>
+                        <div class="mini-progress">
+                            <div class="mini-fill fill-red" style="width: @(vDetractorsPct)%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- 2. BẢNG FEEDBACK CHI TIẾT -->
+<div class="crud-card">
+    <div class="toolbar">
+        <div class="filter-group">
+            <div style="position: relative; display: flex; align-items: center;">
+                <input type="text" id="searchInput" class="custom-input" placeholder="Search client, venue..." 
+                       style="width: 260px; padding-left: 38px;" 
+                       onkeyup="filterContent()" 
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); filterContent(); }">
+                
+                <i class='bx bx-search' onclick="filterContent()" style="position: absolute; left: 12px; font-size: 18px; color: #718096; cursor: pointer;" title="Click to search"></i>
+            </div>
+
+            <select class="custom-select" id="ratingFilter" onchange="filterContent()" style="width: 160px;">
+                <option value="">All Ratings</option>
+                <option value="5">5 Stars ⭐⭐⭐⭐⭐</option>
+                <option value="4">4 Stars ⭐⭐⭐⭐</option>
+                <option value="3">3 Stars ⭐⭐⭐</option>
+                <option value="2">2 Stars ⭐⭐</option>
+                <option value="1">1 Star ⭐</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="feedbackTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Venue</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Submitted At</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fb in ModelData)
+                {
+                    <tr data-venue="@fb.VenueName.ToLower()" data-rating="@fb.Rating">
+                        <td><strong>#@fb.FeedbackId</strong></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="user-avatar-sm">@fb.CustomerName.Substring(0, 1).ToUpper()</div>
+                                <div>
+                                    <div style="font-weight: 700;">@fb.CustomerName</div>
+                                    <div style="font-size:11px; color:#718096;">Booking #@fb.BookingId</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><strong>@fb.VenueName</strong></td>
+                        <td>
+                            <span style="color: #FFB800; font-size: 14px;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= fb.Rating) { <i class='bx bxs-star'></i> }
+                                    else { <i class='bx bx-star' style="color:#D3E0D7;"></i> }
+                                }
+                            </span>
+                        </td>
+                        <td>
+                            <div class="comment-text" title="@fb.Comment">@(string.IsNullOrEmpty(fb.Comment) ? "No comment provided." : fb.Comment)</div>
+                        </td>
+                        <td>@fb.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button class="btn-act" title="View Full Feedback" onclick="openViewModal('#@fb.FeedbackId', '@fb.CustomerName', '@fb.VenueName', '@fb.Rating', '@Html.Raw(HttpUtility.JavaScriptStringEncode(fb.Comment))', '@fb.SubmittedAt.ToString("dd/MM/yyyy HH:mm")')">
+                                    <i class='bx bx-show'></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL DETAILED FEEDBACK -->
+<div class="modal-backdrop" id="viewFeedbackModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Feedback Details <span id="vFbId" style="color:#718096;"></span></h3>
+            <button class="btn-close-modal" onclick="closeModal('viewFeedbackModal')">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><strong>Customer:</strong> <span id="vCustomer"></span></div>
+            <div style="display: flex; justify-content: space-between;"><strong>Venue:</strong> <span id="vVenue"></span></div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>Rating Score:</strong>
+                <span id="vRatingStars" style="color: #FFB800; font-size: 16px;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;"><strong>Submitted Date:</strong> <span id="vDate"></span></div>
+            <hr style="border: none; border-top: 1px dashed #E2E8F0; margin: 4px 0;">
+            <div>
+                <strong style="display:block; margin-bottom: 6px;">Customer Comment:</strong>
+                <div id="vComment" style="background: #F4F7FB; padding: 12px; border-radius: 10px; color: #2D3748; line-height: 1.5; font-style: italic;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal('viewFeedbackModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function openViewModal(id, customer, venue, rating, comment, date) {
+        document.getElementById('vFbId').innerText = id;
+        document.getElementById('vCustomer').innerText = customer;
+        document.getElementById('vVenue').innerText = venue;
+        document.getElementById('vDate').innerText = date;
+        document.getElementById('vComment').innerText = comment ? comment : "No text comment.";
+
+        let starsHtml = '';
+        const ratingNum = parseInt(rating);
+        for (let i = 1; i <= 5; i++) {
+            if (i <= ratingNum) { starsHtml += "<i class='bx bxs-star'></i>"; } 
+            else { starsHtml += "<i class='bx bx-star' style='color:#D3E0D7;'></i>"; }
+        }
+        document.getElementById('vRatingStars').innerHTML = starsHtml;
+        openModal('viewFeedbackModal');
+    }
+
+    function filterContent() {
+        const search = document.getElementById('searchInput').value.toLowerCase().trim();
+        const selectedRating = document.getElementById('ratingFilter').value; // Ví dụ: "4"
+
+        // 1. Lọc các dòng feedback trong bảng dưới
+        const rows = document.querySelectorAll('#feedbackTable tbody tr');
+        rows.forEach(row => {
+            const rRating = row.getAttribute('data-rating');
+            const text = row.innerText.toLowerCase();
+
+            const matchesSearch = text.includes(search);
+            const matchesRating = selectedRating === "" || rRating === selectedRating;
+
+            row.style.display = (matchesSearch && matchesRating) ? "" : "none";
+        });
+
+        // 2. Lọc các Card ở trên dựa vào phần nguyên của Average Score (data-avg-int)
+        const cards = document.querySelectorAll('.venue-card');
+        cards.forEach(card => {
+            const cardAvgInt = card.getAttribute('data-avg-int'); // Phần nguyên (VD: 4)
+            const cardText = card.innerText.toLowerCase();
+
+            const matchesRating = selectedRating === "" || cardAvgInt === selectedRating;
+            const matchesSearch = search === "" || cardText.includes(search);
+
+            if (matchesRating && matchesSearch) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+</script>
+
+@functions {
+    public class FakeFeedback
+    {
+        public int FeedbackId { get; set; }
+        public string CustomerName { get; set; }
+        public int BookingId { get; set; }
+        public string VenueName { get; set; }
+        public int Rating { get; set; }
+        public string Comment { get; set; }
+        public DateTime SubmittedAt { get; set; }
+    }
+}

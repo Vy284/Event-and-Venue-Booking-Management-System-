@@ -23,15 +23,6 @@ namespace EventVenueBooking.ViewModels
         public List<EventTypeViewModel> EventTypes { get; set; }
     }
 
-    public class AddOnServiceViewModel
-    {
-        public int AddOnId { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public decimal Price { get; set; }
-        public string Category { get; set; }
-    }
-
     public class EventTypeViewModel
     {
         public int EventTypeId { get; set; }

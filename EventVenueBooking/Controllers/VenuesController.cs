@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.ViewModels;
 
 namespace EventVenueBooking.Controllers
 {
@@ -18,8 +19,76 @@ namespace EventVenueBooking.Controllers
         // GET: Venues
         public ActionResult Index()
         {
-            var venues = db.Venues.Include(v => v.CreatedByUser).Include(v => v.VenueType);
-            return View(venues.ToList());
+            // Query trực tiếp từ DB sang ViewModel bằng LINQ Select
+            var venues = db.Venues.Select(v => new VenueListViewModel
+            {
+                VenueId = v.VenueId,
+                VenueName = v.Name,
+                Capacity = v.Capacity,
+                PricePerHour = v.RentalRate,
+                RentalUnit = v.RentalUnit,
+                TypeName = v.VenueType != null ? v.VenueType.TypeName : "N/A",
+
+                // Lấy hình ảnh chính
+                PrimaryImageUrl = v.VenueImages.FirstOrDefault(img => img.IsPrimary).ImageUrl ?? "/images/default-venue.jpg",
+
+                Status = v.Status,
+                Location = v.Location,
+                Description = v.Description,
+
+                // Rating trung bình từ bảng Feedback (chưa có thì là 0.0)
+                Rating = db.Feedbacks
+                    .Where(f => f.Booking.VenueId == v.VenueId)
+                    .Select(f => (double?)f.Rating)
+                    .Average() ?? 0.0,
+
+                // Ngày đặt gần nhất từ bảng Booking
+                LastBooking = db.Bookings
+                    .Where(b => b.VenueId == v.VenueId)
+                    .OrderByDescending(b => b.EventEndDateTime)
+                    .Select(b => (DateTime?)b.EventEndDateTime)
+                    .FirstOrDefault()
+
+            }).ToList();
+
+            // Thống kê số lượng cho 4 card trên UI
+            ViewBag.TotalVenues = venues.Count;
+            ViewBag.ActiveVenues = venues.Count(v => v.Status == 0);
+            ViewBag.InactiveVenues = venues.Count(v => v.Status == 1);
+            ViewBag.MaintenanceVenues = venues.Count(v => v.Status == 2);
+
+            return View("~/Views/Admin/Venue.cshtml", venues);
+        }
+
+        public ActionResult Facilities_Services()
+        {
+            var model = new FacilitiesServicesViewModel
+            {
+                Facilities = db.Facilities.Select(f => new FacilityViewModel
+                {
+                    FacilityId = f.FacilityId,
+                    FacilityName = f.FacilityName,
+                    IsActive = f.IsActive,
+                    LinkedVenuesCount = f.VenueFacilities.Count
+                }).ToList(),
+
+                Services = db.AddOnServices.Select(s => new AddOnServiceViewModel
+                {
+                    AddOnId = s.AddOnId,
+                    Name = s.Name,
+                    Description = s.Description,
+                    Price = s.Price,
+                    Category = s.Category,
+                    IsActive = s.IsActive
+                }).ToList()
+            };
+
+            ViewBag.TotalFacilities = model.Facilities.Count;
+            ViewBag.ActiveFacilities = model.Facilities.Count(f => f.IsActive);
+            ViewBag.TotalServices = model.Services.Count;
+            ViewBag.ActiveServices = model.Services.Count(s => s.IsActive);
+
+            return View("~/Views/Admin/Facilities_Services.cshtml", model);
         }
 
         // GET: Details
@@ -46,8 +115,6 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken] //field không nên cho người dùng tự gửi lên: CreatedAt, CreatedByUserId => Authentication
         public ActionResult Create([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status,CreatedAt,CreatedByUserId")] Venue venue)
@@ -82,8 +149,6 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status,CreatedAt,CreatedByUserId")] Venue venue)
@@ -120,7 +185,7 @@ namespace EventVenueBooking.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             Venue venue = db.Venues.Find(id);
-            venue.Status = 0;
+            venue.Status = 0; // TODO: kiểm tra lại giá trị Status, xem chú ý bên dưới
             db.SaveChanges();
             return RedirectToAction("Index");
         }
