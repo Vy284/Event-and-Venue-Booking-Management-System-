@@ -1,33 +1,425 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueCardViewModel>
+
+@{
+    ViewData["Title"] = "Trang chủ";
+    string activeCategory = ViewBag.CurrentCategory as string ?? "All";
+    string currentSearch = ViewBag.CurrentSearch as string ?? "";
+    string currentDate = ViewBag.CurrentDate as string ?? "";
+    var venueList = ViewBag.VenueSelectList as IEnumerable<SelectListItem>;
 }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+<style>
+    .venue-card-editorial {
+        background: transparent;
+        border: none;
+        transition: transform 0.3s ease;
+    }
+
+    .venue-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        aspect-ratio: 4 / 3;
+        background-color: #f5f5f5;
+    }
+
+        .venue-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+    .venue-card-editorial:hover .venue-img-wrapper img {
+        transform: scale(1.04);
+    }
+
+    .venue-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.35);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .venue-card-editorial:hover .venue-overlay {
+        opacity: 1;
+    }
+
+    .btn-view-venue {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #2b2b2b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 12px 28px;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        transform: translateY(10px);
+    }
+
+    .venue-card-editorial:hover .btn-view-venue {
+        transform: translateY(0);
+    }
+
+    .btn-view-venue:hover {
+        background-color: var(--primary-brown, #4a3b32);
+        color: #fff;
+    }
+
+    .venue-info {
+        text-align: center;
+        padding-top: 16px;
+    }
+
+    .venue-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2b2b2b;
+        margin-bottom: 2px;
+        text-decoration: none;
+        display: block;
+        transition: color 0.2s ease;
+    }
+
+        .venue-title:hover {
+            color: var(--primary-brown, #8c6239);
+        }
+
+    .venue-location {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #777;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .venue-meta {
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .venue-price {
+        font-weight: 700;
+        color: #2b2b2b;
+    }
+
+    /* FullCalendar custom styles */
+    .calendar-dark-card {
+        background-color: #3b2e27;
+        border: 1px solid #524237;
+    }
+
+    .fc {
+        --fc-page-bg-color: #3b2e27;
+        --fc-border-color: #524237;
+        --fc-neutral-bg-color: #483930;
+        --fc-button-bg-color: #5c493e;
+        --fc-button-border-color: #6b5549;
+        --fc-button-hover-bg-color: #7a6254;
+        --fc-button-hover-border-color: #7a6254;
+        --fc-button-active-bg-color: #2a201b;
+        --fc-button-active-border-color: #2a201b;
+        font-family: inherit;
+        color: #f5efe6 !important;
+    }
+
+        .fc .fc-scrollgrid,
+        .fc .fc-daygrid-day,
+        .fc .fc-col-header-cell,
+        .fc .fc-toolbar-title {
+            background-color: #3b2e27 !important;
+            color: #f5efe6 !important;
+        }
+
+        .fc .fc-day-today {
+            background-color: #524237 !important;
+        }
+
+        .fc a {
+            color: #f5efe6 !important;
+            text-decoration: none !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #d4a373 !important;
+            font-weight: 600;
+            padding: 10px 0 !important;
+        }
+</style>
+
+<div class="hero-wrapper" style="background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-3 fw-bold mb-3" style="color: var(--primary-brown); line-height: 1.1; letter-spacing: -1px;">
+                    THE PERFECT <br />EVENT VENUE
+                </h1>
+                <p class="lead text-dark fw-bold mb-4" style="max-width: 600px; text-shadow: 0 2px 2px rgba(255,255,255,0.8);">
+                    Khám phá không gian tổ chức sự kiện đỉnh cao, tiệc cưới sang trọng, sinh nhật rực rỡ và hội thảo chuyên nghiệp với hệ thống đặt sảnh hiện đại.
+                </p>
+                <div>
+                    <a href="#venue-gallery" class="btn btn-brown px-4 py-3 shadow">KHÁM PHÁ NGAY</a>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
+</div>
+
+<!-- venue gallery -->
+<div class="container my-5">
+    <div id="venue-gallery" class="pt-3">
+
+        <div class="text-center mb-3">
+            <h6 class="text-uppercase tracking-wider text-muted fw-bold small">DANH MỤC SỰ KIỆN</h6>
+            <h2 class="fw-bold" style="color: var(--primary-brown);">Moments We Created</h2>
+        </div><br>
+
+        <!-- search bar -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-9 col-xl-8">
+                <form id="search-form" action="@Url.Action("Index", "Home")" method="get" class="shadow-sm rounded-pill overflow-hidden bg-white p-2 border">
+                    <input type="hidden" name="category" id="current-category-input" value="@activeCategory" />
+
+                    <div class="row g-0 align-items-center">
+                        <!-- Ô tìm từ khóa -->
+                        <div class="col-md-6 d-flex align-items-center ps-3 pe-2 border-end border-md-0">
+                            <i class="fa-solid fa-magnifying-glass text-muted me-2"></i>
+                            <input type="text" name="search" id="search-input" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Tên sảnh, vị trí..."
+                                   value="@currentSearch" />
+                        </div>
+
+                        <!-- Lịch mini -->
+                        <div class="col-md-4 d-flex align-items-center px-3 border-start">
+                            <input type="date" name="eventDate" id="date-input" value="@currentDate" />
+                        </div>
+
+                        <!-- Nút tìm kiếm -->
+                        <div class="col-md-2 text-end">
+                            <button type="submit" class="btn btn-brown text-white rounded-pill w-100 py-2 fw-medium">
+                                Tìm kiếm
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- filter buttons -->
+        <div class="d-flex justify-content-center gap-2 mb-5 flex-wrap">
+            <a href="@Url.Action("Index", "Home", new { category = "All", search = currentSearch })"
+               data-category="All"
+               class="btn btn-sm px-4 rounded-pill category-btn d-inline-flex align-items-center justify-content-center @(activeCategory == "All" ? "btn-brown" : "btn-outline-secondary")">
+                All Events
+            </a>
+            <a href="@Url.Action("Index", "Home", new { category = "Wedding", search = currentSearch })"
+               data-category="Wedding"
+               class="btn btn-sm px-4 rounded-pill category-btn d-inline-flex align-items-center justify-content-center @(activeCategory == "Wedding" ? "btn-brown" : "btn-outline-secondary")">
+                Weddings
+            </a>
+            <a href="@Url.Action("Index", "Home", new { category = "Corporate", search = currentSearch })"
+               data-category="Corporate"
+               class="btn btn-sm px-4 rounded-pill category-btn d-inline-flex align-items-center justify-content-center @(activeCategory == "Corporate" ? "btn-brown" : "btn-outline-secondary")">
+                Corporate
+            </a>
+            <a href="@Url.Action("Index", "Home", new { category = "Birthday", search = currentSearch })"
+               data-category="Birthday"
+               class="btn btn-sm px-4 rounded-pill category-btn d-inline-flex align-items-center justify-content-center @(activeCategory == "Birthday" ? "btn-brown" : "btn-outline-secondary")">
+                Birthday
+            </a>
+            <a href="@Url.Action("Index", "Home", new { category = "Social", search = currentSearch })"
+               data-category="Social"
+               class="btn btn-sm px-4 rounded-pill category-btn d-inline-flex align-items-center justify-content-center @(activeCategory == "Social" ? "btn-brown" : "btn-outline-secondary")">
+                Social
+            </a>
+        </div>
+
+        <!-- venue cards -->
+        <div id="venue-cards-container" class="row g-4" style="transition: opacity 0.2s ease;">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="venue-card-editorial">
+                            <div class="venue-img-wrapper">
+                                <img src="@item.ImageUrl" alt="@item.Name" loading="lazy">
+
+
+                                <div class="venue-overlay">
+                                    <a href="/Venue/Details/@item.VenueId" class="btn-view-venue">
+                                        VIEW VENUE
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="venue-info">
+                                <a href="/Venue/Details/@item.VenueId" class="venue-title">@item.Name</a>
+                                <div class="venue-location">
+                                    <i class="fa-solid fa-location-dot me-1" style="font-size: 0.7rem;"></i>@item.Location
+                                </div>
+                                <div class="venue-meta">
+                                    <span><i class="fa-solid fa-users me-1"></i>Sức chứa @item.Capacity</span>
+                                    <span>•</span>
+                                    <span class="venue-price">@item.RentalRate.ToString("N0") VNĐ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted fs-5 mb-3">Không tìm thấy sảnh nào phù hợp với từ khóa hoặc danh mục đã chọn.</p>
+                    <a href="@Url.Action("Index", "Home")" id="reset-filter-btn" class="btn btn-outline-dark rounded-pill px-4 d-inline-flex align-items-center justify-content-center">Xóa bộ lọc & Xem tất cả</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- calendar -->
+<div class="bg-light py-sm-3 mt-5 border-top">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h6 class="text-uppercase tracking-wider text-muted fw-bold small">LỊCH TRẠNG THÁI SỰ KIỆN</h6>
+            <h2 class="fw-bold" style="color: var(--primary-brown);">Venue Availability Calendar</h2>
+            <p class="text-muted">Chọn sảnh bên dưới để kiểm tra các ngày/giờ đã được đặt trước</p>
+        </div>
+
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6 col-lg-4">
+                <select id="calendar-venue-select" class="form-select form-select-lg rounded-pill border-secondary shadow-sm fs-6">
+                    <option value="0">-- Chọn sảnh để xem lịch --</option>
+                    @if (venueList != null)
+                    {
+                        foreach (var v in venueList)
+                        {
+                            <option value="@v.Value">@v.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="calendar-dark-card p-4 rounded-4 shadow-lg">
+            <div id="index-availability-calendar" style="min-height: 450px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- javascript to prevent reload page -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const cardsContainer = document.getElementById('venue-cards-container');
+        const categoryInput = document.getElementById('current-category-input');
+        const searchInput = document.getElementById('search-input');
+        const dateInput = document.getElementById('date-input');
+        const searchForm = document.getElementById('search-form');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+
+    function loadVenues(url, selectedCategory) {
+            if (cardsContainer) cardsContainer.style.opacity = '0.4';
+
+            fetch(url)
+                .then(response => response.text())
+                .then(htmlText => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const newCards = doc.getElementById('venue-cards-container');
+
+                    if (newCards && cardsContainer) {
+                        cardsContainer.innerHTML = newCards.innerHTML;
+                        cardsContainer.style.opacity = '1';
+                    }
+
+                    if (selectedCategory) {
+                        if (categoryInput) categoryInput.value = selectedCategory;
+                        categoryBtns.forEach(btn => {
+                            if (btn.getAttribute('data-category') === selectedCategory) {
+                                btn.classList.remove('btn-outline-secondary');
+                                btn.classList.add('btn-brown');
+                            } else {
+                                btn.classList.remove('btn-brown');
+                                btn.classList.add('btn-outline-secondary');
+                            }
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (cardsContainer) cardsContainer.style.opacity = '1';
+                });
+        }
+
+        // Tìm theo buttons
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                loadVenues(this.getAttribute('href'), this.getAttribute('data-category'));
+            });
+        });
+
+        // Tìm theo search bar
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const searchVal = searchInput ? searchInput.value : '';
+                const dateVal = dateInput ? dateInput.value : '';
+                const currentCat = categoryInput ? categoryInput.value : 'All';
+                const baseUrl = '@Url.Action("Index", "Home")';
+                const url = `${baseUrl}?category=${encodeURIComponent(currentCat)}&search=${encodeURIComponent(searchVal)}&eventDate=${encodeURIComponent(dateVal)}`;
+                loadVenues(url, currentCat);
+            });
+        }
+
+        // calendar initialization
+        var calendarEl = document.getElementById('index-availability-calendar');
+        var calendarSelect = document.getElementById('calendar-venue-select');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            buttonText: { today: 'Hôm nay', month: 'Tháng', week: 'Tuần' },
+            locale: 'vi',
+            events: []
+        });
+        calendar.render();
+
+        // khi chọn 1 sảnh từ Dropdown
+        if (calendarSelect) {
+            calendarSelect.addEventListener('change', function () {
+                var selectedVenueId = this.value;
+                calendar.removeAllEventSources();
+                if (selectedVenueId && selectedVenueId !== "0") {
+                    calendar.addEventSource('/Venue/GetVenueBookings?venueId=' + selectedVenueId);
+                }
+            });
+        }
+
+    });
+</script>

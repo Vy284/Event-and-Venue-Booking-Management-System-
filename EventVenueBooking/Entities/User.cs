@@ -10,12 +10,13 @@ namespace EventVenueBooking.Entities
         [Key]
         public int UserId { get; set; }
 
-        [Required]
-        [MaxLength(100)]
+        [Required(ErrorMessage = "Vui lòng nhập họ và tên.")]
+        [MaxLength(100, ErrorMessage = "Họ và tên không được vượt quá 100 ký tự.")]
         public string FullName { get; set; }
 
-        [Required]
-        [MaxLength(255)]
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
+        [MaxLength(255, ErrorMessage = "Email không được vượt quá 255 ký tự.")]
+        [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
         [Index(IsUnique = true)]
         public string Email { get; set; }
 
@@ -23,7 +24,7 @@ namespace EventVenueBooking.Entities
         [MaxLength(255)]
         public string PasswordHash { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(20, ErrorMessage = "Số điện thoại không được vượt quá 20 ký tự.")]
         public string Phone { get; set; }
 
         // 0 = Client, 1 = Coordinator, 2 = Admin

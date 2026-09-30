@@ -9,20 +9,19 @@ namespace EventVenueBooking.Entities
         [Key]
         public int FacilityId { get; set; }
 
-        [Required]
-        [MaxLength(100)]
+        [Required(ErrorMessage = "Vui lòng nhập tên tiện ích.")]
+        [MaxLength(100, ErrorMessage = "Tên tiện ích không được vượt quá 100 ký tự.")]
         [Index(IsUnique = true)]
         public string FacilityName { get; set; }
 
         [Required]
         public bool IsActive { get; set; } = true;
 
-        // N-N với Venue, EF6 tự tạo bảng nối VenueFacilities (cấu hình ở DbContext)
-        public virtual ICollection<Venue> Venues { get; set; }
+        public virtual ICollection<VenueFacility> VenueFacilities { get; set; }
 
         public Facility()
         {
-            Venues = new HashSet<Venue>();
+            VenueFacilities = new HashSet<VenueFacility>();
         }
     }
 }

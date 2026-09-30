@@ -45,6 +45,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.5.2\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -94,10 +97,6 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
-    <Reference Include="Microsoft.Web.Infrastructure, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\Microsoft.Web.Infrastructure.2.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
-    </Reference>
     <Reference Include="System.Net.Http">
     </Reference>
     <Reference Include="System.Net.Http.WebRequest">
@@ -118,12 +117,19 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AddOnServicesController.cs" />
     <Compile Include="Controllers\BookingsController.cs" />
     <Compile Include="Controllers\DashboardController.cs" />
+    <Compile Include="Controllers\EventTypesController.cs" />
+    <Compile Include="Controllers\FacilitiesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PaymentsController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
+    <Compile Include="Controllers\VenueController.cs" />
+    <Compile Include="Controllers\VenueImagesController.cs" />
     <Compile Include="Controllers\VenuesController.cs" />
+    <Compile Include="Controllers\VenueTypesController.cs" />
     <Compile Include="Database\ApplicationDbContext.cs" />
     <Compile Include="Entities\AddOnService.cs" />
     <Compile Include="Entities\Booking.cs" />
@@ -144,12 +150,24 @@
     <Compile Include="Migrations\202609211314137_InitialCreate.Designer.cs">
       <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.cs" />
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.Designer.cs">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModels\BookingHistoryViewModel.cs" />
+    <Compile Include="ViewModels\BookingRequestViewModel.cs" />
     <Compile Include="ViewModels\Booking_PaymentViewModel.cs" />
     <Compile Include="ViewModels\Dashboard_CalendarViewModel.cs" />
+    <Compile Include="ViewModels\FeedbackViewModel.cs" />
+    <Compile Include="ViewModels\LoginViewModel.cs" />
+    <Compile Include="ViewModels\ProfileViewModel.cs" />
+    <Compile Include="ViewModels\RegisterViewModel.cs" />
     <Compile Include="ViewModels\Users_FeedbackViewModel.cs" />
     <Compile Include="ViewModels\Venues_FacilitiesViewModel.cs" />
+    <Compile Include="ViewModels\VenueCardViewModel.cs" />
+    <Compile Include="ViewModels\VenueDetailViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap-grid.css" />
@@ -168,6 +186,7 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\images\bg_landingpage.jpg" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -211,12 +230,51 @@
     <Content Include="Views\Admin\Payments.cshtml" />
     <Content Include="Views\Admin\Users.cshtml" />
     <Content Include="Views\Admin\Feedback.cshtml" />
+    <Content Include="Views\Venue\Details.cshtml" />
+    <Content Include="Views\Shared\_Header.cshtml" />
+    <Content Include="Views\Shared\_Footer.cshtml" />
+    <Content Include="Views\Shared\_AuthModal.cshtml" />
+    <Content Include="Views\Account\Profile.cshtml" />
+    <Content Include="Views\VenueTypes\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Create.cshtml" />
+    <Content Include="Views\VenueTypes\Edit.cshtml" />
+    <Content Include="Views\VenueTypes\Delete.cshtml" />
+    <Content Include="Views\Facilities\Create.cshtml" />
+    <Content Include="Views\Facilities\Delete.cshtml" />
+    <Content Include="Views\Facilities\Details.cshtml" />
+    <Content Include="Views\Facilities\Edit.cshtml" />
+    <Content Include="Views\Facilities\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Details.cshtml" />
+    <Content Include="Views\EventTypes\Create.cshtml" />
+    <Content Include="Views\EventTypes\Delete.cshtml" />
+    <Content Include="Views\EventTypes\Details.cshtml" />
+    <Content Include="Views\EventTypes\Edit.cshtml" />
+    <Content Include="Views\EventTypes\Index.cshtml" />
+    <Content Include="Views\AddOnServices\Create.cshtml" />
+    <Content Include="Views\AddOnServices\Delete.cshtml" />
+    <Content Include="Views\AddOnServices\Details.cshtml" />
+    <Content Include="Views\AddOnServices\Edit.cshtml" />
+    <Content Include="Views\AddOnServices\Index.cshtml" />
+    <Content Include="Views\Venues\Create.cshtml" />
+    <Content Include="Views\Venues\Delete.cshtml" />
+    <Content Include="Views\Venues\Details.cshtml" />
+    <Content Include="Views\Venues\Edit.cshtml" />
+    <Content Include="Views\Venues\Index.cshtml" />
+    <Content Include="Views\VenueImages\Create.cshtml" />
+    <Content Include="Views\VenueImages\Delete.cshtml" />
+    <Content Include="Views\VenueImages\Details.cshtml" />
+    <Content Include="Views\VenueImages\Edit.cshtml" />
+    <Content Include="Views\VenueImages\Index.cshtml" />
+    <Content Include="Views\Bookings\Create.cshtml" />
+    <Content Include="Views\Bookings\Delete.cshtml" />
+    <Content Include="Views\Bookings\Details.cshtml" />
+    <Content Include="Views\Bookings\Edit.cshtml" />
+    <Content Include="Views\Bookings\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="DAL\" />
     <Folder Include="Models\" />
-    <Folder Include="Views\Venues\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />
@@ -248,6 +306,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202609211314137_InitialCreate.resx">
       <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609251500110_FixVenueFacilityMapping.resx">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

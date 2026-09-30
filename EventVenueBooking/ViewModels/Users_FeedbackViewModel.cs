@@ -16,15 +16,4 @@ namespace EventVenueBooking.ViewModels
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
     }
-
-    public class FeedbackViewModel
-    {
-        public int FeedbackId { get; set; }
-        public int BookingId { get; set; }
-        public string CustomerName { get; set; }
-        public string VenueName { get; set; }
-        public int Rating { get; set; }
-        public string Comment { get; set; }
-        public DateTime SubmittedAt { get; set; }
-    }
 }
