@@ -117,8 +117,15 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
-    <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\VenueController.cs" />
+    <Compile Include="Controllers\AddOnServicesController.cs" />
+    <Compile Include="Controllers\BookingsController.cs" />
+    <Compile Include="Controllers\EventTypesController.cs" />
+    <Compile Include="Controllers\FacilitiesController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\VenueImagesController.cs" />
+    <Compile Include="Controllers\VenuesController.cs" />
+    <Compile Include="Controllers\VenueTypesController.cs" />
     <Compile Include="Database\ApplicationDbContext.cs" />
     <Compile Include="Entities\AddOnService.cs" />
     <Compile Include="Entities\Booking.cs" />
@@ -138,6 +145,10 @@
     <Compile Include="Migrations\202609211314137_InitialCreate.cs" />
     <Compile Include="Migrations\202609211314137_InitialCreate.Designer.cs">
       <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.cs" />
+    <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.Designer.cs">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -207,17 +218,48 @@
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Shared\_AuthModal.cshtml" />
     <Content Include="Views\Account\Profile.cshtml" />
+    <Content Include="Views\VenueTypes\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Create.cshtml" />
+    <Content Include="Views\VenueTypes\Edit.cshtml" />
+    <Content Include="Views\VenueTypes\Delete.cshtml" />
+    <Content Include="Views\Facilities\Create.cshtml" />
+    <Content Include="Views\Facilities\Delete.cshtml" />
+    <Content Include="Views\Facilities\Details.cshtml" />
+    <Content Include="Views\Facilities\Edit.cshtml" />
+    <Content Include="Views\Facilities\Index.cshtml" />
+    <Content Include="Views\VenueTypes\Details.cshtml" />
+    <Content Include="Views\EventTypes\Create.cshtml" />
+    <Content Include="Views\EventTypes\Delete.cshtml" />
+    <Content Include="Views\EventTypes\Details.cshtml" />
+    <Content Include="Views\EventTypes\Edit.cshtml" />
+    <Content Include="Views\EventTypes\Index.cshtml" />
+    <Content Include="Views\AddOnServices\Create.cshtml" />
+    <Content Include="Views\AddOnServices\Delete.cshtml" />
+    <Content Include="Views\AddOnServices\Details.cshtml" />
+    <Content Include="Views\AddOnServices\Edit.cshtml" />
+    <Content Include="Views\AddOnServices\Index.cshtml" />
+    <Content Include="Views\Venues\Create.cshtml" />
+    <Content Include="Views\Venues\Delete.cshtml" />
+    <Content Include="Views\Venues\Details.cshtml" />
+    <Content Include="Views\Venues\Edit.cshtml" />
+    <Content Include="Views\Venues\Index.cshtml" />
+    <Content Include="Views\VenueImages\Create.cshtml" />
+    <Content Include="Views\VenueImages\Delete.cshtml" />
+    <Content Include="Views\VenueImages\Details.cshtml" />
+    <Content Include="Views\VenueImages\Edit.cshtml" />
+    <Content Include="Views\VenueImages\Index.cshtml" />
+    <Content Include="Views\Bookings\Create.cshtml" />
+    <Content Include="Views\Bookings\Delete.cshtml" />
+    <Content Include="Views\Bookings\Details.cshtml" />
+    <Content Include="Views\Bookings\Edit.cshtml" />
+    <Content Include="Views\Bookings\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="DAL\" />
     <Folder Include="Models\" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Migrations\202609211314137_InitialCreate.resx">
-      <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
+ 
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />
     <Content Include="Content\bootstrap.rtl.css.map" />
@@ -244,6 +286,14 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\202609211314137_InitialCreate.resx">
+      <DependentUpon>202609211314137_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609251500110_FixVenueFacilityMapping.resx">
+      <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
