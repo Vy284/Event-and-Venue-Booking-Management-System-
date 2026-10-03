@@ -15,69 +15,107 @@ namespace EventVenueBooking.Controllers
         // POST: Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Login(string usernameOrEmail, string password)
+        public ActionResult Login(LoginViewModel model)
         {
-            // Email login
-            var user = db.Users.FirstOrDefault(u =>
-                u.Email == usernameOrEmail
-                && u.PasswordHash == password);
-
-            if (user != null)
+            try 
             {
-                Session["User"] = user;
-                Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
-                Session["UserRole"] = user.Role; // 0 = Client, 1 = Coordinator, 2 = Admin
+                //throw new Exception("Test Error Page"); -> test view error
+                if (!ModelState.IsValid)
+                {
+                    TempData["ErrorMessage"] = "Thông tin đăng nhập không hợp lệ!";
+                    return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+                }
 
-                FormsAuthentication.SetAuthCookie(user.Email, false);
+                var user = db.Users.FirstOrDefault(u =>
+                    u.Email == model.Email);
 
-                TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
+                if (user != null && user.IsActive && BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                {
+                    Session["User"] = user;
+                    Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
+                    Session["UserRole"] = user.Role; // 0 = Client, 1 = Coordinator, 2 = Admin
+
+                    FormsAuthentication.SetAuthCookie(user.Email, false);
+
+                    TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng!";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng!";
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
             }
-
             return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
         }
 
         // POST: Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Register(UserEntity model)
+        public ActionResult Register(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var isExist = db.Users.Any(u => u.Email == model.Email);
-                if (isExist)
+                if (ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Email đã được đăng ký!";
+                    var isExist = db.Users.Any(u => u.Email == model.Email);
+
+                    if (isExist)
+                    {
+                        TempData["ErrorMessage"] = "Email đã được đăng ký!";
+                        TempData["RegisterData"] = model;
+                        TempData["OpenRegisterModal"] = true;
+
+                        return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+                    }
+
+                    var user = new UserEntity
+                    {
+                        FullName = model.FullName,
+                        Email = model.Email,
+                        Phone = model.Phone,
+
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
+
+                        Role = 0,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    db.Users.Add(user);
+                    db.SaveChanges();
+
+                    Session["User"] = user;
+                    Session["UserName"] = string.IsNullOrEmpty(user.FullName)
+                        ? user.Email
+                        : user.FullName;
+                    Session["UserRole"] = user.Role;
+
+                    FormsAuthentication.SetAuthCookie(user.Email, false);
+
+                    TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] =
+                        "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
                     TempData["RegisterData"] = model;
                     TempData["OpenRegisterModal"] = true;
-                    return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
                 }
 
-                model.Role = 0;
-                model.CreatedAt = DateTime.Now;
-
-                db.Users.Add(model);
-                db.SaveChanges();
-
-                // Tự động login
-                Session["User"] = model;
-                Session["UserName"] = string.IsNullOrEmpty(model.FullName) ? model.Email : model.FullName;
-                Session["UserRole"] = model.Role;
-
-                FormsAuthentication.SetAuthCookie(model.Email, false);
-
-                TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
+                return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
             }
-            else
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
             }
-
-            return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+            
         }
+
 
         // GET: Account/Logout
         public ActionResult Logout()
@@ -91,46 +129,57 @@ namespace EventVenueBooking.Controllers
         // GET: Account/Profile
         public ActionResult Profile()
         {
-            // Kiểm tra đăng nhập qua Session
-            var sessionUser = Session["User"] as UserEntity;
-            if (sessionUser == null)
+            try
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem trang cá nhân!";
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Lấy thông tin mới nhất từ DB
-            var user = db.Users.FirstOrDefault(u => u.UserId == sessionUser.UserId);
-            if (user == null) return HttpNotFound();
-
-            string roleDisplay = user.Role == 2 ? "Quản Trị Viên (Admin)" :
-                                 user.Role == 1 ? "Nhân Viên (Coordinator)" : "Khách Hàng Thân Thiết";
-
-            var model = new ProfileViewModel
-            {
-                UserId = user.UserId,
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Role = user.Role,
-                RoleName = roleDisplay,
-                CreatedAt = user.CreatedAt,
-                Bookings = user.Bookings.OrderByDescending(b => b.CreatedAt).Select(b => new UserBookingViewModel
+                // Kiểm tra đăng nhập qua Session
+                var sessionUser = Session["User"] as UserEntity;
+                if (sessionUser == null)
                 {
-                    BookingId = b.BookingId,
-                    VenueName = b.Venue != null ? b.Venue.Name : "Sảnh sự kiện",
-                    VenueImageUrl = db.VenueImages.FirstOrDefault(img => img.VenueId == b.VenueId && img.IsPrimary).ImageUrl
-                                   ?? "/Content/images/bg_landingpage.jpg",
-                    EventTypeName = b.EventType != null ? b.EventType.TypeName : "Tổ chức sự kiện",
-                    EventStartDateTime = b.EventStartDateTime,
-                    EventEndDateTime = b.EventEndDateTime,
-                    GuestCount = b.GuestCount,
-                    TotalCost = b.TotalCost,
-                    Status = b.Status
-                }).ToList()
-            };
+                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem trang cá nhân!";
+                    return RedirectToAction("Index", "Home");
+                }
 
-            return View(model);
+                // Lấy thông tin mới nhất từ DB
+                var user = db.Users.FirstOrDefault(u => u.UserId == sessionUser.UserId);
+                if (user == null) return HttpNotFound();
+
+                string roleDisplay = user.Role == 2 ? "Quản Trị Viên (Admin)" :
+                                     user.Role == 1 ? "Nhân Viên (Coordinator)" : "Khách Hàng Thân Thiết";
+
+                var model = new ProfileViewModel
+                {
+                    UserId = user.UserId,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    Role = user.Role,
+                    RoleName = roleDisplay,
+                    CreatedAt = user.CreatedAt,
+                    Bookings = user.Bookings.OrderByDescending(b => b.CreatedAt).Select(b => new UserBookingViewModel
+                    {
+                        BookingId = b.BookingId,
+                        VenueName = b.Venue != null ? b.Venue.Name : "Sảnh sự kiện",
+                        VenueImageUrl = db.VenueImages
+                                        .Where(img => img.VenueId == b.VenueId && img.IsPrimary)
+                                        .Select(img => img.ImageUrl)
+                                        .FirstOrDefault()
+                                        ?? "/Content/images/bg_landingpage.jpg",
+                        EventTypeName = b.EventType != null ? b.EventType.TypeName : "Tổ chức sự kiện",
+                        EventStartDateTime = b.EventStartDateTime,
+                        EventEndDateTime = b.EventEndDateTime,
+                        GuestCount = b.GuestCount,
+                        TotalCost = b.TotalCost,
+                        Status = b.Status
+                    }).ToList()
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
+            }
         }
 
         // POST: Account/UpdateProfile
@@ -138,24 +187,32 @@ namespace EventVenueBooking.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult UpdateProfile(string fullName, string phone)
         {
-            var sessionUser = Session["User"] as UserEntity;
-            if (sessionUser == null) return RedirectToAction("Index", "Home");
-
-            var user = db.Users.Find(sessionUser.UserId);
-            if (user != null)
+            try
             {
-                user.FullName = fullName;
-                user.Phone = phone;
-                db.SaveChanges();
+                var sessionUser = Session["User"] as UserEntity;
+                if (sessionUser == null) return RedirectToAction("Index", "Home");
 
-                // Cập nhật lại Session
-                Session["User"] = user;
-                Session["UserName"] = user.FullName;
+                var user = db.Users.Find(sessionUser.UserId);
+                if (user != null)
+                {
+                    user.FullName = fullName;
+                    user.Phone = phone;
+                    db.SaveChanges();
 
-                TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                    // Cập nhật lại Session
+                    Session["User"] = user;
+                    Session["UserName"] = user.FullName;
+
+                    TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                }
+
+                return RedirectToAction("Profile");
             }
-
-            return RedirectToAction("Profile");
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
+            }          
         }
 
         protected override void Dispose(bool disposing)

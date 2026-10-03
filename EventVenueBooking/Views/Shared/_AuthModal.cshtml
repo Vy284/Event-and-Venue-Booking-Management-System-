@@ -1,5 +1,5 @@
 ﻿@{
-    var oldRegister = TempData["RegisterData"] as EventVenueBooking.Entities.User;
+    var oldRegister = TempData["RegisterData"] as EventVenueBooking.ViewModels.RegisterViewModel;
     var shouldOpenRegister = TempData["OpenRegisterModal"] != null;
 }
 
@@ -62,10 +62,10 @@
                                 {
                                     @Html.AntiForgeryToken()
                                     <div class="mb-4">
-                                        <input type="text" name="usernameOrEmail" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
+                                        <input type="text" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
                                     </div>
                                     <div class="mb-4">
-                                        <input type="password" name="password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-4 fs-5 fst-italic">
                                         <div class="form-check">
@@ -96,7 +96,10 @@
                                         <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Số điện thoại" />
                                     </div>
                                     <div class="mb-3">
-                                        <input type="password" name="PasswordHash" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="password" name="ConfirmPassword" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Xác nhận mật khẩu" required />
                                     </div>
                                     <button type="submit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-4" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
                                 }
