@@ -12,7 +12,7 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // GET: Venue/Details/1
+        // GET: Venue/Details
         public ActionResult Details(int? id)
         {
             if (id == null)
