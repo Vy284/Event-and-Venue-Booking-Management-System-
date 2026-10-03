@@ -1,16 +1,33 @@
-﻿using System;
+﻿using EventVenueBooking.Database;
+using EventVenueBooking.ViewModels;
+using System;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
-using EventVenueBooking.Database;
 using UserEntity = EventVenueBooking.Entities.User; // Đặt UserEntity để C# không nhầm với Controller.User
-using EventVenueBooking.ViewModels;
 
 namespace EventVenueBooking.Controllers
 {
     public class AccountController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
+
+        //Get role
+        private string GetRoleName(byte role)
+        {
+            switch (role)
+            {
+                case 2:
+                    return "Admin";
+
+                case 1:
+                    return "Coordinator";
+
+                default:
+                    return "Client";
+            }
+        }
 
         // POST: Account/Login
         [HttpPost]
@@ -45,7 +62,26 @@ namespace EventVenueBooking.Controllers
                         : user.FullName;
                     Session["UserRole"] = user.Role;
 
-                    FormsAuthentication.SetAuthCookie(user.Email, false);
+                    string roleName = GetRoleName(user.Role);
+
+                    var ticket = new FormsAuthenticationTicket(
+                        1,
+                        user.Email,
+                        DateTime.Now,
+                        DateTime.Now.AddMinutes(30),
+                        false,
+                        roleName,
+                        FormsAuthentication.FormsCookiePath
+                    );
+
+                    string encryptedTicket = FormsAuthentication.Encrypt(ticket);
+
+                    Response.Cookies.Add(
+                        new HttpCookie(
+                            FormsAuthentication.FormsCookieName,
+                            encryptedTicket
+                        )
+                    );
 
                     TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
                 }
@@ -122,7 +158,26 @@ namespace EventVenueBooking.Controllers
                         : user.FullName;
                     Session["UserRole"] = user.Role;
 
-                    FormsAuthentication.SetAuthCookie(user.Email, false);
+                    string roleName = GetRoleName(user.Role);
+
+                    var ticket = new FormsAuthenticationTicket(
+                        1,
+                        user.Email,
+                        DateTime.Now,
+                        DateTime.Now.AddMinutes(30),
+                        false,
+                        roleName,
+                        FormsAuthentication.FormsCookiePath
+                    );
+
+                    string encryptedTicket = FormsAuthentication.Encrypt(ticket);
+
+                    Response.Cookies.Add(
+                        new HttpCookie(
+                            FormsAuthentication.FormsCookieName,
+                            encryptedTicket
+                        )
+                    );
 
                     TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
                 }
@@ -242,6 +297,18 @@ namespace EventVenueBooking.Controllers
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return View("Error");
             }          
+        }
+
+        [Authorize]
+        public ActionResult TestRole()
+        {
+            return Content(
+                "Authenticated: " + User.Identity.IsAuthenticated +
+                " | Name: " + User.Identity.Name +
+                " | Admin: " + User.IsInRole("Admin") +
+                " | Coordinator: " + User.IsInRole("Coordinator") +
+                " | Client: " + User.IsInRole("Client")
+            );
         }
 
         protected override void Dispose(bool disposing)
