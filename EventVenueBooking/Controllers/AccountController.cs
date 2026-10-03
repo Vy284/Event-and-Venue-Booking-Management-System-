@@ -17,23 +17,33 @@ namespace EventVenueBooking.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model)
         {
-            try 
+            try
             {
-                //throw new Exception("Test Error Page"); -> test view error
+                // Validation của ViewModel không hợp lệ
                 if (!ModelState.IsValid)
                 {
+                    TempData["LoginData"] = new LoginViewModel
+                    {
+                        Email = model.Email
+                        // Không lưu Password
+                    };
+
+                    TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Thông tin đăng nhập không hợp lệ!";
-                    return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+
+                    return RedirectToAction("Index", "Home");
                 }
 
-                var user = db.Users.FirstOrDefault(u =>
-                    u.Email == model.Email);
+                var user = db.Users.FirstOrDefault(u => u.Email == model.Email);
 
-                if (user != null && user.IsActive && BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                if (user != null && user.IsActive &&
+                    BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
                 {
                     Session["User"] = user;
-                    Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
-                    Session["UserRole"] = user.Role; // 0 = Client, 1 = Coordinator, 2 = Admin
+                    Session["UserName"] = string.IsNullOrEmpty(user.FullName)
+                        ? user.Email
+                        : user.FullName;
+                    Session["UserRole"] = user.Role;
 
                     FormsAuthentication.SetAuthCookie(user.Email, false);
 
@@ -41,6 +51,13 @@ namespace EventVenueBooking.Controllers
                 }
                 else
                 {
+                    // Login sai → giữ Email, không giữ Password
+                    TempData["LoginData"] = new LoginViewModel
+                    {
+                        Email = model.Email
+                    };
+
+                    TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng!";
                 }
             }
@@ -49,6 +66,7 @@ namespace EventVenueBooking.Controllers
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return View("Error");
             }
+
             return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
         }
 
@@ -59,6 +77,16 @@ namespace EventVenueBooking.Controllers
         {
             try
             {
+                // Lưu lại những thông tin được phép giữ
+                var registerData = new RegisterViewModel
+                {
+                    FullName = model.FullName,
+                    Email = model.Email,
+                    Phone = model.Phone
+                    // Không lưu Password
+                    // Không lưu ConfirmPassword
+                };
+
                 if (ModelState.IsValid)
                 {
                     var isExist = db.Users.Any(u => u.Email == model.Email);
@@ -66,10 +94,10 @@ namespace EventVenueBooking.Controllers
                     if (isExist)
                     {
                         TempData["ErrorMessage"] = "Email đã được đăng ký!";
-                        TempData["RegisterData"] = model;
+                        TempData["RegisterData"] = registerData;
                         TempData["OpenRegisterModal"] = true;
 
-                        return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+                        return RedirectToAction("Index", "Home");
                     }
 
                     var user = new UserEntity
@@ -102,18 +130,18 @@ namespace EventVenueBooking.Controllers
                 {
                     TempData["ErrorMessage"] =
                         "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
-                    TempData["RegisterData"] = model;
+
+                    TempData["RegisterData"] = registerData;
                     TempData["OpenRegisterModal"] = true;
                 }
 
-                return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
+                return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return View("Error");
             }
-            
         }
 
 
@@ -127,6 +155,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Account/Profile
+        [Authorize]
         public ActionResult Profile()
         {
             try
