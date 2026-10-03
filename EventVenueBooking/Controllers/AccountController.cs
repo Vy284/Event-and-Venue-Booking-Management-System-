@@ -267,6 +267,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Account/UpdateProfile
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult UpdateProfile(string fullName, string phone)
