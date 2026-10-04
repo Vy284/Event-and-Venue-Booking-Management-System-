@@ -270,26 +270,52 @@ namespace EventVenueBooking.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult UpdateProfile(string fullName, string phone)
+        public ActionResult UpdateProfile(UpdateProfileViewModel model)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    TempData["ErrorMessage"] =
+                        "Thông tin cập nhật không hợp lệ.";
+
+                    return RedirectToAction("Profile");
+                }
+
                 var sessionUser = Session["User"] as UserEntity;
-                if (sessionUser == null) return RedirectToAction("Index", "Home");
+
+                if (sessionUser == null)
+                {
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để cập nhật thông tin!";
+
+                    return RedirectToAction("Index", "Home");
+                }
 
                 var user = db.Users.Find(sessionUser.UserId);
-                if (user != null)
+
+                if (user == null)
                 {
-                    user.FullName = fullName;
-                    user.Phone = phone;
-                    db.SaveChanges();
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
 
-                    // Cập nhật lại Session
-                    Session["User"] = user;
-                    Session["UserName"] = user.FullName;
-
-                    TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                    return RedirectToAction("Index", "Home");
                 }
+
+                user.FullName = model.FullName.Trim();
+
+                user.Phone = string.IsNullOrWhiteSpace(model.Phone)
+                    ? null
+                    : model.Phone.Trim();
+
+                db.SaveChanges();
+
+                // Cập nhật lại Session
+                Session["User"] = user;
+                Session["UserName"] = user.FullName;
+
+                TempData["SuccessMessage"] =
+                    "Cập nhật thông tin cá nhân thành công!";
 
                 return RedirectToAction("Profile");
             }
@@ -297,9 +323,11 @@ namespace EventVenueBooking.Controllers
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
                 return View("Error");
-            }          
+            }
         }
 
+
+        //test
         [Authorize]
         public ActionResult TestRole()
         {
@@ -312,6 +340,169 @@ namespace EventVenueBooking.Controllers
             );
         }
 
+        //GET: Account/ChangeEmail
+        [Authorize]
+        public ActionResult ChangeEmail()
+        {
+            return View();
+        }
+        // POST: Account/ChangeEmail
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ChangeEmail(ChangeEmailViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                var sessionUser = Session["User"] as UserEntity;
+
+                if (sessionUser == null)
+                {
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để thay đổi email.";
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var user = db.Users.Find(sessionUser.UserId);
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                string newEmail = model.NewEmail.Trim();
+
+                bool emailExists = db.Users.Any(u =>
+                    u.Email == newEmail &&
+                    u.UserId != user.UserId);
+
+                if (emailExists)
+                {
+                    ModelState.AddModelError(
+                        "NewEmail",
+                        "Email này đã được sử dụng.");
+
+                    return View(model);
+                }
+
+                user.Email = newEmail;
+
+                db.SaveChanges();
+
+                Session["User"] = user;
+
+                // Tạo lại authentication ticket vì Email đang
+                // được dùng làm Name của FormsAuthenticationTicket.
+                string roleName = GetRoleName(user.Role);
+
+                var ticket = new FormsAuthenticationTicket(
+                    1,
+                    user.Email,
+                    DateTime.Now,
+                    DateTime.Now.AddMinutes(30),
+                    false,
+                    roleName
+                );
+
+                string encryptedTicket =
+                    FormsAuthentication.Encrypt(ticket);
+
+                var cookie = new HttpCookie(
+                    FormsAuthentication.FormsCookieName,
+                    encryptedTicket);
+
+                Response.Cookies.Add(cookie);
+
+                TempData["SuccessMessage"] =
+                    "Thay đổi email thành công!";
+
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
+            }
+        }
+
+        //GET: Account/ChangePassword
+        [Authorize]
+        public ActionResult ChangePassword()
+        {
+            return View();
+        }
+        // POST: Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ChangePassword(ChangePasswordViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                var sessionUser = Session["User"] as UserEntity;
+
+                if (sessionUser == null)
+                {
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để thay đổi mật khẩu.";
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var user = db.Users.Find(sessionUser.UserId);
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                bool currentPasswordCorrect =
+                    BCrypt.Net.BCrypt.Verify(
+                        model.CurrentPassword,
+                        user.PasswordHash);
+
+                if (!currentPasswordCorrect)
+                {
+                    ModelState.AddModelError(
+                        "CurrentPassword",
+                        "Mật khẩu hiện tại không chính xác.");
+
+                    return View(model);
+                }
+
+                user.PasswordHash =
+                    BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+
+                db.SaveChanges();
+
+                TempData["SuccessMessage"] =
+                    "Đổi mật khẩu thành công!";
+
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                return View("Error");
+            }
+        }
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();

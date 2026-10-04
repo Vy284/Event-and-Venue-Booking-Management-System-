@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EventVenueBooking.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
@@ -32,13 +33,26 @@ namespace EventVenueBooking
             if (ticket == null || ticket.Expired)
                 return;
 
-            string roleName = ticket.UserData;
+            using (var db = new ApplicationDbContext())
+            {
+                var user = db.Users.FirstOrDefault(u =>
+                    u.Email == ticket.Name);
 
-            var identity = new FormsIdentity(ticket);
-            var principal = new GenericPrincipal(identity, new[] { roleName });
+                if (user == null || !user.IsActive)
+                {
+                    FormsAuthentication.SignOut();
+                    return;
+                }
 
-            Context.User = principal;
-            System.Threading.Thread.CurrentPrincipal = principal;
+                string roleName = ticket.UserData;
+
+                var identity = new FormsIdentity(ticket);
+                var principal =
+                    new GenericPrincipal(identity, new[] { roleName });
+
+                Context.User = principal;
+                System.Threading.Thread.CurrentPrincipal = principal;
+            }
         }
     }
 }
