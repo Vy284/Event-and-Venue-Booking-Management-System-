@@ -1,6 +1,11 @@
 ﻿@{
     var oldRegister = TempData["RegisterData"] as EventVenueBooking.ViewModels.RegisterViewModel;
     var shouldOpenRegister = TempData["OpenRegisterModal"] != null;
+    var shouldOpenLogin = TempData["OpenLoginModal"] != null;
+
+    var loginError = shouldOpenLogin ? TempData["ErrorMessage"] as string : null;
+    var registerError = shouldOpenRegister ? TempData["ErrorMessage"] as string : null;
+
 }
 
 <style>
@@ -53,57 +58,85 @@
                         </ul>
 
                         <div class="tab-content" id="pills-tabContent">
-                            <!-- Login -->
+                            <!-- Login Tab -->
                             <div class="tab-pane fade show active" id="pills-login">
                                 <h2 class="fw-normal mb-1" style="font-family: 'Playfair Display', serif; color: #2B2623; font-size: 2.2rem;">Welcome Back!</h2>
-                                <p class="text-muted small mb-4 text-uppercase" style="font-size: 1rem; letter-spacing: 1px;">Nhập thông tin tài khoản của bạn</p>
+                                <p class="text-muted small mb-3 text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Nhập thông tin tài khoản của bạn</p>
 
-                                @using (Html.BeginForm("Login", "Account", FormMethod.Post))
+                                <!-- Khung báo lỗi Login AJAX -->
+                                <div id="loginAlert" class="alert alert-danger py-2 px-3 mb-3 border-0 rounded-3 small d-none align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span id="loginAlertText"></span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(loginError))
+                                {
+                                    <div class="alert alert-danger py-2 px-3 mb-3 border-0 rounded-3 small d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                        <span>@loginError</span>
+                                    </div>
+                                }
+
+                                @using (Html.BeginForm("Login", "Account", FormMethod.Post, new { id = "loginForm" }))
                                 {
                                     @Html.AntiForgeryToken()
-                                    <div class="mb-4">
-                                        <input type="text" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
+                                    <div class="mb-3">
+                                        <input type="email" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
                                     </div>
-                                    <div class="mb-4">
-                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
+                                    <div class="mb-3">
+                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
                                     </div>
-                                    <div class="d-flex justify-content-between align-items-center mb-4 fs-5 fst-italic">
+                                    <div class="d-flex justify-content-between align-items-center mb-4 fs-6 fst-italic">
                                         <div class="form-check">
                                             <input class="form-check-input border-secondary" type="checkbox" id="rememberMe">
                                             <label class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi</label>
                                         </div>
                                         <a href="#" class="text-decoration-none text-muted">Quên mật khẩu?</a>
                                     </div>
-                                    <button type="submit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-4" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">ĐĂNG NHẬP</button>
+                                    <button type="submit" id="btnLoginSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">ĐĂNG NHẬP</button>
                                 }
                             </div>
 
-                            <!-- Register -->
+                            <!-- Register Tab -->
                             <div class="tab-pane fade" id="pills-register">
                                 <h2 class="fw-normal mb-1" style="font-family: 'Playfair Display', serif; color: #2B2623; font-size: 2.2rem;">Create Account</h2>
-                                <p class="text-muted small mb-4 text-uppercase" style="font-size: 1rem; letter-spacing: 1px;">Trở thành thành viên để nhận ưu đãi</p>
+                                <p class="text-muted small mb-3 text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Trở thành thành viên để nhận ưu đãi</p>
 
-                                @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+                                <!-- Khung báo lỗi Register AJAX -->
+                                <div id="registerAlert" class="alert alert-danger py-2 px-3 mb-3 border-0 rounded-3 small d-none align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span id="registerAlertText"></span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(registerError))
                                 {
-                                    @Html.AntiForgeryToken()
-                                    <div class="mb-3">
-                                        <input type="text" name="FullName" value="@(oldRegister != null ? oldRegister.FullName : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Họ và tên" required />
+                                    <div class="alert alert-danger py-2 px-3 mb-3 border-0 rounded-3 small d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                        <span>@registerError</span>
                                     </div>
-                                    <div class="mb-3">
-                                        <input type="email" name="Email" value="@(oldRegister != null ? oldRegister.Email : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Địa chỉ Email" required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Số điện thoại" />
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Mật khẩu" required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="password" name="ConfirmPassword" class="form-control border-0 px-3 shadow-sm bg-white fs-5" placeholder="Xác nhận mật khẩu" required />
-                                    </div>
-                                    <button type="submit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-4" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
                                 }
-                            </div>
+
+                                    @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <div class="mb-3">
+                                            <input type="text" name="FullName" value="@(oldRegister != null ? oldRegister.FullName : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Họ và tên" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="email" name="Email" value="@(oldRegister != null ? oldRegister.Email : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Số điện thoại" />
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" name="ConfirmPassword" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Xác nhận mật khẩu" required />
+                                        </div>
+                                        <button type="submit" id="btnRegisterSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
+                                    }
+                                </div>
                         </div>
 
                     </div>
@@ -113,21 +146,71 @@
     </div>
 </div>
 
-@if (shouldOpenRegister)
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var authModalElement = document.getElementById('authModal');
-            if (authModalElement) {
-                var myModal = new bootstrap.Modal(authModalElement);
-                myModal.show();
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
 
-                // Chuyển sang tab Register
-                var registerTab = document.getElementById('pills-register-tab');
-                if (registerTab) {
-                    var tab = new bootstrap.Tab(registerTab);
-                    tab.show();
-                }
-            }
-        });</script>
-}
+        // Submit Login AJAX
+        var loginForm = document.getElementById("loginForm");
+        if (loginForm) {
+            loginForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                var formData = new FormData(loginForm);
+                var alertBox = document.getElementById("loginAlert");
+                var alertText = document.getElementById("loginAlertText");
+
+                fetch(loginForm.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            if (alertBox && alertText) {
+                                alertText.textContent = data.message;
+                                alertBox.classList.remove("d-none");
+                                alertBox.classList.add("d-flex");
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error Login:", err));
+            });
+        }
+
+        // Submit Register AJAX
+        var registerForm = document.getElementById("registerForm");
+        if (registerForm) {
+            registerForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                var formData = new FormData(registerForm);
+                var alertBox = document.getElementById("registerAlert");
+                var alertText = document.getElementById("registerAlertText");
+
+                fetch(registerForm.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            if (alertBox && alertText) {
+                                alertText.textContent = data.message;
+                                alertBox.classList.remove("d-none");
+                                alertBox.classList.add("d-flex");
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error Register:", err));
+            });
+        }
+    });
+</script>

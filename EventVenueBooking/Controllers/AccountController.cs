@@ -36,63 +36,46 @@ namespace EventVenueBooking.Controllers
         {
             try
             {
-                // Validation của ViewModel không hợp lệ
                 if (!ModelState.IsValid)
                 {
-                    TempData["LoginData"] = new LoginViewModel
-                    {
-                        Email = model.Email
-                        // Không lưu Password
-                    };
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Thông tin đăng nhập không hợp lệ!" });
 
+                    TempData["LoginData"] = new LoginViewModel { Email = model.Email };
                     TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Thông tin đăng nhập không hợp lệ!";
-
                     return RedirectToAction("Index", "Home");
                 }
 
                 var user = db.Users.FirstOrDefault(u => u.Email == model.Email);
 
-                if (user != null && user.IsActive &&
-                    BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                if (user != null && user.IsActive && BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
                 {
                     Session["User"] = user;
-                    Session["UserName"] = string.IsNullOrEmpty(user.FullName)
-                        ? user.Email
-                        : user.FullName;
+                    Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
                     Session["UserRole"] = user.Role;
 
                     string roleName = GetRoleName(user.Role);
 
                     var ticket = new FormsAuthenticationTicket(
-                        1,
-                        user.Email,
-                        DateTime.Now,
-                        DateTime.Now.AddMinutes(30),
-                        false,
-                        roleName,
-                        FormsAuthentication.FormsCookiePath
+                        1, user.Email, DateTime.Now, DateTime.Now.AddMinutes(30), false, roleName, FormsAuthentication.FormsCookiePath
                     );
 
                     string encryptedTicket = FormsAuthentication.Encrypt(ticket);
-
-                    Response.Cookies.Add(
-                        new HttpCookie(
-                            FormsAuthentication.FormsCookieName,
-                            encryptedTicket
-                        )
-                    );
+                    Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket));
 
                     TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
+
+                    // NẾU LÀ AJAX: Trả về JSON thông báo thành công + link chuyển trang
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, redirectUrl = Request.UrlReferrer?.ToString() ?? Url.Action("Index", "Home") });
                 }
                 else
                 {
-                    // Login sai → giữ Email, không giữ Password
-                    TempData["LoginData"] = new LoginViewModel
-                    {
-                        Email = model.Email
-                    };
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Email hoặc mật khẩu không đúng!" });
 
+                    TempData["LoginData"] = new LoginViewModel { Email = model.Email };
                     TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng!";
                 }
@@ -100,6 +83,8 @@ namespace EventVenueBooking.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Lỗi hệ thống, vui lòng thử lại!" });
                 return View("Error");
             }
 
@@ -113,14 +98,11 @@ namespace EventVenueBooking.Controllers
         {
             try
             {
-                // Lưu lại những thông tin được phép giữ
                 var registerData = new RegisterViewModel
                 {
                     FullName = model.FullName,
                     Email = model.Email,
                     Phone = model.Phone
-                    // Không lưu Password
-                    // Không lưu ConfirmPassword
                 };
 
                 if (ModelState.IsValid)
@@ -129,10 +111,12 @@ namespace EventVenueBooking.Controllers
 
                     if (isExist)
                     {
+                        if (Request.IsAjaxRequest())
+                            return Json(new { success = false, message = "Email đã được đăng ký!" });
+
                         TempData["ErrorMessage"] = "Email đã được đăng ký!";
                         TempData["RegisterData"] = registerData;
                         TempData["OpenRegisterModal"] = true;
-
                         return RedirectToAction("Index", "Home");
                     }
 
@@ -141,9 +125,7 @@ namespace EventVenueBooking.Controllers
                         FullName = model.FullName,
                         Email = model.Email,
                         Phone = model.Phone,
-
                         PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-
                         Role = 0,
                         IsActive = true,
                         CreatedAt = DateTime.Now
@@ -153,39 +135,24 @@ namespace EventVenueBooking.Controllers
                     db.SaveChanges();
 
                     Session["User"] = user;
-                    Session["UserName"] = string.IsNullOrEmpty(user.FullName)
-                        ? user.Email
-                        : user.FullName;
+                    Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
                     Session["UserRole"] = user.Role;
 
                     string roleName = GetRoleName(user.Role);
-
-                    var ticket = new FormsAuthenticationTicket(
-                        1,
-                        user.Email,
-                        DateTime.Now,
-                        DateTime.Now.AddMinutes(30),
-                        false,
-                        roleName,
-                        FormsAuthentication.FormsCookiePath
-                    );
-
-                    string encryptedTicket = FormsAuthentication.Encrypt(ticket);
-
-                    Response.Cookies.Add(
-                        new HttpCookie(
-                            FormsAuthentication.FormsCookieName,
-                            encryptedTicket
-                        )
-                    );
+                    var ticket = new FormsAuthenticationTicket(1, user.Email, DateTime.Now, DateTime.Now.AddMinutes(30), false, roleName, FormsAuthentication.FormsCookiePath);
+                    Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, FormsAuthentication.Encrypt(ticket)));
 
                     TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
+
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, redirectUrl = Url.Action("Index", "Home") });
                 }
                 else
                 {
-                    TempData["ErrorMessage"] =
-                        "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Thông tin đăng ký không hợp lệ!" });
 
+                    TempData["ErrorMessage"] = "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
                     TempData["RegisterData"] = registerData;
                     TempData["OpenRegisterModal"] = true;
                 }
@@ -195,6 +162,8 @@ namespace EventVenueBooking.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Lỗi hệ thống xảy ra!" });
                 return View("Error");
             }
         }

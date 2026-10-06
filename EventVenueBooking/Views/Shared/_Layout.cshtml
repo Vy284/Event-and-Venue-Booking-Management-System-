@@ -23,22 +23,41 @@
     <!-- Auth Modal Partial -->
     @Html.Partial("_AuthModal")
 
-    <!-- Alert Messages (hàm alert của JS)-->
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <script>
-            alert("@Html.Raw(TempData["ErrorMessage"])");
-        </script>
-    }
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <script>
-            alert("@Html.Raw(TempData["SuccessMessage"])");
-        </script>
-    }
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @RenderSection("Scripts", required: false)
+
+    <!-- Toast thông báo thành công -->
+    @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+    {
+        var isSuccess = TempData["SuccessMessage"] != null;
+        var message = isSuccess ? TempData["SuccessMessage"] : TempData["ErrorMessage"];
+
+        <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 9999;">
+            <div id="globalToast" class="toast align-items-center text-white border-0 shadow-lg show" role="alert" aria-live="assertive" aria-atomic="true"
+                 style="background-color: @(isSuccess ? "#4A3525" : "#A93226"); border-radius: 12px; width: max-content; max-width: 90vw; transition: all 0.5s ease;">
+                <div class="d-flex p-2 align-items-center justify-content-between">
+                    <div class="toast-body d-flex align-items-center gap-2 fs-6">
+                        <i class="fa-solid @(isSuccess ? "fa-circle-check" : "fa-circle-exclamation") fs-4"></i>
+                        <span class="fw-medium">@message</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var toastEl = document.getElementById('globalToast');
+                if (toastEl) {
+                    // Tự động trượt ẩn đi sau 3.5 giây
+                    setTimeout(function () {
+                        var bsToast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                        bsToast.hide();
+                    }, 3500);
+                }
+            });
+        </script>
+    }
+
 </body>
 </html>
