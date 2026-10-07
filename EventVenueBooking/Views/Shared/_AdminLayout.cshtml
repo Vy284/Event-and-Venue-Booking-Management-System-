@@ -241,6 +241,8 @@
             <div class="brand-logo">
                 <i class='bx bxs-shapes'></i> VenueHub
             </div>
+
+            @* SỬA 1: ẩn menu theo role. Venues, Facilities & Services, Users chỉ Admin thấy *@
             <ul class="nav-list">
                 <li>
                     <a href="@Url.Action("Index", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
@@ -257,26 +259,36 @@
                         <i class='bx bx-receipt'></i> Bookings
                     </a>
                 </li>
-                <li>
-                    <a href="@Url.Action("Index", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
-                        <i class='bx bx-building-house'></i> Venues
-                    </a>
-                </li>
-                <li>
-                    <a href="@Url.Action("Facilities_Services", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Facilities" ? "active" : "")">
-                        <i class='bx bx-cube'></i> Facilities & Services
-                    </a>
-                </li>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a href="@Url.Action("Index", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
+                            <i class='bx bx-building-house'></i> Venues
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Facilities_Services", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Facilities" ? "active" : "")">
+                            <i class='bx bx-cube'></i> Facilities & Services
+                        </a>
+                    </li>
+                }
+
                 <li>
                     <a href="@Url.Action("Index", "Payments")" class="nav-link @(ViewBag.ActiveMenu == "Payments" ? "active" : "")">
                         <i class='bx bx-wallet'></i> Payments
                     </a>
                 </li>
-                <li>
-                    <a href="@Url.Action("Index", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
-                        <i class='bx bx-user'></i> Users
-                    </a>
-                </li>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a href="@Url.Action("Index", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
+                            <i class='bx bx-user'></i> Users
+                        </a>
+                    </li>
+                }
+
                 <li>
                     <a href="@Url.Action("Feedback", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Feedback" ? "active" : "")">
                         <i class='bx bx-star'></i> Feedback
@@ -285,10 +297,15 @@
             </ul>
         </div>
 
+        @* SỬA 2: nút Sign Out gửi form POST tới Account/Logout *@
         <div class="sidebar-bottom">
-            <button class="btn-signout">
-                <i class='bx bx-log-out'></i> Sign Out
-            </button>
+            @using (Html.BeginForm("Logout", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-signout">
+                    <i class='bx bx-log-out'></i> Sign Out
+                </button>
+            }
         </div>
     </aside>
 
@@ -300,7 +317,8 @@
             <header class="main-header">
                 <div class="header-title">
                     <h2>@(ViewBag.Title ?? "Dashboard")</h2>
-                    <p>Hello Orlando, welcome back!</p>
+                    @* SỬA 3a: lấy tên người đăng nhập thay cho "Orlando" *@
+                    <p>Hello @User.Identity.Name, welcome back!</p>
                 </div>
                 <div class="header-actions">
                     <div class="search-box">
@@ -312,8 +330,9 @@
                     <div class="user-profile">
                         <img src="https://i.pravatar.cc/100?img=33" class="avatar" alt="User Avatar">
                         <div class="user-info">
-                            <div class="name">Orlando Laurentius</div>
-                            <div class="role">Admin</div>
+                            @* SỬA 3b: tên và role thật thay cho "Orlando Laurentius" / "Admin" *@
+                            <div class="name">@User.Identity.Name</div>
+                            <div class="role">@(User.IsInRole("Admin") ? "Admin" : "Coordinator")</div>
                         </div>
                     </div>
                 </div>

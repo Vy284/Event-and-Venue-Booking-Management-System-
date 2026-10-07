@@ -8,6 +8,7 @@ using System.Data.Entity;
 
 namespace EventVenueBooking.Controllers
 {
+    [AllowAnonymous]                                // THÊM: khách chưa đăng nhập vẫn xem được sảnh và lịch
     public class VenueController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -41,8 +42,12 @@ namespace EventVenueBooking.Controllers
         public JsonResult GetVenueBookings(int venueId)
         {
             // Lấy tất cả các Booking của sảnh này ngoại trừ các đơn đã bị Hủy (Status = 4)
+            // SỬA: lấy dữ liệu về bộ nhớ (ToList) rồi mới định dạng ngày. EF không dịch được
+            // DateTime.ToString("yyyy-MM-dd...") sang SQL nên bản cũ sẽ báo lỗi khi chạy.
             var bookings = db.Bookings
                 .Where(b => b.VenueId == venueId && b.Status != 4)
+                .Select(b => new { b.EventStartDateTime, b.EventEndDateTime })
+                .ToList()
                 .Select(b => new
                 {
                     title = "Đã được đặt",

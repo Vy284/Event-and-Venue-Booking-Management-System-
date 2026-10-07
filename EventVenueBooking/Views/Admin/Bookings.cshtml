@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<EventVenueBooking.ViewModels.BookingManagementViewModel>
+@using EventVenueBooking.Services
 @{
     ViewBag.Title = "Bookings Management";
     ViewBag.ActiveMenu = "Bookings";
@@ -112,11 +113,13 @@
         gap: 8px;
         cursor: pointer;
         transition: all 0.2s;
+        text-decoration: none;
     }
 
         .btn-create:hover {
             opacity: 0.9;
             transform: translateY(-1px);
+            color: #FFFFFF;
         }
 
     /* TABLE STYLES */
@@ -224,11 +227,6 @@
         color: #2196F3;
     }
 
-    .btn-edit {
-        background: #FFF4E5;
-        color: #FF9800;
-    }
-
     .btn-cancel-act {
         background: #FDE8E8;
         color: #E53935;
@@ -236,6 +234,49 @@
 
     .btn-act:hover {
         opacity: 0.8;
+    }
+
+    /* NÚT QUY TRÌNH BOOKING */
+    .flow-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+
+    .flow-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin: 0;
+    }
+
+    .btn-flow {
+        border: none;
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        color: #fff;
+        white-space: nowrap;
+    }
+
+    .flow-green {
+        background: var(--primary-green);
+    }
+
+    .flow-blue {
+        background: #1565C0;
+    }
+
+    .flow-orange {
+        background: #E65100;
+    }
+
+    .flow-note {
+        font-size: 11px;
+        color: var(--text-muted);
     }
 
     /* MODAL POPUP */
@@ -291,21 +332,11 @@
         cursor: pointer;
     }
 
-    .form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-    }
-
     .form-group {
         display: flex;
         flex-direction: column;
         gap: 6px;
     }
-
-        .form-group.full-width {
-            grid-column: span 2;
-        }
 
         .form-group label {
             font-size: 12px;
@@ -355,22 +386,31 @@
     }
 </style>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:#E8F5E9;color:#2E7D32;padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:13px;">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:#FFEBEE;color:#C62828;padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:13px;">@TempData["ErrorMessage"]</div>
+}
+
 <!-- 1. THỐNG KÊ NHANH -->
 <div class="booking-stats">
     <div class="stat-mini-card">
-        <div class="stat-mini-info"><p>Pending Requests</p><h3>12</h3></div>
+        <div class="stat-mini-info"><p>Pending Requests</p><h3>@ViewBag.PendingCount</h3></div>
         <div class="stat-mini-icon icon-pending"><i class='bx bx-time-five'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info"><p>Confirmed</p><h3>45</h3></div>
+        <div class="stat-mini-info"><p>Confirmed / In progress</p><h3>@ViewBag.ConfirmedCount</h3></div>
         <div class="stat-mini-icon icon-confirmed"><i class='bx bx-check-circle'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info"><p>Completed</p><h3>128</h3></div>
+        <div class="stat-mini-info"><p>Completed</p><h3>@ViewBag.CompletedCount</h3></div>
         <div class="stat-mini-icon icon-completed"><i class='bx bx-task'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info"><p>Cancelled</p><h3>8</h3></div>
+        <div class="stat-mini-info"><p>Cancelled</p><h3>@ViewBag.CancelledCount</h3></div>
         <div class="stat-mini-icon icon-cancelled"><i class='bx bx-x-circle'></i></div>
     </div>
 </div>
@@ -381,14 +421,15 @@
         <div class="filter-group">
             <input type="text" id="searchInput" class="custom-input" placeholder="Search Client / Venue..." style="width: 220px;" onkeyup="filterTable()">
             <select class="custom-select" id="statusFilter" onchange="filterTable()">
-                <option value="">All Statuses</option>
+                <option value="">All Payments</option>
                 <option value="Paid">Paid</option>
+                <option value="Partial">Partial</option>
                 <option value="Unpaid">Unpaid</option>
             </select>
         </div>
-        <button class="btn-create" onclick="openCreateModal()">
+        <a class="btn-create" href="@Url.Action("Create", "Bookings")">
             <i class='bx bx-plus'></i> New Booking
-        </button>
+        </a>
     </div>
 
     <div class="table-responsive">
@@ -401,6 +442,7 @@
                     <th>Add-On Services</th>
                     <th>Booking Date</th>
                     <th>Total Cost</th>
+                    <th>Status</th>
                     <th>Payment</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
@@ -408,6 +450,9 @@
             <tbody>
                 @if (Model != null && Model.Any())
                 {
+                    string[] stText = { "Chờ đặt cọc", "Đã xác nhận", "Đang diễn ra", "Hoàn tất", "Đã hủy" };
+                    string[] stClass = { "badge-pending", "badge-confirmed", "badge-confirmed", "badge-completed", "badge-cancelled" };
+
                     foreach (var item in Model)
                     {
                         string initials = "NV";
@@ -424,7 +469,10 @@
                             }
                         }
 
-                        <tr>
+                        decimal remaining = item.TotalAmount - item.PaidAmount;
+                        decimal depositAmount = Math.Round(item.TotalAmount * BookingService.DepositRate, 0);
+
+                        <tr data-pay="@item.PaymentStatus">
                             <td><strong>#@item.BookingId</strong></td>
                             <td>
                                 <div class="user-cell">
@@ -453,10 +501,16 @@
                             </td>
                             <td>@item.BookingDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td style="font-weight: 700; color: var(--primary-green);">@item.TotalAmount.ToString("N0") VNĐ</td>
+                            <td><span class="status-badge @stClass[item.Status]">@stText[item.Status]</span></td>
                             <td>
                                 @if (item.PaymentStatus == "Paid")
                                 {
                                     <span class="status-badge badge-completed">Paid</span>
+                                }
+                                else if (item.PaymentStatus == "Partial")
+                                {
+                                    <span class="status-badge badge-confirmed">Partial</span>
+                                    <div class="flow-note">Còn @remaining.ToString("N0")</div>
                                 }
                                 else
                                 {
@@ -464,10 +518,73 @@
                                 }
                             </td>
                             <td>
-                                <div class="action-btns" style="justify-content: flex-end;">
-                                    <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.BookingId', '@item.CustomerName', '@item.VenueName', '@item.BookingDate.ToString("dd/MM/yyyy HH:mm")', '@item.TotalAmount.ToString("N0") VNĐ', '@item.PaymentStatus')"><i class='bx bx-show'></i></button>
-                                    <button class="btn-act btn-edit" title="Edit" onclick="openEditModal('@item.BookingId')"><i class='bx bx-edit'></i></button>
-                                    <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('@item.BookingId')"><i class='bx bx-x-circle'></i></button>
+                                <div class="flow-wrap">
+
+                                    @* Chờ đặt cọc: thu cọc (hệ thống tự chuyển sang Đã xác nhận) *@
+                                    @if (item.Status == BookingStatuses.Pending)
+                                    {
+                                        <form class="flow-form" method="post" action="@Url.Action("RecordPayment", "Bookings")">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.BookingId" />
+                                            <input type="hidden" name="paymentType" value="@PaymentTypes.Deposit" />
+                                            <select name="method" class="custom-select" required>
+                                                <option value="">Phương thức</option>
+                                                <option value="Cash">Tiền mặt</option>
+                                                <option value="Bank Transfer">Chuyển khoản</option>
+                                                <option value="Credit Card">Thẻ tín dụng</option>
+                                                <option value="E-Wallet">Ví điện tử</option>
+                                            </select>
+                                            <button type="submit" class="btn-flow flow-green">Thu cọc &amp; xác nhận (@depositAmount.ToString("N0"))</button>
+                                        </form>
+                                    }
+
+                                    @* Đã xác nhận: bắt đầu sự kiện *@
+                                    @if (item.Status == BookingStatuses.Confirmed)
+                                    {
+                                        <form class="flow-form" method="post" action="@Url.Action("ChangeStatus", "Bookings")">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.BookingId" />
+                                            <input type="hidden" name="status" value="@BookingStatuses.InProgress" />
+                                            <button type="submit" class="btn-flow flow-blue">Bắt đầu</button>
+                                        </form>
+                                    }
+
+                                    @* Đã xác nhận / đang diễn ra mà còn nợ: thu phần còn lại *@
+                                    @if ((item.Status == BookingStatuses.Confirmed || item.Status == BookingStatuses.InProgress) && remaining > 0)
+                                    {
+                                        <form class="flow-form" method="post" action="@Url.Action("RecordPayment", "Bookings")">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.BookingId" />
+                                            <input type="hidden" name="paymentType" value="@PaymentTypes.Final" />
+                                            <select name="method" class="custom-select" required>
+                                                <option value="">Phương thức</option>
+                                                <option value="Cash">Tiền mặt</option>
+                                                <option value="Bank Transfer">Chuyển khoản</option>
+                                                <option value="Credit Card">Thẻ tín dụng</option>
+                                                <option value="E-Wallet">Ví điện tử</option>
+                                            </select>
+                                            <button type="submit" class="btn-flow flow-orange">Thu còn lại (@remaining.ToString("N0"))</button>
+                                        </form>
+                                    }
+
+                                    @* Đang diễn ra và đã thu đủ: hoàn tất *@
+                                    @if (item.Status == BookingStatuses.InProgress && remaining <= 0)
+                                    {
+                                        <form class="flow-form" method="post" action="@Url.Action("ChangeStatus", "Bookings")">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.BookingId" />
+                                            <input type="hidden" name="status" value="@BookingStatuses.Completed" />
+                                            <button type="submit" class="btn-flow flow-green">Hoàn tất</button>
+                                        </form>
+                                    }
+
+                                    <div class="action-btns" style="justify-content: flex-end;">
+                                        <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.BookingId', '@item.CustomerName', '@item.VenueName', '@item.BookingDate.ToString("dd/MM/yyyy HH:mm")', '@item.TotalAmount.ToString("N0") VNĐ', '@item.PaymentStatus')"><i class='bx bx-show'></i></button>
+                                        @if (item.Status == BookingStatuses.Pending || item.Status == BookingStatuses.Confirmed)
+                                        {
+                                            <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('@item.BookingId')"><i class='bx bx-x-circle'></i></button>
+                                        }
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -476,7 +593,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu đặt chỗ nào.</td>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu đặt chỗ nào.</td>
                     </tr>
                 }
             </tbody>
@@ -484,87 +601,7 @@
     </div>
 </div>
 
-<!-- 3. MODAL CREATE / EDIT BOOKING (ĐÃ ĐỒNG BỘ CÁC CỘT) -->
-<div class="modal-backdrop" id="bookingFormModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3 id="modalTitle">Create New Booking</h3>
-            <button class="btn-close-modal" onclick="closeModal('bookingFormModal')">&times;</button>
-        </div>
-        <form id="bookingForm" onsubmit="handleFormSubmit(event)">
-            <input type="hidden" id="bookingId" name="BookingId" value="0">
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Client Name (*)</label>
-                    <input type="text" class="form-control" id="clientName" required placeholder="Ex: Nguyen Van A">
-                </div>
-
-                <div class="form-group">
-                    <label>Venue (*)</label>
-                    <select class="form-control" id="venueId" required>
-                        <option value="1">Grand Ballroom A</option>
-                        <option value="2">Skyline Garden</option>
-                        <option value="3">Executive Hall</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Guest Count (*)</label>
-                    <input type="number" class="form-control" id="guestCount" required placeholder="Ex: 100">
-                </div>
-
-                <div class="form-group">
-                    <label>Event Start DateTime (*)</label>
-                    <input type="datetime-local" class="form-control" id="eventStartDateTime" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Payment Method (*)</label>
-                    <select class="form-control" id="paymentMethod" required>
-                        <option value="Transfer">Transfer (Chuyển khoản)</option>
-                        <option value="Cash">Cash (Tiền mặt)</option>
-                        <option value="Credit Card">Credit Card</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Payment Status (*)</label>
-                    <select class="form-control" id="paymentStatus" required>
-                        <option value="Unpaid">Unpaid</option>
-                        <option value="Paid">Paid</option>
-                    </select>
-                </div>
-
-                <!-- Đồng bộ thêm phần chọn Add-On Services -->
-                <div class="form-group full-width">
-                    <label>Add-On Services</label>
-                    <div style="display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap;">
-                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                            <input type="checkbox" name="AddOnServices" value="Decoration"> Decoration
-                        </label>
-                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                            <input type="checkbox" name="AddOnServices" value="Sound & Light"> Sound & Light
-                        </label>
-                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                            <input type="checkbox" name="AddOnServices" value="MC / Singer"> MC / Singer
-                        </label>
-                        <label style="font-weight: normal; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                            <input type="checkbox" name="AddOnServices" value="Buffet Setup"> Buffet Setup
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="closeModal('bookingFormModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Save Booking</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- 4. MODAL VIEW DETAILS -->
+<!-- 3. MODAL VIEW DETAILS -->
 <div class="modal-backdrop" id="viewDetailsModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -578,7 +615,7 @@
             <hr style="border: none; border-top: 1px dashed var(--border-color);">
             <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: var(--primary-green);"><span>Total Cost:</span> <span id="vTotalCost"></span></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <strong>Status:</strong> <span id="vStatusBadge"></span>
+                <strong>Payment:</strong> <span id="vStatusBadge"></span>
             </div>
         </div>
         <div class="modal-footer">
@@ -587,19 +624,20 @@
     </div>
 </div>
 
-<!-- 5. MODAL CANCEL BOOKING -->
+<!-- 4. MODAL CANCEL BOOKING -->
 <div class="modal-backdrop" id="cancelModal">
     <div class="modal-box" style="max-width: 450px;">
         <div class="modal-header">
             <h3 style="color:#C62828;">Cancel Booking</h3>
             <button class="btn-close-modal" onclick="closeModal('cancelModal')">&times;</button>
         </div>
-        <form onsubmit="handleCancelSubmit(event)">
-            <input type="hidden" id="cancelBookingId">
+        <form method="post" action="@Url.Action("Cancel", "Bookings")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="cancelBookingId" name="id">
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Are you sure you want to cancel this booking? Please provide a reason below.</p>
             <div class="form-group">
                 <label>Cancel Reason (*)</label>
-                <textarea class="form-control" id="cancelReason" rows="3" required placeholder="Enter reason for cancellation..."></textarea>
+                <textarea class="form-control" id="cancelReason" name="reason" rows="3" required placeholder="Enter reason for cancellation..."></textarea>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('cancelModal')">Close</button>
@@ -619,19 +657,6 @@
         document.getElementById(id).classList.remove('show');
     }
 
-    function openCreateModal() {
-        document.getElementById('modalTitle').innerText = "Create New Booking";
-        document.getElementById('bookingForm').reset();
-        document.getElementById('bookingId').value = "0";
-        openModal('bookingFormModal');
-    }
-
-    function openEditModal(id) {
-        document.getElementById('modalTitle').innerText = "Edit Booking #" + id;
-        document.getElementById('bookingId').value = id;
-        openModal('bookingFormModal');
-    }
-
     function openViewModal(id, client, venue, start, total, status) {
         document.getElementById('vBookingId').innerText = "#" + id;
         document.getElementById('vClientName').innerText = client;
@@ -648,15 +673,13 @@
         openModal('cancelModal');
     }
 
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        alert("Lưu booking thành công!");
-        closeModal('bookingFormModal');
-    }
-
-    function handleCancelSubmit(e) {
-        e.preventDefault();
-        alert("Đã hủy booking!");
-        closeModal('cancelModal');
+    function filterTable() {
+        var q = document.getElementById('searchInput').value.toLowerCase();
+        var pay = document.getElementById('statusFilter').value;
+        document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
+            var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
+            var okPay = !pay || tr.getAttribute('data-pay') === pay;
+            tr.style.display = (okText && okPay) ? '' : 'none';
+        });
     }
 </script>

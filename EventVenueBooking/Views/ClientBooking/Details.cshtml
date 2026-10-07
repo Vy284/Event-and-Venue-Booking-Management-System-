@@ -1,0 +1,175 @@
+﻿@model EventVenueBooking.Entities.Booking
+@using EventVenueBooking.Services
+@{
+    ViewData["Title"] = "Booking #" + Model.BookingId;
+
+    string[] statusText = { "Chờ đặt cọc", "Đã xác nhận", "Đang diễn ra", "Hoàn tất", "Đã hủy" };
+    string[] statusClass = { "warning", "success", "primary", "secondary", "danger" };
+    string[] paymentTypeText = { "Đặt cọc", "Thanh toán cuối" };
+    string[] paymentStatusText = { "Chờ xử lý", "Đã thanh toán", "Đã hoàn tiền" };
+
+    string unitName = Model.RentalUnitAtBooking == 0 ? "giờ" : Model.RentalUnitAtBooking == 1 ? "buổi" : "ngày";
+
+    decimal paid = Model.Payments.Where(p => p.PaymentStatus == PaymentStatuses.Completed).Sum(p => p.Amount);
+    decimal remaining = Model.TotalCost - paid;
+    bool hasDeposit = Model.Payments.Any(p => p.PaymentType == PaymentTypes.Deposit && p.PaymentStatus == PaymentStatuses.Completed);
+    decimal depositAmount = Math.Round(Model.TotalCost * BookingService.DepositRate, 0);
+    bool isCancelled = Model.Status == BookingStatuses.Cancelled;
+}
+
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/Home/Index" class="text-decoration-none text-muted">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("Profile", "Account")" class="text-decoration-none text-muted">Trang cá nhân</a></li>
+            <li class="breadcrumb-item active fw-bold" aria-current="page">Booking #@Model.BookingId</li>
+        </ol>
+    </nav>
+
+    @if (TempData["BookingSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["BookingSuccess"]</div>
+    }
+    @if (TempData["BookingError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["BookingError"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <!-- Thông tin booking -->
+            <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0" style="color: var(--primary-brown);">Booking #@Model.BookingId</h4>
+                    <span class="badge rounded-pill text-bg-@statusClass[Model.Status] px-3 py-2">@statusText[Model.Status]</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="text-muted small">Địa điểm</div><strong>@Model.Venue.Name</strong></div>
+                    <div class="col-md-6"><div class="text-muted small">Loại sự kiện</div><strong>@Model.EventType.TypeName</strong></div>
+                    <div class="col-md-6"><div class="text-muted small">Bắt đầu</div><strong>@Model.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                    <div class="col-md-6"><div class="text-muted small">Kết thúc</div><strong>@Model.EventEndDateTime.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                    <div class="col-md-6"><div class="text-muted small">Số khách</div><strong>@Model.GuestCount người</strong></div>
+                    <div class="col-md-6"><div class="text-muted small">Ngày đặt</div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                </div>
+                @if (isCancelled && !string.IsNullOrEmpty(Model.CancelReason))
+                {
+                    <div class="alert alert-secondary mt-3 mb-0">Lý do hủy: @Model.CancelReason</div>
+                }
+            </div>
+
+            <!-- Chi tiết giá (đã chốt tại thời điểm đặt) -->
+            <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+                <h5 class="fw-bold mb-3" style="color: var(--primary-brown);">Chi tiết giá</h5>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td>Thuê sảnh (@Model.VenueRateAtBooking.ToString("N0") VNĐ × @(Model.RentalQuantity) @unitName)</td>
+                            <td class="text-end">@Model.VenueCost.ToString("N0") VNĐ</td>
+                        </tr>
+                        @foreach (var ba in Model.BookingAddOns)
+                        {
+                            <tr>
+                                <td>@ba.AddOnService.Name (@ba.PriceAtBooking.ToString("N0") VNĐ × @(ba.Quantity))</td>
+                                <td class="text-end">@ba.Subtotal.ToString("N0") VNĐ</td>
+                            </tr>
+                        }
+                        <tr class="fw-bold fs-5">
+                            <td>Tổng cộng</td>
+                            <td class="text-end text-danger">@Model.TotalCost.ToString("N0") VNĐ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Lịch sử thanh toán -->
+            <div class="bg-white p-4 rounded-4 shadow-sm">
+                <h5 class="fw-bold mb-3" style="color: var(--primary-brown);">Lịch sử thanh toán</h5>
+                @if (Model.Payments.Any())
+                {
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr><th>Loại</th><th>Phương thức</th><th class="text-end">Số tiền</th><th>Trạng thái</th><th>Ngày</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Payments.OrderBy(x => x.PaymentId))
+                            {
+                                <tr>
+                                    <td>@paymentTypeText[p.PaymentType]</td>
+                                    <td>@p.PaymentMethod</td>
+                                    <td class="text-end">@p.Amount.ToString("N0") VNĐ</td>
+                                    <td>@paymentStatusText[p.PaymentStatus]</td>
+                                    <td>@(p.PaymentDate.HasValue ? p.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Chưa có khoản thanh toán nào.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Cột thao tác -->
+        <div class="col-lg-4">
+            <div class="bg-white p-4 rounded-4 shadow-sm sticky-top" style="top: 100px;">
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Tổng tiền</span><strong>@Model.TotalCost.ToString("N0") VNĐ</strong></div>
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Đã thanh toán</span><strong class="text-success">@paid.ToString("N0") VNĐ</strong></div>
+                <div class="d-flex justify-content-between mb-3"><span class="text-muted">Còn lại</span><strong class="text-danger">@((isCancelled ? 0 : remaining).ToString("N0")) VNĐ</strong></div>
+                <hr />
+
+                @if (!isCancelled && Model.Status == BookingStatuses.Pending && !hasDeposit)
+                {
+                    <h6 class="fw-bold">Đặt cọc @((int)(BookingService.DepositRate * 100))%</h6>
+                    <p class="small text-muted">Cần đặt cọc @depositAmount.ToString("N0") VNĐ để xác nhận booking.</p>
+                    using (Html.BeginForm("Pay", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="paymentType" value="0" />
+                        <select name="method" class="form-select mb-2" required>
+                            <option value="">-- Phương thức thanh toán --</option>
+                            <option value="Bank Transfer">Chuyển khoản</option>
+                            <option value="Credit Card">Thẻ tín dụng</option>
+                            <option value="E-Wallet">Ví điện tử</option>
+                        </select>
+                        <button type="submit" class="btn btn-brown w-100 fw-bold">Thanh toán cọc @depositAmount.ToString("N0") VNĐ</button>
+                    }
+                }
+                else if (!isCancelled && Model.Status == BookingStatuses.Confirmed && remaining > 0)
+                {
+                    <h6 class="fw-bold">Thanh toán phần còn lại</h6>
+                    using (Html.BeginForm("Pay", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="paymentType" value="1" />
+                        <select name="method" class="form-select mb-2" required>
+                            <option value="">-- Phương thức thanh toán --</option>
+                            <option value="Bank Transfer">Chuyển khoản</option>
+                            <option value="Credit Card">Thẻ tín dụng</option>
+                            <option value="E-Wallet">Ví điện tử</option>
+                        </select>
+                        <button type="submit" class="btn btn-brown w-100 fw-bold">Thanh toán @remaining.ToString("N0") VNĐ</button>
+                    }
+                }
+                else if (!isCancelled && remaining <= 0)
+                {
+                    <div class="alert alert-success mb-0">Đã thanh toán đủ.</div>
+                }
+
+                @if (Model.Status == BookingStatuses.Pending || Model.Status == BookingStatuses.Confirmed)
+                {
+                    <hr />
+                    using (Html.BeginForm("Cancel", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post,
+                        new { onsubmit = "return confirm('Bạn chắc chắn muốn hủy booking này?');" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="text" name="reason" class="form-control form-control-sm mb-2" maxlength="500" placeholder="Lý do hủy (không bắt buộc)" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">Hủy booking</button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

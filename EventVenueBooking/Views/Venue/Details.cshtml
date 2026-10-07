@@ -79,7 +79,7 @@
             <!-- Name & Description -->
             <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge rounded-pill text-bg-warning px-3 py-2">@Model.VenueType.TypeName</span>
+                    <span class="badge rounded-pill text-bg-warning px-3 py-2">@(Model.VenueType != null ? Model.VenueType.TypeName : "")</span>
                     <span class="text-muted"><i class="fa-solid fa-location-dot me-1 text-danger"></i>@Model.Location</span>
                 </div>
                 <h2 class="fw-bold mb-3" style="color: var(--primary-brown);">@Model.Name</h2>
@@ -123,18 +123,18 @@
                 <div id="venue-calendar" style="min-height: 400px;"></div>
             </div>
 
-            <!-- Facilities -->
+            <!-- Facilities (SỬA: dùng VenueFacilities -> Facility) -->
             <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
                 <h4 class="fw-bold mb-3" style="color: var(--primary-brown);">Trang thiết bị & Tiện ích</h4>
                 <div class="row g-3">
-                    @if (Model.Facilities != null && Model.Facilities.Any())
+                    @if (Model.VenueFacilities != null && Model.VenueFacilities.Any(x => x.Facility != null && x.Facility.IsActive))
                     {
-                        foreach (var facility in Model.Facilities)
+                        foreach (var vf in Model.VenueFacilities.Where(x => x.Facility != null && x.Facility.IsActive))
                         {
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="fa-solid fa-circle-check text-success"></i>
-                                    <span>@facility.FacilityName</span>
+                                    <span>@vf.Facility.FacilityName</span>
                                 </div>
                             </div>
                         }
@@ -182,7 +182,8 @@
                 <hr />
 
                 <div class="d-grid gap-3 mt-4">
-                    <a href="/Booking/Create?venueId=@Model.VenueId" class="btn btn-brown py-3 fs-6 fw-bold shadow">
+                    @* SỬA: trỏ sang ClientBookingController *@
+                    <a href="@Url.Action("Create", "ClientBooking", new { venueId = Model.VenueId })" class="btn btn-brown py-3 fs-6 fw-bold shadow">
                         <i class="fa-regular fa-calendar-check me-2"></i>ĐẶT SẢNH NGAY
                     </a>
                     <a href="tel:0901234567" class="btn btn-outline-dark py-2 rounded-pill">

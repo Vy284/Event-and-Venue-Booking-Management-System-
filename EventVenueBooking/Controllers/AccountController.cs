@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Web;                                   // THÊM: để dùng HttpCookie
 using System.Web.Mvc;
 using System.Web.Security;
 using EventVenueBooking.Database;
@@ -12,7 +13,24 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
+        // THÊM: tạo cookie đăng nhập có kèm tên role trong ticket
+        // (Global.asax đọc ticket.UserData để biết role của người dùng)
+        private void SignIn(UserEntity user)
+        {
+            string roleName = user.Role == 2 ? "Admin" : (user.Role == 1 ? "Coordinator" : "Client");
+
+            var ticket = new FormsAuthenticationTicket(
+                1, user.Email, DateTime.Now, DateTime.Now.AddMinutes(60), false, roleName);
+
+            string encrypted = FormsAuthentication.Encrypt(ticket);
+            Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, encrypted)
+            {
+                HttpOnly = true
+            });
+        }
+
         // POST: Account/Login
+        [AllowAnonymous]                            // THÊM
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Login(string usernameOrEmail, string password)
@@ -20,7 +38,8 @@ namespace EventVenueBooking.Controllers
             // Email login
             var user = db.Users.FirstOrDefault(u =>
                 u.Email == usernameOrEmail
-                && u.PasswordHash == password);
+                && u.PasswordHash == password
+                && u.IsActive);                     // THÊM: tài khoản bị khóa thì không đăng nhập được
 
             if (user != null)
             {
@@ -28,9 +47,13 @@ namespace EventVenueBooking.Controllers
                 Session["UserName"] = string.IsNullOrEmpty(user.FullName) ? user.Email : user.FullName;
                 Session["UserRole"] = user.Role; // 0 = Client, 1 = Coordinator, 2 = Admin
 
-                FormsAuthentication.SetAuthCookie(user.Email, false);
+                SignIn(user);                       // SỬA: thay cho FormsAuthentication.SetAuthCookie(...)
 
                 TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
+
+                // THÊM: Admin / Coordinator vào thẳng trang quản trị
+                if (user.Role == 1 || user.Role == 2)
+                    return RedirectToAction("Index", "Dashboard");
             }
             else
             {
@@ -41,6 +64,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Account/Register
+        [AllowAnonymous]                            // THÊM
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Register(UserEntity model)
@@ -67,7 +91,7 @@ namespace EventVenueBooking.Controllers
                 Session["UserName"] = string.IsNullOrEmpty(model.FullName) ? model.Email : model.FullName;
                 Session["UserRole"] = model.Role;
 
-                FormsAuthentication.SetAuthCookie(model.Email, false);
+                SignIn(model);                      // SỬA: thay cho FormsAuthentication.SetAuthCookie(...)
 
                 TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
             }
@@ -79,7 +103,8 @@ namespace EventVenueBooking.Controllers
             return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
         }
 
-        // GET: Account/Logout
+        // GET/POST: Account/Logout
+        [AllowAnonymous]                            // THÊM
         public ActionResult Logout()
         {
             Session.Clear();

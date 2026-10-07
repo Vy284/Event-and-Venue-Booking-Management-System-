@@ -8,9 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Filters;                    // THÊM
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin")]              // THÊM
     public class VenueImagesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();

@@ -1,5 +1,6 @@
 ﻿using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Filters;                    // THÊM
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -10,6 +11,7 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin")]              // THÊM
     public class VenueTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -43,27 +45,27 @@ namespace EventVenueBooking.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(VenueType venueType) 
+        public ActionResult Create(VenueType venueType)
         {
             if (ModelState.IsValid)
             {
                 db.VenueTypes.Add(venueType);
                 db.SaveChanges();
                 return RedirectToAction("Index");
-            }    
+            }
             return View(venueType);
         }
 
         //Get/Edit
         public ActionResult Edit(int? id)
         {
-            if (id == null) 
+            if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
             VenueType venueType = db.VenueTypes.Find(id);
-            if (venueType == null) 
+            if (venueType == null)
             {
                 return HttpNotFound();
             }
@@ -74,7 +76,7 @@ namespace EventVenueBooking.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(VenueType venueType)
         {
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
                 db.Entry(venueType).State = EntityState.Modified;
                 db.SaveChanges();
@@ -89,7 +91,7 @@ namespace EventVenueBooking.Controllers
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             VenueType venueType = db.VenueTypes.Find(id);
-            if(venueType == null) return HttpNotFound();
+            if (venueType == null) return HttpNotFound();
             return View(venueType);
         }
         [HttpPost, ActionName("Delete")]

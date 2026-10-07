@@ -1,4 +1,5 @@
 ﻿using EventVenueBooking.Database;
+using EventVenueBooking.Filters;                    // THÊM
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Data.Entity;
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin,Coordinator")]  // THÊM
     public class PaymentsController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();

@@ -1,4 +1,5 @@
 ﻿using EventVenueBooking.Database;
+using EventVenueBooking.Filters;                    // THÊM
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin,Coordinator")]  // THÊM
     public class DashboardController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -30,8 +32,9 @@ namespace EventVenueBooking.Controllers
                     .Select(b => (decimal?)b.TotalCost)
                     .Sum() ?? 0,
 
-                // Số địa điểm đang hoạt động (Status = 0: Active)
-                ActiveVenuesCount = db.Venues.Count(v => v.Status == 0),
+                // SỬA: Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance
+                // (bản cũ đếm Status == 0 nên đếm nhầm các địa điểm đang tắt)
+                ActiveVenuesCount = db.Venues.Count(v => v.Status == 1),
 
                 // Lấy 5 booking mới nhất
                 RecentBookings = db.Bookings

@@ -8,9 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Filters;                    // THÊM
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin")]              // THÊM
     public class FacilitiesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -111,7 +113,7 @@ namespace EventVenueBooking.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             Facility facility = db.Facilities.Find(id);
-            if(facility == null) return HttpNotFound();
+            if (facility == null) return HttpNotFound();
             facility.IsActive = false;
             db.SaveChanges();
             return RedirectToAction("Index");

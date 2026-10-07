@@ -1,0 +1,160 @@
+﻿@model EventVenueBooking.ViewModels.ClientBookingFormViewModel
+@{
+    ViewData["Title"] = "Đặt sảnh - " + Model.VenueName;
+    string unitLabel = Model.RentalUnit == 0 ? "giờ" : Model.RentalUnit == 1 ? "buổi (4 giờ)" : "ngày (8 giờ)";
+}
+
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/Home/Index" class="text-decoration-none text-muted">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("Details", "Venue", new { id = Model.VenueId })" class="text-decoration-none text-muted">@Model.VenueName</a></li>
+            <li class="breadcrumb-item active fw-bold" aria-current="page">Đặt sảnh</li>
+        </ol>
+    </nav>
+
+    <form id="booking-form" method="post" action="@Url.Action("Create", "ClientBooking")">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="VenueId" value="@Model.VenueId" />
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">@Html.ValidationSummary(false)</div>
+                }
+
+                <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+                    <h4 class="fw-bold mb-1" style="color: var(--primary-brown);">Đặt sảnh: @Model.VenueName</h4>
+                    <p class="text-muted small mb-4">
+                        Giá thuê @Model.RentalRate.ToString("N0") VNĐ / @unitLabel · Sức chứa tối đa @Model.Capacity người
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Loại sự kiện</label>
+                            <select name="EventTypeId" class="form-select" required>
+                                <option value="">-- Chọn loại sự kiện --</option>
+                                @foreach (var et in Model.EventTypes)
+                                {
+                                    <option value="@et.EventTypeId" @(Model.EventTypeId == et.EventTypeId ? "selected" : "")>@et.TypeName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số lượng khách</label>
+                            <input type="number" name="GuestCount" class="form-control" min="1" max="@Model.Capacity"
+                                   value="@(Model.GuestCount > 0 ? Model.GuestCount : 1)" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Bắt đầu</label>
+                            <input type="datetime-local" name="EventStart" class="form-control"
+                                   value="@(Model.EventStart.HasValue ? Model.EventStart.Value.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Kết thúc</label>
+                            <input type="datetime-local" name="EventEnd" class="form-control"
+                                   value="@(Model.EventEnd.HasValue ? Model.EventEnd.Value.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-4 shadow-sm">
+                    <h5 class="fw-bold mb-3" style="color: var(--primary-brown);">Dịch vụ đi kèm (tùy chọn)</h5>
+                    <div class="list-group list-group-flush">
+                        @for (int i = 0; i < Model.AvailableAddOns.Count; i++)
+                        {
+                            var addon = Model.AvailableAddOns[i];
+                            var existing = Model.AddOns.FirstOrDefault(a => a.AddOnId == addon.AddOnId);
+                            int qty = existing != null ? existing.Quantity : 0;
+
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">@addon.Name</h6>
+                                    <small class="text-muted">@addon.Description</small>
+                                    <span class="badge bg-light text-dark border ms-1">@addon.Category</span>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-danger mb-1">+@addon.Price.ToString("N0") VNĐ</div>
+                                    <input type="hidden" name="AddOns[@i].AddOnId" value="@addon.AddOnId" />
+                                    <input type="number" name="AddOns[@i].Quantity" class="form-control form-control-sm ms-auto"
+                                           style="width: 90px;" min="0" max="999" value="@qty" />
+                                </div>
+                            </div>
+                        }
+                        @if (Model.AvailableAddOns.Count == 0)
+                        {
+                            <p class="text-muted mb-0">Hiện chưa có dịch vụ đi kèm.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bg-white p-4 rounded-4 shadow-sm sticky-top" style="top: 100px;">
+                    <h5 class="text-muted small text-uppercase fw-bold mb-3">Giá tạm tính</h5>
+                    <div id="quote-box" class="small">Chọn thời gian để xem giá tạm tính.</div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-brown py-3 fw-bold shadow">
+                            <i class="fa-regular fa-calendar-check me-2"></i>XÁC NHẬN ĐẶT SẢNH
+                        </button>
+                    </div>
+                    <div class="mt-3 text-muted small text-center">
+                        Giá được chốt tại thời điểm đặt. Sau khi đặt, bạn cần đặt cọc để xác nhận.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var form = document.getElementById('booking-form');
+        var box = document.getElementById('quote-box');
+        var unitNames = ['giờ', 'buổi', 'ngày'];
+        var timer = null;
+
+        function money(n) { return Number(n).toLocaleString('vi-VN') + ' VNĐ'; }
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+        function row(label, value, cls) {
+            return '<div class="d-flex justify-content-between mb-1 ' + (cls || '') + '"><span>' + label + '</span><strong>' + value + '</strong></div>';
+        }
+
+        function requestQuote() {
+            if (!form.elements['EventStart'].value || !form.elements['EventEnd'].value) {
+                box.textContent = 'Chọn thời gian bắt đầu và kết thúc để xem giá tạm tính.';
+                return;
+            }
+            fetch('@Url.Action("Quote", "ClientBooking")', { method: 'POST', body: new FormData(form) })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d.ok) { box.innerHTML = '<span class="text-danger">' + esc(d.message) + '</span>'; return; }
+
+                    var html = '';
+                    if (!d.available) {
+                        html += '<div class="alert alert-danger py-2">Khung giờ này đã có người đặt.</div>';
+                    }
+                    html += row('Thuê sảnh (' + money(d.venueRate) + ' × ' + d.rentalQuantity + ' ' + unitNames[d.rentalUnit] + ')', money(d.venueCost));
+                    d.lines.forEach(function (l) {
+                        html += row(esc(l.name) + ' (' + money(l.unitPrice) + ' × ' + l.quantity + ')', money(l.subtotal));
+                    });
+                    html += '<hr>';
+                    html += row('Tổng cộng', '<span class="text-danger">' + money(d.total) + '</span>', 'fs-5');
+                    html += '<div class="text-muted mt-2">Tiền cọc cần thanh toán: <strong>' + money(d.deposit) + '</strong></div>';
+                    box.innerHTML = html;
+                })
+                .catch(function () { box.textContent = 'Không tính được giá, vui lòng thử lại.'; });
+        }
+
+        function schedule() { clearTimeout(timer); timer = setTimeout(requestQuote, 300); }
+        form.addEventListener('input', schedule);
+        form.addEventListener('change', schedule);
+        requestQuote();
+    })();
+</script>

@@ -8,13 +8,15 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
+    [AllowAnonymous]                                // THÊM: trang chủ cho mọi người xem
     public class HomeController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
         public ActionResult Index(string search, string category, string eventDate)
         {
-            var query = db.Venues.Where(v => v.Status == 0).AsQueryable();
+            // SỬA: Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance. Chỉ hiện sảnh Active.
+            var query = db.Venues.Where(v => v.Status == 1).AsQueryable();
 
             // Lọc theo Tên sảnh hoặc Vị trí
             if (!string.IsNullOrEmpty(search))
@@ -88,7 +90,8 @@ namespace EventVenueBooking.Controllers
                            ?? "/Content/images/bg_landingpage.jpg" // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
             }).ToList();
 
-            ViewBag.VenueSelectList = new SelectList(db.Venues.Where(v => v.Status == 0).Select(v => new { v.VenueId, v.Name }), "VenueId", "Name");
+            // SỬA: cũng chỉ lấy sảnh Active (Status == 1)
+            ViewBag.VenueSelectList = new SelectList(db.Venues.Where(v => v.Status == 1).Select(v => new { v.VenueId, v.Name }), "VenueId", "Name");
 
             // Lưu lại để giữ trạng thái trên View
             ViewBag.CurrentSearch = search;

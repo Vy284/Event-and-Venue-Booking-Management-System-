@@ -1,5 +1,6 @@
 ﻿using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Filters;                    // THÊM
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -10,11 +11,13 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin,Coordinator")]  // THÊM: áp cho cả class (Feedback cho cả 2 role)
     public class UsersController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Users
+        [CustomAuthorize(Roles = "Admin")]          // THÊM: danh sách Users chỉ Admin được xem
         public ActionResult Index()
         {
             var users = db.Users.Select(u => new UserViewModel

@@ -15,7 +15,13 @@ namespace EventVenueBooking.ViewModels
         public decimal TotalAmount { get; set; }
 
         public string PaymentMethod { get; set; }
-        public string PaymentStatus { get; set; } // "Paid", "Unpaid", "Refunded"
+        public string PaymentStatus { get; set; } // "Paid", "Partial", "Unpaid"
+
+        // THÊM: trạng thái booking (0 = Pending, 1 = Confirmed, 2 = InProgress, 3 = Completed, 4 = Cancelled)
+        public byte Status { get; set; }
+
+        // THÊM: tổng số tiền đã thu (các khoản Completed), dùng để tính "còn lại"
+        public decimal PaidAmount { get; set; }
 
         // --- BỔ SUNG THÊM TRƯỜNG NÀY ĐỂ HIỂN THỊ DỊCH VỤ ĐI KÈM ---
         public List<string> AddOnServices { get; set; } = new List<string>();

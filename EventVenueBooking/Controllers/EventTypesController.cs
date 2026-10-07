@@ -8,9 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
+using EventVenueBooking.Filters;                    // THÊM
 
 namespace EventVenueBooking.Controllers
 {
+    [CustomAuthorize(Roles = "Admin")]              // THÊM
     public class EventTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -111,6 +113,10 @@ namespace EventVenueBooking.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             EventType eventType = db.EventTypes.Find(id);
+            if (eventType == null)                  // SỬA: tránh lỗi NullReference khi id không tồn tại
+            {
+                return HttpNotFound();
+            }
             eventType.IsActive = false;
             db.SaveChanges();
             return RedirectToAction("Index");
