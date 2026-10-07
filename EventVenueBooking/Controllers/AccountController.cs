@@ -20,8 +20,17 @@ namespace EventVenueBooking.Controllers
             {
                 case 2: return "Admin";
                 case 1: return "Coordinator";
+                case 0: return "Client";
                 default: return "Client";
             }
+        }
+
+        // GET: Account/Login
+        [AllowAnonymous]
+        public ActionResult Login()
+        {
+            TempData["OpenLoginModal"] = true;
+            return RedirectToAction("Index", "Home");
         }
 
         // POST: Account/Login
@@ -64,20 +73,42 @@ namespace EventVenueBooking.Controllers
                     Response.Cookies.Add(cookie);
 
                     TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
+
+                    if (user.Role == 2)
+                    {
+                        return RedirectToAction("Dashboard", "Admin");
+                    }
+
+                    string returnUrl = Request.QueryString["ReturnUrl"];
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
                     TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng hoặc tài khoản bị khóa!";
+                    return RedirectToAction("Index", "Home");
                 }
-
-                return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return View("Error");
+                System.Diagnostics.Debug.WriteLine("LỖI LOGIN: " + ex.ToString());
+                TempData["OpenLoginModal"] = true;
+                TempData["ErrorMessage"] = "Hệ thống gặp sự cố kết nối. Vui lòng thử lại!";
+                return RedirectToAction("Index", "Home");
             }
+        }
+
+        // GET: Account/Register
+        [AllowAnonymous]
+        public ActionResult Register()
+        {
+            TempData["OpenRegisterModal"] = true;
+            return RedirectToAction("Index", "Home");
         }
 
         // POST: Account/Register
@@ -113,7 +144,7 @@ namespace EventVenueBooking.Controllers
                         Email = model.Email,
                         Phone = model.Phone,
                         PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                        Role = 0,
+                        Role = 0, // Client mặc định
                         IsActive = true,
                         CreatedAt = DateTime.Now
                     };
@@ -154,8 +185,9 @@ namespace EventVenueBooking.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return View("Error");
+                System.Diagnostics.Debug.WriteLine("LỖI REGISTER: " + ex.ToString());
+                TempData["ErrorMessage"] = "Sự cố hệ thống khi đăng ký. Vui lòng thử lại!";
+                return RedirectToAction("Index", "Home");
             }
         }
 

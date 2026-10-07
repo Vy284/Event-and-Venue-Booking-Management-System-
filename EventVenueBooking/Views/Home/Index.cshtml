@@ -263,7 +263,6 @@
                             <div class="venue-img-wrapper">
                                 <img src="@item.ImageUrl" alt="@item.Name" loading="lazy">
 
-
                                 <div class="venue-overlay">
                                     <a href="/Venue/Details/@item.VenueId" class="btn-view-venue">
                                         VIEW VENUE
@@ -338,12 +337,12 @@
         const searchForm = document.getElementById('search-form');
         const categoryBtns = document.querySelectorAll('.category-btn');
 
-    function loadVenues(url, selectedCategory) {
+        function loadVenues(url, selectedCategory) {
             if (cardsContainer) cardsContainer.style.opacity = '0.4';
 
             fetch(url)
-                .then(response => response.text())
-                .then(htmlText => {
+                .then(function (response) { return response.text(); })
+                .then(function (htmlText) {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(htmlText, 'text/html');
                     const newCards = doc.getElementById('venue-cards-container');
@@ -354,8 +353,10 @@
                     }
 
                     if (selectedCategory) {
-                        if (categoryInput) categoryInput.value = selectedCategory;
-                        categoryBtns.forEach(btn => {
+                        if (categoryInput && 'value' in categoryInput) {
+                            categoryInput.value = selectedCategory;
+                        }
+                        categoryBtns.forEach(function (btn) {
                             if (btn.getAttribute('data-category') === selectedCategory) {
                                 btn.classList.remove('btn-outline-secondary');
                                 btn.classList.add('btn-brown');
@@ -366,17 +367,22 @@
                         });
                     }
                 })
-                .catch(err => {
+                .catch(function (err) {
                     console.error(err);
                     if (cardsContainer) cardsContainer.style.opacity = '1';
                 });
         }
 
         // Tìm theo buttons
-        categoryBtns.forEach(btn => {
+        categoryBtns.forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                loadVenues(this.getAttribute('href'), this.getAttribute('data-category'));
+                const target = e.currentTarget;
+                if (target) {
+                    const href = target.getAttribute('href') || '';
+                    const cat = target.getAttribute('data-category') || '';
+                    loadVenues(href, cat);
+                }
             });
         });
 
@@ -384,11 +390,11 @@
         if (searchForm) {
             searchForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                const searchVal = searchInput ? searchInput.value : '';
-                const dateVal = dateInput ? dateInput.value : '';
-                const currentCat = categoryInput ? categoryInput.value : 'All';
+                const searchVal = (searchInput && 'value' in searchInput) ? searchInput.value : '';
+                const dateVal = (dateInput && 'value' in dateInput) ? dateInput.value : '';
+                const currentCat = (categoryInput && 'value' in categoryInput) ? categoryInput.value : 'All';
                 const baseUrl = '@Url.Action("Index", "Home")';
-                const url = `${baseUrl}?category=${encodeURIComponent(currentCat)}&search=${encodeURIComponent(searchVal)}&eventDate=${encodeURIComponent(dateVal)}`;
+                const url = baseUrl + '?category=' + encodeURIComponent(currentCat) + '&search=' + encodeURIComponent(searchVal) + '&eventDate=' + encodeURIComponent(dateVal);
                 loadVenues(url, currentCat);
             });
         }
@@ -396,29 +402,32 @@
         // calendar initialization
         var calendarEl = document.getElementById('index-availability-calendar');
         var calendarSelect = document.getElementById('calendar-venue-select');
+        var globalFullCalendar = window['FullCalendar'];
 
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
-            },
-            buttonText: { today: 'Hôm nay', month: 'Tháng', week: 'Tuần' },
-            locale: 'vi',
-            events: []
-        });
-        calendar.render();
-
-        // khi chọn 1 sảnh từ Dropdown
-        if (calendarSelect) {
-            calendarSelect.addEventListener('change', function () {
-                var selectedVenueId = this.value;
-                calendar.removeAllEventSources();
-                if (selectedVenueId && selectedVenueId !== "0") {
-                    calendar.addEventSource('/Venue/GetVenueBookings?venueId=' + selectedVenueId);
-                }
+        if (calendarEl && globalFullCalendar) {
+            var calendar = new globalFullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                buttonText: { today: 'Hôm nay', month: 'Tháng', week: 'Tuần' },
+                locale: 'vi',
+                events: []
             });
+            calendar.render();
+
+            if (calendarSelect) {
+                calendarSelect.addEventListener('change', function (e) {
+                    var selectTarget = e.target;
+                    var selectedVenueId = (selectTarget && 'value' in selectTarget) ? selectTarget.value : '';
+                    calendar.removeAllEventSources();
+                    if (selectedVenueId && selectedVenueId !== "0") {
+                        calendar.addEventSource('/Venue/GetVenueBookings?venueId=' + selectedVenueId);
+                    }
+                });
+            }
         }
 
     });

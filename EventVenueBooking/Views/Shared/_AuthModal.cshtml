@@ -1,6 +1,7 @@
 ﻿@{
     var oldRegister = TempData["RegisterData"] as EventVenueBooking.ViewModels.RegisterViewModel;
     var shouldOpenRegister = TempData["OpenRegisterModal"] != null;
+    var shouldOpenLogin = TempData["OpenLoginModal"] != null;
 }
 
 <style>
@@ -113,21 +114,37 @@
     </div>
 </div>
 
-@if (shouldOpenRegister)
+@if (shouldOpenLogin || shouldOpenRegister)
 {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var authModalElement = document.getElementById('authModal');
-            if (authModalElement) {
-                var myModal = new bootstrap.Modal(authModalElement);
+            var globalBs = window['bootstrap'];
+            if (authModalElement && globalBs) {
+                var myModal = new globalBs.Modal(authModalElement);
                 myModal.show();
 
-                // Chuyển sang tab Register
-                var registerTab = document.getElementById('pills-register-tab');
-                if (registerTab) {
-                    var tab = new bootstrap.Tab(registerTab);
-                    tab.show();
+                @if (shouldOpenRegister)
+                {
+                    <text>
+                    var registerTab = document.getElementById('pills-register-tab');
+                    if (registerTab) {
+                        var tab = new globalBs.Tab(registerTab);
+                        tab.show();
+                    }
+                    </text>
+                }
+                else if (shouldOpenLogin)
+                {
+                    <text>
+                    var loginTab = document.getElementById('pills-login-tab');
+                    if (loginTab) {
+                        var tab = new globalBs.Tab(loginTab);
+                        tab.show();
+                    }
+                    </text>
                 }
             }
-        });</script>
+        });
+    </script>
 }
