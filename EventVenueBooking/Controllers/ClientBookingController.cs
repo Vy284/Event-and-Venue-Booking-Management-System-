@@ -54,6 +54,20 @@ namespace EventVenueBooking.Controllers
             return true;
         }
 
+        // MỚI: kiểm tra dữ liệu đầu vào phía server. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
+        private string ValidateInput(int guestCount, int capacity, DateTime start, DateTime end)
+        {
+            if (guestCount < 1)
+                return "Số khách phải lớn hơn 0.";
+            if (guestCount > capacity)
+                return "Số khách tối đa là " + capacity + " người.";
+            if (end <= start)
+                return "Thời gian kết thúc phải sau thời gian bắt đầu.";
+            if (start < DateTime.Now)
+                return "Không thể đặt sảnh trong quá khứ.";
+            return null;
+        }
+
         // GET: ClientBooking/Create?venueId=1
         public ActionResult Create(int? venueId)
         {
@@ -82,6 +96,15 @@ namespace EventVenueBooking.Controllers
             if (model.EventStart == null || model.EventEnd == null)
             {
                 ModelState.AddModelError("", "Vui lòng chọn thời gian bắt đầu và kết thúc.");
+                return View(model);
+            }
+
+            // MỚI: kiểm tra số khách, thứ tự thời gian, quá khứ
+            string error = ValidateInput(model.GuestCount, model.Capacity,
+                                         model.EventStart.Value, model.EventEnd.Value);
+            if (error != null)
+            {
+                ModelState.AddModelError("", error);
                 return View(model);
             }
 
@@ -114,6 +137,12 @@ namespace EventVenueBooking.Controllers
                 var venue = db.Venues.Find(model.VenueId);
                 if (venue == null)
                     return Json(new { ok = false, message = "Địa điểm không tồn tại." });
+
+                // MỚI: kiểm tra đầu vào trước khi tính giá
+                string error = ValidateInput(model.GuestCount, venue.Capacity,
+                                             model.EventStart.Value, model.EventEnd.Value);
+                if (error != null)
+                    return Json(new { ok = false, message = error });
 
                 var service = new BookingService(db);
                 var quote = service.CalculatePrice(venue, model.EventStart.Value, model.EventEnd.Value, model.AddOns);
@@ -207,4 +236,3 @@ namespace EventVenueBooking.Controllers
         }
     }
 }
-
