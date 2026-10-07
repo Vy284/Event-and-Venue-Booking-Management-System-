@@ -28,7 +28,6 @@ namespace EventVenueBooking.Controllers
         // GET: Venues
         public ActionResult Index()
         {
-            // Query trực tiếp từ DB sang ViewModel bằng LINQ Select
             var venues = db.Venues.Select(v => new VenueListViewModel
             {
                 VenueId = v.VenueId,

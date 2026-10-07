@@ -9,11 +9,11 @@ namespace EventVenueBooking.ViewModels
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập Email")]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập Mật khẩu")]
         [DataType(DataType.Password)]
-        public string PasswordHash { get; set; }
+        public string Password { get; set; }
     }
 }

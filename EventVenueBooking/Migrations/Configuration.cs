@@ -21,7 +21,7 @@
                     UserId = 1,
                     FullName = "Quản Lý Hệ Thống",
                     Email = "admin@eventvenue.com",
-                    PasswordHash = "admin123",
+                    PasswordHash = "$2a$11$0VIDReRhGnqWLo6SWTBKI.y8Y8dDKt1ba1sOgv7quUmI9L2352SFm", //BCrypt.Net.BCrypt.HashPassword("admin123")
                     Phone = "0901234567",
                     Role = 2, // Manager / Admin
                     IsActive = true,
@@ -32,7 +32,7 @@
                     UserId = 2,
                     FullName = "Nhân Viên Lễ Tân",
                     Email = "receptionist@eventvenue.com",
-                    PasswordHash = "user123",
+                    PasswordHash = "$2a$11$tZVy9U9SCAIyrkJl7o194.9KrwMZ7k3IAlFD8QiwO6pXruJHQMPx2", //BCrypt.Net.BCrypt.HashPassword("user123")
                     Phone = "0909876543",
                     Role = 1, // Receptionist
                     IsActive = true,
