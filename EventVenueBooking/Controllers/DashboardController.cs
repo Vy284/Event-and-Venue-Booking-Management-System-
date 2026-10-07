@@ -1,5 +1,6 @@
 ﻿using EventVenueBooking.Database;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
+using EventVenueBooking.Services;                   // THÊM: để dùng BookingStatuses, PaymentStatuses
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin,Coordinator")]  // THÊM
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class DashboardController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -26,14 +27,13 @@ namespace EventVenueBooking.Controllers
                 TotalBookingsThisMonth = db.Bookings
                     .Count(b => b.CreatedAt.Month == now.Month && b.CreatedAt.Year == now.Year),
 
-                // Tổng doanh thu từ các booking không bị hủy
-                TotalRevenue = db.Bookings
-                    .Where(b => b.Status != 4) // 4 = Cancelled
-                    .Select(b => (decimal?)b.TotalCost)
+                // SỬA: Doanh thu = tiền đã thu thật (khớp với trang Payments)
+                TotalRevenue = db.Payments
+                    .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
+                    .Select(p => (decimal?)p.Amount)
                     .Sum() ?? 0,
 
-                // SỬA: Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance
-                // (bản cũ đếm Status == 0 nên đếm nhầm các địa điểm đang tắt)
+                // Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance
                 ActiveVenuesCount = db.Venues.Count(v => v.Status == 1),
 
                 // Lấy 5 booking mới nhất
@@ -59,27 +59,30 @@ namespace EventVenueBooking.Controllers
             return View("~/Views/Admin/Dashboard.cshtml", model);
         }
 
-
-
+        // SỬA: sửa lệch tuần + lọc booking đã hủy
         public ActionResult Calendar(string weekDate)
         {
-            DateTime today = DateTime.Today;
+            DateTime startDate;
 
-            // Tự parse chuỗi yyyy-MM-dd từ JS gửi lên
-            if (!string.IsNullOrEmpty(weekDate))
+            if (!string.IsNullOrEmpty(weekDate) && DateTime.TryParse(weekDate, out DateTime parsed))
             {
-                DateTime.TryParse(weekDate, out today);
+                startDate = parsed.Date;   // giữ nguyên ngày được chọn, KHÔNG lùi về Chủ Nhật
+            }
+            else
+            {
+                // Mặc định: đầu khối 7 ngày chứa hôm nay (ngày 1, 8, 15, 22, 29)
+                var today = DateTime.Today;
+                startDate = new DateTime(today.Year, today.Month, ((today.Day - 1) / 7) * 7 + 1);
             }
 
-            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek);
-            DateTime endOfWeek = startOfWeek.AddDays(7);
+            DateTime endDate = startDate.AddDays(7);
+            ViewBag.WeekStartDate = startDate;
 
-            ViewBag.WeekStartDate = startOfWeek;
-
-            // Các đoạn query db.Bookings ở dưới m GIỮ NGUYÊN...
             var bookings = db.Bookings
                 .Include("Venue")
-                .Where(b => b.EventStartDateTime >= startOfWeek && b.EventStartDateTime < endOfWeek)
+                .Where(b => b.Status != BookingStatuses.Cancelled
+                         && b.EventStartDateTime >= startDate
+                         && b.EventStartDateTime < endDate)
                 .ToList();
 
             var model = bookings.Select(b => new CalendarEventViewModel

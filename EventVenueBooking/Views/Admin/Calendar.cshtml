@@ -4,33 +4,17 @@
     ViewBag.ActiveMenu = "Calendar";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
-    // 1. TỰ ĐỘNG ĐỌC QUERYSTRING 'weekDate' TRÊN URL (Độc lập với Controller)
-    DateTime weekStart;
-    string weekDateQuery = Request.QueryString["weekDate"];
+    // SỬA: Controller đã tính sẵn ngày bắt đầu của khối 7 ngày, view chỉ việc dùng
+    DateTime weekStart = ViewBag.WeekStartDate != null
+        ? (DateTime)ViewBag.WeekStartDate
+        : DateTime.Today;
 
-    if (ViewBag.WeekStartDate != null)
-    {
-        weekStart = (DateTime)ViewBag.WeekStartDate;
-    }
-    else if (!string.IsNullOrEmpty(weekDateQuery) && DateTime.TryParse(weekDateQuery, out DateTime parsedDate))
-    {
-        // Nhảy về ngày Chủ Nhật của tuần đó
-        weekStart = parsedDate.AddDays(-(int)parsedDate.DayOfWeek);
-    }
-    else
-    {
-        // Mặc định lấy ngày hôm nay
-        weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-    }
-
-    // 2. Tính ngày tuần trước để gán vào nút Back
+    // Ngày bắt đầu của khối 7 ngày trước đó (cho nút Back)
     string prevWeekStr = weekStart.AddDays(-7).ToString("yyyy-MM-dd");
 
-    // 3. Tính Tháng và Tuần hiện tại để đồng bộ Dropdown
-    DateTime refDate = weekStart.AddDays(3); // Dùng Thứ 4 làm mốc chuẩn
-    string currentMonth = refDate.ToString("yyyy-MM");
-    int currentWeekNum = ((refDate.Day - 1) / 7) + 1;
-    if (currentWeekNum > 5) { currentWeekNum = 5; }
+    // Tháng và số tuần hiện tại để đồng bộ dropdown
+    string currentMonth = weekStart.ToString("yyyy-MM");
+    int currentWeekNum = Math.Min(((weekStart.Day - 1) / 7) + 1, 5);
 }
 
 <style>
@@ -318,7 +302,7 @@
         <div class="calendar-grid">
 
             <div class="header-cell">
-                <!-- Nút Back lùi tuần truyền thẳng ngảy đã trừ 7 ngày từ C# -->
+                <!-- Nút Back lùi tuần truyền thẳng ngày đã trừ 7 ngày từ C# -->
                 <button id="prevWeekBtn" class="btn-nav-week" data-date="@prevWeekStr" title="Previous Week">
                     <i class='bx bx-left-arrow-alt'></i>
                 </button>
@@ -379,39 +363,39 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
 
-        function goToDate(dateString) {
-            var url = new URL(window.location.href);
-            url.searchParams.set('weekDate', dateString);
-            window.location.href = url.toString();
-        }
+            function goToDate(dateString) {
+                var url = new URL(window.location.href);
+                url.searchParams.set('weekDate', dateString);
+                window.location.href = url.toString();
+            }
 
-        // 1. Nút Back về tuần trước
-        document.getElementById('prevWeekBtn').addEventListener('click', function () {
-            var targetDate = this.getAttribute('data-date');
-            goToDate(targetDate);
+            // 1. Nút Back về tuần trước
+            document.getElementById('prevWeekBtn').addEventListener('click', function () {
+                var targetDate = this.getAttribute('data-date');
+                goToDate(targetDate);
+            });
+
+            // 2. Chọn Tháng/Năm mới
+            document.getElementById('monthPicker').addEventListener('change', function () {
+                if (!this.value) return;
+                // Chuyển tới ngày mùng 1 của tháng được chọn
+                goToDate(this.value + '-01');
+            });
+
+            // 3. Chọn Tuần (Week 1 -> Week 5)
+            document.getElementById('weekSelect').addEventListener('change', function () {
+                var selectedWeek = parseInt(this.value);
+                var monthVal = document.getElementById('monthPicker').value;
+
+                if (!monthVal) return;
+
+                // Tính số ngày tương ứng của tuần
+                var day = (selectedWeek - 1) * 7 + 1;
+                var dayStr = day.toString().padStart(2, '0');
+
+                goToDate(monthVal + '-' + dayStr);
+            });
         });
-
-        // 2. Chọn Tháng/Năm mới
-        document.getElementById('monthPicker').addEventListener('change', function () {
-            if (!this.value) return;
-            // Chuyển tới ngày mùng 1 của tháng được chọn
-            goToDate(this.value + '-01');
-        });
-
-        // 3. Chọn Tuần (Week 1 -> Week 5)
-        document.getElementById('weekSelect').addEventListener('change', function () {
-            var selectedWeek = parseInt(this.value);
-            var monthVal = document.getElementById('monthPicker').value;
-
-            if (!monthVal) return;
-
-            // Tính số ngày tương ứng của tuần
-            var day = (selectedWeek - 1) * 7 + 1;
-            var dayStr = day.toString().padStart(2, '0');
-
-            goToDate(monthVal + '-' + dayStr);
-        });
-    });
 </script>

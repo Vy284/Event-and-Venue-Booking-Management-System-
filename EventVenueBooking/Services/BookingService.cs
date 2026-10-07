@@ -227,59 +227,78 @@ namespace EventVenueBooking.Services
         }
 
         // 5. Ghi nhận thanh toán (cọc = DepositRate * TotalCost; Final = phần còn lại)
+        //    SỬA: có transaction + khóa dòng booking (chống ghi trùng khi bấm 2 lần),
+        //    chặn booking Completed, làm tròn tiền cọc chuẩn, kiểm tra phương thức thanh toán.
         public Payment RecordPayment(int bookingId, byte paymentType, string method, int recordedByUserId)
         {
-            var booking = _db.Bookings.Include(b => b.Payments).FirstOrDefault(b => b.BookingId == bookingId);
-            if (booking == null)
-                throw new BookingException("Booking không tồn tại.");
-            if (booking.Status == BookingStatuses.Cancelled)
-                throw new BookingException("Booking đã bị hủy.");
+            method = (method ?? "").Trim();
+            if (method.Length == 0)
+                throw new BookingException("Vui lòng chọn phương thức thanh toán.");
+            if (method.Length > 50)
+                throw new BookingException("Phương thức thanh toán quá dài (tối đa 50 ký tự).");
 
-            decimal paid = booking.Payments
-                .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
-                .Sum(p => p.Amount);
-
-            decimal amount;
-            if (paymentType == PaymentTypes.Deposit)
+            using (var tx = _db.Database.BeginTransaction())
             {
-                if (booking.Payments.Any(p => p.PaymentType == PaymentTypes.Deposit && p.PaymentStatus == PaymentStatuses.Completed))
-                    throw new BookingException("Booking này đã đặt cọc.");
-                amount = Math.Round(booking.TotalCost * DepositRate, 0);
+                // Khóa dòng booking để bấm 2 lần / 2 request song song không ghi trùng.
+                // "Bookings" là tên bảng EF tạo mặc định; sai thì sửa theo DB.
+                _db.Database.ExecuteSqlCommand(
+                    "SELECT BookingId FROM Bookings WITH (UPDLOCK, ROWLOCK) WHERE BookingId = @p0", bookingId);
+
+                var booking = _db.Bookings.Include(b => b.Payments).FirstOrDefault(b => b.BookingId == bookingId);
+                if (booking == null)
+                    throw new BookingException("Booking không tồn tại.");
+                if (booking.Status == BookingStatuses.Cancelled)
+                    throw new BookingException("Booking đã bị hủy.");
+                if (booking.Status == BookingStatuses.Completed)
+                    throw new BookingException("Booking đã hoàn tất.");
+
+                decimal paid = booking.Payments
+                    .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
+                    .Sum(p => p.Amount);
+
+                decimal amount;
+                if (paymentType == PaymentTypes.Deposit)
+                {
+                    if (booking.Payments.Any(p => p.PaymentType == PaymentTypes.Deposit && p.PaymentStatus == PaymentStatuses.Completed))
+                        throw new BookingException("Booking này đã đặt cọc.");
+                    amount = Math.Round(booking.TotalCost * DepositRate, 0, MidpointRounding.AwayFromZero);
+                }
+                else if (paymentType == PaymentTypes.Final)
+                {
+                    if (booking.Status == BookingStatuses.Pending)
+                        throw new BookingException("Cần đặt cọc trước khi thanh toán phần còn lại.");
+                    amount = booking.TotalCost - paid;
+                    if (amount <= 0)
+                        throw new BookingException("Booking đã thanh toán đủ.");
+                }
+                else
+                {
+                    throw new BookingException("Loại thanh toán không hợp lệ.");
+                }
+
+                var payment = new Payment
+                {
+                    BookingId = bookingId,
+                    Amount = amount,
+                    PaymentType = paymentType,
+                    PaymentMethod = method,
+                    PaymentStatus = PaymentStatuses.Completed,   // thanh toán giả lập: coi như thành công ngay
+                    PaymentDate = DateTime.Now,
+                    RecordedByUserId = recordedByUserId
+                };
+                _db.Payments.Add(payment);
+
+                if (paymentType == PaymentTypes.Deposit && booking.Status == BookingStatuses.Pending)
+                {
+                    booking.Status = BookingStatuses.Confirmed;
+                    booking.LastModifiedByUserId = recordedByUserId;
+                    booking.LastModifiedAt = DateTime.Now;
+                }
+
+                _db.SaveChanges();
+                tx.Commit();
+                return payment;
             }
-            else if (paymentType == PaymentTypes.Final)
-            {
-                if (booking.Status == BookingStatuses.Pending)
-                    throw new BookingException("Cần đặt cọc trước khi thanh toán phần còn lại.");
-                amount = booking.TotalCost - paid;
-                if (amount <= 0)
-                    throw new BookingException("Booking đã thanh toán đủ.");
-            }
-            else
-            {
-                throw new BookingException("Loại thanh toán không hợp lệ.");
-            }
-
-            var payment = new Payment
-            {
-                BookingId = bookingId,
-                Amount = amount,
-                PaymentType = paymentType,
-                PaymentMethod = method,
-                PaymentStatus = PaymentStatuses.Completed,   // thanh toán giả lập: coi như thành công ngay
-                PaymentDate = DateTime.Now,
-                RecordedByUserId = recordedByUserId
-            };
-            _db.Payments.Add(payment);
-
-            if (paymentType == PaymentTypes.Deposit && booking.Status == BookingStatuses.Pending)
-            {
-                booking.Status = BookingStatuses.Confirmed;
-                booking.LastModifiedByUserId = recordedByUserId;
-                booking.LastModifiedAt = DateTime.Now;
-            }
-
-            _db.SaveChanges();
-            return payment;
         }
 
         // 6. Hủy booking (hủy thì các khoản đã thu chuyển Refunded - chốt chính sách với nhóm)
