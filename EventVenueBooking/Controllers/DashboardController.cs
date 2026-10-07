@@ -1,6 +1,6 @@
 ﻿using EventVenueBooking.Database;
 using EventVenueBooking.Filters;
-using EventVenueBooking.Services;                   // THÊM: để dùng BookingStatuses, PaymentStatuses
+using EventVenueBooking.Services;
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -16,27 +16,23 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // GET: Dashboard
+        // GET: Dashboard/Index
         public ActionResult Index()
         {
             var now = DateTime.Now;
 
             var model = new DashboardViewModel
             {
-                // Thống kê số booking tháng này
                 TotalBookingsThisMonth = db.Bookings
                     .Count(b => b.CreatedAt.Month == now.Month && b.CreatedAt.Year == now.Year),
 
-                // SỬA: Doanh thu = tiền đã thu thật (khớp với trang Payments)
                 TotalRevenue = db.Payments
                     .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
                     .Select(p => (decimal?)p.Amount)
                     .Sum() ?? 0,
 
-                // Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance
                 ActiveVenuesCount = db.Venues.Count(v => v.Status == 1),
 
-                // Lấy 5 booking mới nhất
                 RecentBookings = db.Bookings
                     .Include(b => b.ClientUser)
                     .Include(b => b.Venue)
@@ -59,18 +55,17 @@ namespace EventVenueBooking.Controllers
             return View("~/Views/Admin/Dashboard.cshtml", model);
         }
 
-        // SỬA: sửa lệch tuần + lọc booking đã hủy
+        // GET: Dashboard/Calendar
         public ActionResult Calendar(string weekDate)
         {
             DateTime startDate;
 
             if (!string.IsNullOrEmpty(weekDate) && DateTime.TryParse(weekDate, out DateTime parsed))
             {
-                startDate = parsed.Date;   // giữ nguyên ngày được chọn, KHÔNG lùi về Chủ Nhật
+                startDate = parsed.Date;
             }
             else
             {
-                // Mặc định: đầu khối 7 ngày chứa hôm nay (ngày 1, 8, 15, 22, 29)
                 var today = DateTime.Today;
                 startDate = new DateTime(today.Year, today.Month, ((today.Day - 1) / 7) * 7 + 1);
             }
@@ -97,7 +92,6 @@ namespace EventVenueBooking.Controllers
             return View("~/Views/Admin/Calendar.cshtml", model);
         }
 
-        // Hàm phụ trợ map Status (byte) ra String theo thiết kế Booking.cs
         private string GetStatusString(byte statusByte)
         {
             switch (statusByte)

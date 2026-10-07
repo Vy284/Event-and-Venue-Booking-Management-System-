@@ -76,7 +76,7 @@ namespace EventVenueBooking.Controllers
 
                     if (user.Role == 2)
                     {
-                        return RedirectToAction("Dashboard", "Admin");
+                        return RedirectToAction("Index", "Dashboard"); // Đã sửa từ "Dashboard", "Admin" sang "Index", "Dashboard"
                     }
 
                     string returnUrl = Request.QueryString["ReturnUrl"];
