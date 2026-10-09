@@ -6,15 +6,21 @@
     string[] statusText = { "Chờ đặt cọc", "Đã xác nhận", "Đang diễn ra", "Hoàn tất", "Đã hủy" };
     string[] statusClass = { "warning", "success", "primary", "secondary", "danger" };
     string[] paymentTypeText = { "Đặt cọc", "Thanh toán cuối" };
-    string[] paymentStatusText = { "Chờ xử lý", "Đã thanh toán", "Đã hoàn tiền" };
+    string[] paymentStatusText = { "Chờ xử lý", "Đã nhận", "Đã hoàn tiền" };   // SỬA: "Đã nhận" thay cho "Đã thanh toán"
 
     string unitName = Model.RentalUnitAtBooking == 0 ? "giờ" : Model.RentalUnitAtBooking == 1 ? "buổi" : "ngày";
 
     decimal paid = Model.Payments.Where(p => p.PaymentStatus == PaymentStatuses.Completed).Sum(p => p.Amount);
+    decimal refunded = Model.Payments.Where(p => p.PaymentStatus == PaymentStatuses.Refunded).Sum(p => p.Amount);   // THÊM
     decimal remaining = Model.TotalCost - paid;
     bool hasDeposit = Model.Payments.Any(p => p.PaymentType == PaymentTypes.Deposit && p.PaymentStatus == PaymentStatuses.Completed);
-    decimal depositAmount = Math.Round(Model.TotalCost * BookingService.DepositRate, 0);
+    decimal depositAmount = Math.Round(Model.TotalCost * BookingService.DepositRate, 0, MidpointRounding.AwayFromZero);   // SỬA: khớp cách làm tròn của service
     bool isCancelled = Model.Status == BookingStatuses.Cancelled;
+
+    // THÊM: nhãn tiến độ thanh toán của cả booking
+    string paymentProgress = isCancelled
+        ? (refunded > 0 ? "Đã hoàn tiền" : "Đã hủy")
+        : (paid >= Model.TotalCost ? "Đã thanh toán đủ" : (paid > 0 ? "Đã đặt cọc" : "Chưa thanh toán"));
 }
 
 <div class="container py-5 mt-4">
@@ -115,9 +121,19 @@
         <!-- Cột thao tác -->
         <div class="col-lg-4">
             <div class="bg-white p-4 rounded-4 shadow-sm sticky-top" style="top: 100px;">
+                <!-- THÊM: nhãn tiến độ thanh toán -->
+                <div class="mb-3"><span class="badge text-bg-light border px-3 py-2">@paymentProgress</span></div>
+
                 <div class="d-flex justify-content-between mb-1"><span class="text-muted">Tổng tiền</span><strong>@Model.TotalCost.ToString("N0") VNĐ</strong></div>
-                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Đã thanh toán</span><strong class="text-success">@paid.ToString("N0") VNĐ</strong></div>
-                <div class="d-flex justify-content-between mb-3"><span class="text-muted">Còn lại</span><strong class="text-danger">@((isCancelled ? 0 : remaining).ToString("N0")) VNĐ</strong></div>
+                <div class="d-flex justify-content-between mb-1"><span class="text-muted">Đã thu</span><strong class="text-success">@paid.ToString("N0") VNĐ</strong></div>
+                @if (isCancelled)
+                {
+                    <div class="d-flex justify-content-between mb-3"><span class="text-muted">Đã hoàn lại</span><strong>@refunded.ToString("N0") VNĐ</strong></div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between mb-3"><span class="text-muted">Còn lại</span><strong class="text-danger">@remaining.ToString("N0") VNĐ</strong></div>
+                }
                 <hr />
 
                 @if (!isCancelled && Model.Status == BookingStatuses.Pending && !hasDeposit)
