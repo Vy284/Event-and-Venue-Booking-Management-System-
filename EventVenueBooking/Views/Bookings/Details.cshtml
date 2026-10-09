@@ -1,170 +1,403 @@
 ﻿@model EventVenueBooking.Entities.Booking
-
+@using EventVenueBooking.Services
 @{
-    ViewBag.Title = "Details";
+    // Nếu sai đường dẫn: mở Views/Admin/Bookings.cshtml, chép đúng dòng Layout ở đầu file đó
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Booking #" + Model.BookingId;
+    ViewBag.ActiveMenu = "Bookings";
+
+    string[] statusText = { "Pending", "Confirmed", "In Progress", "Completed", "Cancelled" };
+    string[] statusClass = { "warn", "ok", "info", "done", "bad" };
+    string[] paymentTypeText = { "Đặt cọc", "Thanh toán cuối" };
+    string[] paymentStatusText = { "Chờ xử lý", "Đã thanh toán", "Đã hoàn tiền" };
+    string unitName = Model.RentalUnitAtBooking == 0 ? "giờ" : Model.RentalUnitAtBooking == 1 ? "buổi" : "ngày";
+
+    string customer = Model.ClientUser != null ? Model.ClientUser.FullName : "N/A";
+    string venueName = Model.Venue != null ? Model.Venue.Name : "N/A";
+    string eventTypeName = Model.EventType != null ? Model.EventType.TypeName : "N/A";
+
+    bool isCancelled = Model.Status == BookingStatuses.Cancelled;
+    decimal paid = Model.Payments.Where(p => p.PaymentStatus == PaymentStatuses.Completed).Sum(p => p.Amount);
+    decimal remaining = Model.TotalCost - paid;
+    bool fullyPaid = remaining <= 0;
+    bool hasDeposit = Model.Payments.Any(p => p.PaymentType == PaymentTypes.Deposit && p.PaymentStatus == PaymentStatuses.Completed);
+    decimal depositAmount = Math.Round(Model.TotalCost * BookingService.DepositRate, 0);
+
+    // Nhãn thanh toán tổng thể của booking (chỉ để hiển thị, không lưu DB)
+    string payLabel = isCancelled ? "Đã hủy"
+                    : fullyPaid ? "Đã thanh toán đủ"
+                    : paid > 0 ? "Đang thanh toán"
+                    : "Chưa thanh toán";
+    string payClass = isCancelled ? "bad" : fullyPaid ? "ok" : paid > 0 ? "warn" : "done";
+
+    // Các bước chuyển trạng thái hợp lệ (khớp BookingService.ChangeStatus)
+    var nextSteps = new List<Tuple<string, byte>>();
+    if (Model.Status == BookingStatuses.Confirmed) { nextSteps.Add(Tuple.Create("Bắt đầu sự kiện", BookingStatuses.InProgress)); }
+    if (Model.Status == BookingStatuses.InProgress) { nextSteps.Add(Tuple.Create("Hoàn tất booking", BookingStatuses.Completed)); }
+
+    // Khoản thu tiếp theo (khớp BookingService.RecordPayment)
+    byte? payType = null;
+    decimal payAmount = 0;
+    string payTitle = "";
+    if (!isCancelled && Model.Status != BookingStatuses.Completed)
+    {
+        if (!hasDeposit) { payType = PaymentTypes.Deposit; payAmount = depositAmount; payTitle = "Thu tiền cọc"; }
+        else if (Model.Status != BookingStatuses.Pending && remaining > 0) { payType = PaymentTypes.Final; payAmount = remaining; payTitle = "Thu phần còn lại"; }
+    }
 }
 
-<h2>Details</h2>
+<style>
+    .bd-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
 
-<div>
-    <h4>Booking</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.CancelledByUser.FullName)
-        </dt>
+        .bd-top a.back {
+            color: var(--primary-green);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 14px;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.CancelledByUser.FullName)
-        </dd>
+    .bd-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        align-items: start;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.ClientUser.FullName)
-        </dt>
+    @@media (max-width: 1100px) {
+        .bd-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
-        <dd>
-            @Html.DisplayFor(model => model.ClientUser.FullName)
-        </dd>
+    .bd-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(24,74,59,.05);
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.EventType.TypeName)
-        </dt>
+        .bd-card h3 {
+            font-size: 16px;
+            color: var(--primary-green);
+            margin-bottom: 14px;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.EventType.TypeName)
-        </dd>
+    .bd-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 24px;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.LastModifiedByUser.FullName)
-        </dt>
+        .bd-info .k {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.LastModifiedByUser.FullName)
-        </dd>
+        .bd-info .v {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.Venue.Name)
-        </dt>
+    .bd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
 
-        <dd>
-            @Html.DisplayFor(model => model.Venue.Name)
-        </dd>
+        .bd-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.GuestCount)
-        </dt>
+        .bd-table td {
+            padding: 10px 6px;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.GuestCount)
-        </dd>
+        .bd-table .r {
+            text-align: right;
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.EventStartDateTime)
-        </dt>
+        .bd-table tr.total td {
+            font-weight: 800;
+            font-size: 16px;
+            border-bottom: none;
+            color: #c0392b;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.EventStartDateTime)
-        </dd>
+    .pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.EventEndDateTime)
-        </dt>
+        .pill.ok {
+            background: #d4edda;
+            color: #1e6b36;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.EventEndDateTime)
-        </dd>
+        .pill.warn {
+            background: #fff3cd;
+            color: #8a6d0b;
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
+        .pill.info {
+            background: #d6e9f8;
+            color: #1a5a8a;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.Status)
-        </dd>
+        .pill.done {
+            background: #e3e8e5;
+            color: #4d5f55;
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.VenueRateAtBooking)
-        </dt>
+        .pill.bad {
+            background: #f8d7da;
+            color: #8a1f2b;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.VenueRateAtBooking)
-        </dd>
+    .bd-sum {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.RentalUnitAtBooking)
-        </dt>
+        .bd-sum .num {
+            font-weight: 800;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.RentalUnitAtBooking)
-        </dd>
+    .bd-btn {
+        width: 100%;
+        border: none;
+        border-radius: 10px;
+        padding: 11px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        background: var(--primary-green);
+        color: #fff;
+        margin-top: 8px;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.RentalQuantity)
-        </dt>
+        .bd-btn.outline {
+            background: transparent;
+            color: #c0392b;
+            border: 1.5px solid #c0392b;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.RentalQuantity)
-        </dd>
+    .bd-input {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 13px;
+        margin-top: 8px;
+    }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.VenueCost)
-        </dt>
+    .bd-msg {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
 
-        <dd>
-            @Html.DisplayFor(model => model.VenueCost)
-        </dd>
+        .bd-msg.ok {
+            background: #d4edda;
+            color: #1e6b36;
+        }
 
-        <dt>
-            @Html.DisplayNameFor(model => model.AddOnCost)
-        </dt>
+        .bd-msg.bad {
+            background: #f8d7da;
+            color: #8a1f2b;
+        }
 
-        <dd>
-            @Html.DisplayFor(model => model.AddOnCost)
-        </dd>
+    .bd-hr {
+        border: none;
+        border-top: 1px solid var(--border-color);
+        margin: 14px 0;
+    }
+</style>
 
-        <dt>
-            @Html.DisplayNameFor(model => model.TotalCost)
-        </dt>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="bd-msg ok">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="bd-msg bad">@TempData["ErrorMessage"]</div>
+}
 
-        <dd>
-            @Html.DisplayFor(model => model.TotalCost)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.LastModifiedAt)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.LastModifiedAt)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.CancelledAt)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.CancelledAt)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.CancelReason)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.CancelReason)
-        </dd>
-
-    </dl>
+<div class="bd-top">
+    <div>
+        <span class="pill @statusClass[Model.Status]">@statusText[Model.Status]</span>
+        <span class="pill @payClass">@payLabel</span>
+    </div>
+    <a class="back" href="@Url.Action("Index", "Bookings")">&larr; Về danh sách booking</a>
 </div>
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.BookingId }) |
-    @Html.ActionLink("Back to List", "Index")
-</p>
+
+<div class="bd-grid">
+    <!-- ================= CỘT TRÁI ================= -->
+    <div>
+        <div class="bd-card">
+            <h3>Thông tin booking #@Model.BookingId</h3>
+            <div class="bd-info">
+                <div><div class="k">Khách hàng</div><div class="v">@customer</div></div>
+                <div><div class="k">Địa điểm</div><div class="v">@venueName</div></div>
+                <div><div class="k">Loại sự kiện</div><div class="v">@eventTypeName</div></div>
+                <div><div class="k">Số khách</div><div class="v">@Model.GuestCount người</div></div>
+                <div><div class="k">Bắt đầu</div><div class="v">@Model.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")</div></div>
+                <div><div class="k">Kết thúc</div><div class="v">@Model.EventEndDateTime.ToString("dd/MM/yyyy HH:mm")</div></div>
+                <div><div class="k">Ngày đặt</div><div class="v">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div></div>
+            </div>
+        </div>
+
+        <div class="bd-card">
+            <h3>Chi tiết giá (đã chốt lúc đặt)</h3>
+            <table class="bd-table">
+                <tbody>
+                    <tr>
+                        <td>Thuê sảnh (@Model.VenueRateAtBooking.ToString("N0") VNĐ × @Model.RentalQuantity @unitName)</td>
+                        <td class="r">@Model.VenueCost.ToString("N0") VNĐ</td>
+                    </tr>
+                    @foreach (var ba in Model.BookingAddOns)
+                    {
+                        <tr>
+                            <td>@(ba.AddOnService != null ? ba.AddOnService.Name : "Add-on #" + ba.AddOnId) (@ba.PriceAtBooking.ToString("N0") VNĐ × @ba.Quantity)</td>
+                            <td class="r">@ba.Subtotal.ToString("N0") VNĐ</td>
+                        </tr>
+                    }
+                    <tr class="total">
+                        <td>Tổng cộng</td>
+                        <td class="r">@Model.TotalCost.ToString("N0") VNĐ</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bd-card">
+            <h3>Lịch sử thanh toán</h3>
+            @if (Model.Payments.Any())
+            {
+                <table class="bd-table">
+                    <thead>
+                        <tr><th>Loại</th><th>Phương thức</th><th class="r">Số tiền</th><th>Trạng thái</th><th>Ngày</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Payments.OrderBy(x => x.PaymentId))
+                        {
+                            <tr>
+                                <td>@paymentTypeText[p.PaymentType]</td>
+                                <td>@(string.IsNullOrEmpty(p.PaymentMethod) ? "N/A" : p.PaymentMethod)</td>
+                                <td class="r">@p.Amount.ToString("N0") VNĐ</td>
+                                <td>
+                                    @if (p.PaymentStatus == PaymentStatuses.Completed && !fullyPaid && !isCancelled)
+                                    {
+                                        <span class="pill warn">Đang thanh toán</span>
+                                    }
+                                    else
+                                    {
+                                        @paymentStatusText[p.PaymentStatus]
+                                    }
+                                </td>
+                                <td>@(p.PaymentDate.HasValue ? p.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="color: var(--text-muted); font-size: 14px;">Chưa có khoản thanh toán nào.</div>
+            }
+        </div>
+
+        @if (Model.LastModifiedAt.HasValue || isCancelled)
+        {
+            <div class="bd-card">
+                <h3>Lịch sử thay đổi</h3>
+                <div class="bd-info">
+                    @if (Model.LastModifiedAt.HasValue)
+                    {
+                        <div><div class="k">Sửa lần cuối bởi</div><div class="v">@(Model.LastModifiedByUser != null ? Model.LastModifiedByUser.FullName : "N/A")</div></div>
+                        <div><div class="k">Lúc</div><div class="v">@Model.LastModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</div></div>
+                    }
+                    @if (isCancelled)
+                    {
+                        <div><div class="k">Hủy bởi</div><div class="v">@(Model.CancelledByUser != null ? Model.CancelledByUser.FullName : "N/A")</div></div>
+                        <div><div class="k">Hủy lúc</div><div class="v">@(Model.CancelledAt.HasValue ? Model.CancelledAt.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div></div>
+                        <div><div class="k">Lý do</div><div class="v">@(string.IsNullOrEmpty(Model.CancelReason) ? "-" : Model.CancelReason)</div></div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ================= CỘT PHẢI: TỔNG KẾT + THAO TÁC ================= -->
+    <div>
+        <div class="bd-card">
+            <div class="bd-sum"><span>Tổng tiền</span><span class="num">@Model.TotalCost.ToString("N0") VNĐ</span></div>
+            <div class="bd-sum"><span>Đã thu</span><span class="num" style="color:#1e6b36;">@paid.ToString("N0") VNĐ</span></div>
+            <div class="bd-sum"><span>Còn lại</span><span class="num" style="color:#c0392b;">@((isCancelled ? 0 : remaining).ToString("N0")) VNĐ</span></div>
+
+            @foreach (var step in nextSteps)
+            {
+                using (Html.BeginForm("ChangeStatus", "Bookings", new { id = Model.BookingId }, FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="@step.Item2" />
+                    <input type="hidden" name="returnTo" value="details" />
+                    <button type="submit" class="bd-btn">@step.Item1</button>
+                }
+            }
+
+            @if (payType.HasValue)
+            {
+                <hr class="bd-hr" />
+                <div style="font-weight:700; font-size:14px;">@payTitle: @payAmount.ToString("N0") VNĐ</div>
+                using (Html.BeginForm("RecordPayment", "Bookings", new { id = Model.BookingId }, FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="paymentType" value="@payType.Value" />
+                    <input type="hidden" name="returnTo" value="details" />
+                    <select name="method" class="bd-input" required>
+                        <option value="">-- Phương thức --</option>
+                        <option value="Cash">Tiền mặt</option>
+                        <option value="Bank Transfer">Chuyển khoản</option>
+                        <option value="Credit Card">Thẻ tín dụng</option>
+                        <option value="E-Wallet">Ví điện tử</option>
+                    </select>
+                    <button type="submit" class="bd-btn">Ghi nhận thanh toán</button>
+                }
+            }
+
+            @if (Model.Status == BookingStatuses.Pending || Model.Status == BookingStatuses.Confirmed)
+            {
+                <hr class="bd-hr" />
+                using (Html.BeginForm("Cancel", "Bookings", new { id = Model.BookingId }, FormMethod.Post,
+                    new { onsubmit = "return confirm('Hủy booking này? Các khoản đã thu sẽ chuyển sang Đã hoàn tiền.');" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnTo" value="details" />
+                    <input type="text" name="reason" class="bd-input" maxlength="500" placeholder="Lý do hủy (không bắt buộc)" />
+                    <button type="submit" class="bd-btn outline">Hủy booking</button>
+                }
+            }
+        </div>
+    </div>
+</div>

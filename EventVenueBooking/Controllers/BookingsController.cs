@@ -26,6 +26,14 @@ namespace EventVenueBooking.Controllers
             return db.Users.Where(u => u.Email == email).Select(u => u.UserId).First();
         }
 
+        // SỬA: quay về trang chi tiết nếu form gửi từ đó, ngược lại về danh sách
+        private ActionResult BackTo(string returnTo, int id)
+        {
+            if (returnTo == "details")
+                return RedirectToAction("Details", new { id });
+            return RedirectToAction("Index");
+        }
+
         // Đổ dữ liệu dropdown cho view Create/Edit
         // SỬA 2.1: chỉ liệt kê tài khoản Client (Role = 0) đang hoạt động
         // SỬA 2.3: chỉ liệt kê EventType và Venue đang hoạt động
@@ -90,13 +98,24 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Details
+        // SỬA: nạp sẵn khách, địa điểm, loại sự kiện, thanh toán, add-on (bản cũ dùng Find nên các mục này bị null)
         public ActionResult Details(int? id)
         {
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Booking booking = db.Bookings.Find(id);
+
+            Booking booking = db.Bookings
+                .Include(b => b.ClientUser)
+                .Include(b => b.Venue)
+                .Include(b => b.EventType)
+                .Include(b => b.LastModifiedByUser)
+                .Include(b => b.CancelledByUser)
+                .Include(b => b.Payments)
+                .Include(b => b.BookingAddOns.Select(ba => ba.AddOnService))
+                .FirstOrDefault(b => b.BookingId == id);
+
             if (booking == null)
             {
                 return HttpNotFound();
@@ -197,10 +216,11 @@ namespace EventVenueBooking.Controllers
             return View(booking);
         }
 
-        // Đổi trạng thái (nút Bắt đầu / Hoàn tất trên trang danh sách)
+        // Đổi trạng thái (nút Bắt đầu / Hoàn tất trên danh sách, và nút trên trang chi tiết)
+        // SỬA: thêm returnTo
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ChangeStatus(int id, byte status)
+        public ActionResult ChangeStatus(int id, byte status, string returnTo = null)
         {
             try
             {
@@ -211,13 +231,14 @@ namespace EventVenueBooking.Controllers
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
-            return RedirectToAction("Index");
+            return BackTo(returnTo, id);
         }
 
         // Ghi nhận thanh toán, paymentType: 0 = Deposit, 1 = FinalPayment
+        // SỬA: thêm returnTo
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult RecordPayment(int id, byte paymentType, string method)
+        public ActionResult RecordPayment(int id, byte paymentType, string method, string returnTo = null)
         {
             try
             {
@@ -228,13 +249,14 @@ namespace EventVenueBooking.Controllers
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
-            return RedirectToAction("Index");
+            return BackTo(returnTo, id);
         }
 
-        // Hủy booking kèm lý do (modal Cancel ở trang danh sách)
+        // Hủy booking kèm lý do (modal Cancel ở trang danh sách, và form trên trang chi tiết)
+        // SỬA: thêm returnTo
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Cancel(int id, string reason)
+        public ActionResult Cancel(int id, string reason, string returnTo = null)
         {
             reason = string.IsNullOrWhiteSpace(reason) ? "Hủy bởi quản trị" : reason.Trim();
             if (reason.Length > 500) reason = reason.Substring(0, 500);
@@ -248,7 +270,7 @@ namespace EventVenueBooking.Controllers
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
-            return RedirectToAction("Index");
+            return BackTo(returnTo, id);
         }
 
         // GET: Delete

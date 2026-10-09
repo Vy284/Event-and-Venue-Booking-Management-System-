@@ -202,6 +202,12 @@
         color: #C62828;
     }
 
+    /* Đang thanh toán (mới cọc, còn nợ) */
+    .badge-partial {
+        background: #FFF8DC;
+        color: #8A6D0B;
+    }
+
     /* ACTION BUTTONS */
     .action-btns {
         display: flex;
@@ -220,6 +226,11 @@
         font-size: 16px;
         cursor: pointer;
         transition: 0.2s;
+    }
+
+    /* nút mắt giờ là thẻ <a> */
+    a.btn-act {
+        text-decoration: none;
     }
 
     .btn-view {
@@ -421,10 +432,10 @@
         <div class="filter-group">
             <input type="text" id="searchInput" class="custom-input" placeholder="Search Client / Venue..." style="width: 220px;" onkeyup="filterTable()">
             <select class="custom-select" id="statusFilter" onchange="filterTable()">
-                <option value="">All Payments</option>
-                <option value="Paid">Paid</option>
-                <option value="Partial">Partial</option>
-                <option value="Unpaid">Unpaid</option>
+                <option value="">Tất cả thanh toán</option>
+                <option value="Paid">Đã thanh toán đủ</option>
+                <option value="Partial">Đang thanh toán</option>
+                <option value="Unpaid">Chưa thanh toán</option>
             </select>
         </div>
         <a class="btn-create" href="@Url.Action("Create", "Bookings")">
@@ -461,7 +472,8 @@
                             var parts = item.CustomerName.Trim().Split(' ');
                             if (parts.Length >= 2)
                             {
-                                initials = (parts[0][0] + parts[parts.Length - 1][0]).ToString().ToUpper();
+                                // SỬA: bản cũ cộng 2 ký tự (char + char) ra số nên avatar hiện số; nối chuỗi thì đúng
+                                initials = string.Concat(parts[0][0], parts[parts.Length - 1][0]).ToUpper();
                             }
                             else if (parts.Length == 1 && parts[0].Length > 0)
                             {
@@ -503,18 +515,19 @@
                             <td style="font-weight: 700; color: var(--primary-green);">@item.TotalAmount.ToString("N0") VNĐ</td>
                             <td><span class="status-badge @stClass[item.Status]">@stText[item.Status]</span></td>
                             <td>
+                                @* SỬA: nhãn tiếng Việt; mới cọc thì hiện "Đang thanh toán" kèm số tiền còn lại *@
                                 @if (item.PaymentStatus == "Paid")
                                 {
-                                    <span class="status-badge badge-completed">Paid</span>
+                                    <span class="status-badge badge-completed">Đã thanh toán đủ</span>
                                 }
                                 else if (item.PaymentStatus == "Partial")
                                 {
-                                    <span class="status-badge badge-confirmed">Partial</span>
+                                    <span class="status-badge badge-partial">Đang thanh toán</span>
                                     <div class="flow-note">Còn @remaining.ToString("N0")</div>
                                 }
                                 else
                                 {
-                                    <span class="status-badge badge-pending">Unpaid</span>
+                                    <span class="status-badge badge-pending">Chưa thanh toán</span>
                                 }
                             </td>
                             <td>
@@ -579,7 +592,8 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
-                                        <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.BookingId', '@item.CustomerName', '@item.VenueName', '@item.BookingDate.ToString("dd/MM/yyyy HH:mm")', '@item.TotalAmount.ToString("N0") VNĐ', '@item.PaymentStatus')"><i class='bx bx-show'></i></button>
+                                        @* SỬA: nút mắt mở trang chi tiết đầy đủ *@
+                                        <a class="btn-act btn-view" title="Chi tiết" href="@Url.Action("Details", "Bookings", new { id = item.BookingId })"><i class='bx bx-show'></i></a>
                                         @if (item.Status == BookingStatuses.Pending || item.Status == BookingStatuses.Confirmed)
                                         {
                                             <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('@item.BookingId')"><i class='bx bx-x-circle'></i></button>
@@ -601,30 +615,7 @@
     </div>
 </div>
 
-<!-- 3. MODAL VIEW DETAILS -->
-<div class="modal-backdrop" id="viewDetailsModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3>Booking Details <span id="vBookingId" style="color:var(--text-muted);"></span></h3>
-            <button class="btn-close-modal" onclick="closeModal('viewDetailsModal')">&times;</button>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
-            <div style="display: flex; justify-content: space-between;"><strong>Client Name:</strong> <span id="vClientName"></span></div>
-            <div style="display: flex; justify-content: space-between;"><strong>Venue:</strong> <span id="vVenue"></span></div>
-            <div style="display: flex; justify-content: space-between;"><strong>Start Time:</strong> <span id="vStart"></span></div>
-            <hr style="border: none; border-top: 1px dashed var(--border-color);">
-            <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: var(--primary-green);"><span>Total Cost:</span> <span id="vTotalCost"></span></div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <strong>Payment:</strong> <span id="vStatusBadge"></span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn-secondary" onclick="closeModal('viewDetailsModal')">Close</button>
-        </div>
-    </div>
-</div>
-
-<!-- 4. MODAL CANCEL BOOKING -->
+<!-- 3. MODAL CANCEL BOOKING -->
 <div class="modal-backdrop" id="cancelModal">
     <div class="modal-box" style="max-width: 450px;">
         <div class="modal-header">
@@ -649,37 +640,27 @@
 
 <!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
 <script>
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
 
-    function openViewModal(id, client, venue, start, total, status) {
-        document.getElementById('vBookingId').innerText = "#" + id;
-        document.getElementById('vClientName').innerText = client;
-        document.getElementById('vVenue').innerText = venue;
-        document.getElementById('vStart').innerText = start;
-        document.getElementById('vTotalCost').innerText = total;
-        document.getElementById('vStatusBadge').innerText = status;
-        openModal('viewDetailsModal');
-    }
+        function openCancelModal(id) {
+            document.getElementById('cancelBookingId').value = id;
+            document.getElementById('cancelReason').value = "";
+            openModal('cancelModal');
+        }
 
-    function openCancelModal(id) {
-        document.getElementById('cancelBookingId').value = id;
-        document.getElementById('cancelReason').value = "";
-        openModal('cancelModal');
-    }
-
-    function filterTable() {
-        var q = document.getElementById('searchInput').value.toLowerCase();
-        var pay = document.getElementById('statusFilter').value;
-        document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
-            var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
-            var okPay = !pay || tr.getAttribute('data-pay') === pay;
-            tr.style.display = (okText && okPay) ? '' : 'none';
-        });
-    }
+        function filterTable() {
+            var q = document.getElementById('searchInput').value.toLowerCase();
+            var pay = document.getElementById('statusFilter').value;
+            document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
+                var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
+                var okPay = !pay || tr.getAttribute('data-pay') === pay;
+                tr.style.display = (okText && okPay) ? '' : 'none';
+            });
+        }
 </script>
