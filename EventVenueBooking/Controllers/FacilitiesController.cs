@@ -8,11 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class FacilitiesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -75,15 +75,22 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(Facility facility)
+        public ActionResult Edit([Bind(Include = "FacilityId,FacilityName,IsActive")] Facility facility)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(facility).State = EntityState.Modified;
+                var existing = db.Facilities.Find(facility.FacilityId);
+                if (existing == null)
+                {
+                    return HttpNotFound();
+                }
+
+                existing.FacilityName = facility.FacilityName;
+                existing.IsActive = facility.IsActive;
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
@@ -105,7 +112,7 @@ namespace EventVenueBooking.Controllers
             return View(facility);
         }
 
-        // POST: Delete
+        // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)

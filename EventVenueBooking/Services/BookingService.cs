@@ -40,6 +40,20 @@ namespace EventVenueBooking.Services
         public const byte Pending = 0, Completed = 1, Refunded = 2;
     }
 
+    // THÊM: danh sách phương thức thanh toán hợp lệ, dùng chung cho mọi đường ghi Payment
+    public static class PaymentMethods
+    {
+        // Nếu form admin còn dùng "Cash" thì thêm vào mảng này
+        public static readonly string[] All = { "Bank Transfer", "Credit Card", "E-Wallet" };
+
+        // Trả về tên chuẩn nếu hợp lệ (không phân biệt hoa thường), ngược lại trả về null
+        public static string Normalize(string method)
+        {
+            method = (method ?? "").Trim();
+            return All.FirstOrDefault(m => string.Equals(m, method, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     public static class VenueStatuses
     {
         public const byte Inactive = 0, Active = 1, UnderMaintenance = 2;
@@ -80,7 +94,7 @@ namespace EventVenueBooking.Services
     // ===== Service =====
     public class BookingService
     {
-        public const decimal DepositRate = 0.30m;   // tỉ lệ cọc - chốt lại với nhóm
+        public const decimal DepositRate = 0.30m;   // tỉ lệ cọc: đã chốt với nhóm (30%)
 
         private readonly ApplicationDbContext _db;
 
@@ -163,11 +177,15 @@ namespace EventVenueBooking.Services
             if (guestCount < 1)
                 throw new BookingException("Số lượng khách phải lớn hơn 0.");
 
+            // SỬA: ClientUserId phải là tài khoản Client (Role = 0), còn hoạt động
             var client = _db.Users.Find(clientUserId);
-            if (client == null || !client.IsActive)
+            if (client == null || !client.IsActive || client.Role != 0)
                 throw new BookingException("Tài khoản khách hàng không hợp lệ.");
-            if (_db.EventTypes.Find(eventTypeId) == null)
-                throw new BookingException("Loại sự kiện không hợp lệ.");
+
+            // SỬA: EventType phải còn hoạt động
+            var eventType = _db.EventTypes.Find(eventTypeId);
+            if (eventType == null || !eventType.IsActive)
+                throw new BookingException("Loại sự kiện không hợp lệ hoặc đã ngừng sử dụng.");
 
             using (var tx = _db.Database.BeginTransaction())
             {
@@ -227,15 +245,14 @@ namespace EventVenueBooking.Services
         }
 
         // 5. Ghi nhận thanh toán (cọc = DepositRate * TotalCost; Final = phần còn lại)
-        //    SỬA: có transaction + khóa dòng booking (chống ghi trùng khi bấm 2 lần),
-        //    chặn booking Completed, làm tròn tiền cọc chuẩn, kiểm tra phương thức thanh toán.
+        //    Có transaction + khóa dòng booking (chống ghi trùng khi bấm 2 lần),
+        //    chặn booking Completed, làm tròn tiền cọc chuẩn.
+        //    SỬA: phương thức thanh toán kiểm tra theo danh sách cố định PaymentMethods.
         public Payment RecordPayment(int bookingId, byte paymentType, string method, int recordedByUserId)
         {
-            method = (method ?? "").Trim();
-            if (method.Length == 0)
-                throw new BookingException("Vui lòng chọn phương thức thanh toán.");
-            if (method.Length > 50)
-                throw new BookingException("Phương thức thanh toán quá dài (tối đa 50 ký tự).");
+            method = PaymentMethods.Normalize(method);
+            if (method == null)
+                throw new BookingException("Vui lòng chọn phương thức thanh toán hợp lệ.");
 
             using (var tx = _db.Database.BeginTransaction())
             {

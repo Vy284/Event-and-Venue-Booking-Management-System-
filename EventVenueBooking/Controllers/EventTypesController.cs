@@ -8,11 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class EventTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -45,9 +45,10 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Create
+        // SỬA: thêm [Bind] chỉ nhận các trường được phép nhập
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(EventType eventType)
+        public ActionResult Create([Bind(Include = "TypeName,IsActive")] EventType eventType)
         {
             if (ModelState.IsValid)
             {
@@ -75,15 +76,22 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(EventType eventType)
+        public ActionResult Edit([Bind(Include = "EventTypeId,TypeName,IsActive")] EventType eventType)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(eventType).State = EntityState.Modified;
+                var existing = db.EventTypes.Find(eventType.EventTypeId);
+                if (existing == null)
+                {
+                    return HttpNotFound();
+                }
+
+                existing.TypeName = eventType.TypeName;
+                existing.IsActive = eventType.IsActive;
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
@@ -105,13 +113,13 @@ namespace EventVenueBooking.Controllers
             return View(eventType);
         }
 
-        // POST: Delete
+        // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
             EventType eventType = db.EventTypes.Find(id);
-            if (eventType == null)                  // SỬA: tránh lỗi NullReference khi id không tồn tại
+            if (eventType == null)
             {
                 return HttpNotFound();
             }

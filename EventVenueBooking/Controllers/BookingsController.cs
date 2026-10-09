@@ -1,7 +1,7 @@
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
-using EventVenueBooking.Services;                   // THÊM
+using EventVenueBooking.Filters;
+using EventVenueBooking.Services;
 using EventVenueBooking.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -14,26 +14,35 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin,Coordinator")]  // THÊM
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class BookingsController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // THÊM: lấy UserId người đang đăng nhập (ticket lưu Name = Email)
+        // Lấy UserId người đang đăng nhập (ticket lưu Name = Email)
         private int CurrentUserId()
         {
             string email = User.Identity.Name;
             return db.Users.Where(u => u.Email == email).Select(u => u.UserId).First();
         }
 
-        // THÊM: gom phần đổ dữ liệu dropdown cho view Create/Edit
+        // Đổ dữ liệu dropdown cho view Create/Edit
+        // SỬA 2.1: chỉ liệt kê tài khoản Client (Role = 0) đang hoạt động
+        // SỬA 2.3: chỉ liệt kê EventType và Venue đang hoạt động
+        // SỬA 2.2: bỏ dropdown CancelledByUserId / LastModifiedByUserId (người thao tác do server tự ghi)
         private void PopulateDropdowns(Booking booking)
         {
-            ViewBag.CancelledByUserId = new SelectList(db.Users, "UserId", "FullName", booking?.CancelledByUserId);
-            ViewBag.ClientUserId = new SelectList(db.Users, "UserId", "FullName", booking?.ClientUserId);
-            ViewBag.EventTypeId = new SelectList(db.EventTypes, "EventTypeId", "TypeName", booking?.EventTypeId);
-            ViewBag.LastModifiedByUserId = new SelectList(db.Users, "UserId", "FullName", booking?.LastModifiedByUserId);
-            ViewBag.VenueId = new SelectList(db.Venues, "VenueId", "Name", booking?.VenueId);
+            ViewBag.ClientUserId = new SelectList(
+                db.Users.Where(u => u.Role == 0 && u.IsActive),
+                "UserId", "FullName", booking?.ClientUserId);
+
+            ViewBag.EventTypeId = new SelectList(
+                db.EventTypes.Where(e => e.IsActive),
+                "EventTypeId", "TypeName", booking?.EventTypeId);
+
+            ViewBag.VenueId = new SelectList(
+                db.Venues.Where(v => v.Status == VenueStatuses.Active),
+                "VenueId", "Name", booking?.VenueId);
         }
 
         // GET: Bookings
@@ -43,7 +52,7 @@ namespace EventVenueBooking.Controllers
                 .Include(b => b.ClientUser)
                 .Include(b => b.Venue)
                 .Include(b => b.Payments)
-                .Include(b => b.BookingAddOns.Select(ba => ba.AddOnService)) // Include thêm bảng dịch vụ đi kèm nếu có quan hệ
+                .Include(b => b.BookingAddOns.Select(ba => ba.AddOnService))
                 .OrderByDescending(b => b.CreatedAt)
                 .ToList()
                 .Select(b => new BookingManagementViewModel
@@ -53,13 +62,13 @@ namespace EventVenueBooking.Controllers
                     VenueName = b.Venue != null ? b.Venue.Name : "N/A",
                     BookingDate = b.EventStartDateTime,
                     TotalAmount = b.TotalCost,
-                    Status = b.Status,                                                   // THÊM
-                    PaidAmount = b.Payments                                              // THÊM
+                    Status = b.Status,
+                    PaidAmount = b.Payments
                         .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
                         .Sum(p => p.Amount),
                     PaymentMethod = b.Payments.FirstOrDefault()?.PaymentMethod ?? "Chưa chọn",
 
-                    // SỬA: "Paid" chỉ khi đã thu đủ; mới cọc thì "Partial"
+                    // "Paid" chỉ khi đã thu đủ; mới cọc thì "Partial"
                     PaymentStatus =
                         b.Payments.Where(p => p.PaymentStatus == PaymentStatuses.Completed).Sum(p => p.Amount) >= b.TotalCost
                             ? "Paid"
@@ -71,7 +80,7 @@ namespace EventVenueBooking.Controllers
                         : new List<string>()
                 }).ToList();
 
-            // THÊM: số liệu cho 4 thẻ thống kê (trước đây là số cố định trong view)
+            // Số liệu cho 4 thẻ thống kê
             ViewBag.PendingCount = bookings.Count(x => x.Status == BookingStatuses.Pending);
             ViewBag.ConfirmedCount = bookings.Count(x => x.Status == BookingStatuses.Confirmed || x.Status == BookingStatuses.InProgress);
             ViewBag.CompletedCount = bookings.Count(x => x.Status == BookingStatuses.Completed);
@@ -98,12 +107,12 @@ namespace EventVenueBooking.Controllers
         // GET: Create
         public ActionResult Create()
         {
-            PopulateDropdowns(null);                // SỬA: dùng hàm gom
+            PopulateDropdowns(null);
             return View();
         }
 
         // POST: Create
-        // SỬA: không bind cả Booking nữa. Chỉ nhận các ô nhập, giá và trạng thái do BookingService tính.
+        // Không bind cả Booking. Chỉ nhận các ô nhập, giá và trạng thái do BookingService tính.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create(int clientUserId, int venueId, int eventTypeId, int guestCount,
@@ -149,12 +158,12 @@ namespace EventVenueBooking.Controllers
             {
                 return HttpNotFound();
             }
-            PopulateDropdowns(booking);             // SỬA: dùng hàm gom
+            PopulateDropdowns(booking);
             return View(booking);
         }
 
         // POST: Edit
-        // SỬA: chỉ cho đổi trạng thái (qua BookingService). Giá, venue, thời gian không sửa ở đây
+        // Chỉ cho đổi trạng thái (qua BookingService). Giá, venue, thời gian không sửa ở đây
         // để giữ nguyên giá tại thời điểm đặt và không lọt trùng lịch.
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -188,7 +197,7 @@ namespace EventVenueBooking.Controllers
             return View(booking);
         }
 
-        // THÊM: Đổi trạng thái (nút Bắt đầu / Hoàn tất trên trang danh sách)
+        // Đổi trạng thái (nút Bắt đầu / Hoàn tất trên trang danh sách)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ChangeStatus(int id, byte status)
@@ -205,7 +214,7 @@ namespace EventVenueBooking.Controllers
             return RedirectToAction("Index");
         }
 
-        // THÊM: Ghi nhận thanh toán, paymentType: 0 = Deposit, 1 = FinalPayment
+        // Ghi nhận thanh toán, paymentType: 0 = Deposit, 1 = FinalPayment
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult RecordPayment(int id, byte paymentType, string method)
@@ -222,7 +231,7 @@ namespace EventVenueBooking.Controllers
             return RedirectToAction("Index");
         }
 
-        // THÊM: Hủy booking kèm lý do (modal Cancel ở trang danh sách)
+        // Hủy booking kèm lý do (modal Cancel ở trang danh sách)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Cancel(int id, string reason)
@@ -257,7 +266,7 @@ namespace EventVenueBooking.Controllers
             return View(booking);
         }
 
-        // POST: Delete  (không xóa thật, chỉ hủy)
+        // POST: Delete (không xóa thật, chỉ hủy)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
@@ -268,7 +277,7 @@ namespace EventVenueBooking.Controllers
                 return HttpNotFound();
             }
 
-            // SỬA: hủy qua service để ghi người hủy, lý do, và chuyển khoản đã thu sang Refunded
+            // Hủy qua service để ghi người hủy, lý do, và chuyển khoản đã thu sang Refunded
             try
             {
                 new BookingService(db).CancelBooking(id, CurrentUserId(), "Hủy bởi quản trị");

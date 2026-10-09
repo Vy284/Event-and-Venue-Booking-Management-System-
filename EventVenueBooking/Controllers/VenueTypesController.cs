@@ -1,6 +1,6 @@
 ﻿using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -11,10 +11,11 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class VenueTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
+
         // GET
         public ActionResult Index()
         {
@@ -43,15 +44,27 @@ namespace EventVenueBooking.Controllers
         {
             return View();
         }
+
+        // POST: Create
+        // SỬA: thêm [Bind], kiểm tra trùng tên (TypeName có unique index)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(VenueType venueType)
+        public ActionResult Create([Bind(Include = "TypeName,IsActive")] VenueType venueType)
         {
             if (ModelState.IsValid)
             {
-                db.VenueTypes.Add(venueType);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                venueType.TypeName = venueType.TypeName.Trim();
+
+                if (db.VenueTypes.Any(v => v.TypeName == venueType.TypeName))
+                {
+                    ModelState.AddModelError("TypeName", "Tên loại địa điểm này đã tồn tại.");
+                }
+                else
+                {
+                    db.VenueTypes.Add(venueType);
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
             return View(venueType);
         }
@@ -72,16 +85,34 @@ namespace EventVenueBooking.Controllers
 
             return View(venueType);
         }
+
+        // POST: Edit
+        // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa, kiểm tra trùng tên
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(VenueType venueType)
+        public ActionResult Edit([Bind(Include = "VenueTypeId,TypeName,IsActive")] VenueType venueType)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(venueType).State = EntityState.Modified;
-                db.SaveChanges();
-                //return Content("Đã nhận: " + venueType.TypeName);
-                return RedirectToAction("Index");
+                var existing = db.VenueTypes.Find(venueType.VenueTypeId);
+                if (existing == null)
+                {
+                    return HttpNotFound();
+                }
+
+                string newName = venueType.TypeName.Trim();
+
+                if (db.VenueTypes.Any(v => v.TypeName == newName && v.VenueTypeId != venueType.VenueTypeId))
+                {
+                    ModelState.AddModelError("TypeName", "Tên loại địa điểm này đã tồn tại.");
+                }
+                else
+                {
+                    existing.TypeName = newName;
+                    existing.IsActive = venueType.IsActive;
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
             return View(venueType);
         }
@@ -94,6 +125,8 @@ namespace EventVenueBooking.Controllers
             if (venueType == null) return HttpNotFound();
             return View(venueType);
         }
+
+        // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirm(int id)

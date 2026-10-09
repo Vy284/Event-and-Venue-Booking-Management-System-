@@ -8,11 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class VenueImagesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -47,8 +47,6 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "ImageId,VenueId,ImageUrl,IsPrimary")] VenueImage venueImage)
@@ -97,14 +95,22 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
+        // SỬA: nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa (có kiểm tra tồn tại)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "ImageId,VenueId,ImageUrl,IsPrimary")] VenueImage venueImage)
         {
             if (ModelState.IsValid)
             {
+                var existing = db.VenueImages.Find(venueImage.ImageId);
+                if (existing == null)
+                {
+                    return HttpNotFound();
+                }
+
                 if (venueImage.IsPrimary)
                 {
+                    // Ảnh này thành ảnh chính thì bỏ cờ ảnh chính của các ảnh khác cùng sảnh
                     var oldPrimaryImages = db.VenueImages
                         .Where(x => x.VenueId == venueImage.VenueId
                                  && x.IsPrimary
@@ -116,7 +122,11 @@ namespace EventVenueBooking.Controllers
                         image.IsPrimary = false;
                     }
                 }
-                db.Entry(venueImage).State = EntityState.Modified;
+
+                existing.VenueId = venueImage.VenueId;
+                existing.ImageUrl = venueImage.ImageUrl;
+                existing.IsPrimary = venueImage.IsPrimary;
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
@@ -140,6 +150,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Delete
+        // SỬA: ảnh chính không bị xóa ngầm nữa; phải chọn ảnh khác làm ảnh chính trước
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
@@ -147,14 +158,14 @@ namespace EventVenueBooking.Controllers
             VenueImage venueImage = db.VenueImages.Find(id);
             if (venueImage == null)
                 return HttpNotFound();
+
             if (venueImage.IsPrimary)
             {
-                venueImage.IsPrimary = false;
+                TempData["ErrorMessage"] = "Đây là ảnh chính của địa điểm. Hãy chọn ảnh khác làm ảnh chính trước khi xóa ảnh này.";
+                return RedirectToAction("Index");
             }
-            else
-            {
-                db.VenueImages.Remove(venueImage);
-            }
+
+            db.VenueImages.Remove(venueImage);
             db.SaveChanges();
             return RedirectToAction("Index");
         }

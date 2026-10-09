@@ -8,21 +8,32 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
+using EventVenueBooking.Services;                   // THÊM: để dùng BookingStatuses, VenueStatuses
 using EventVenueBooking.ViewModels;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class VenuesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // THÊM: lấy UserId người đang đăng nhập (ticket lưu Name = Email)
+        // Lấy UserId người đang đăng nhập (ticket lưu Name = Email)
         private int CurrentUserId()
         {
             string email = User.Identity.Name;
             return db.Users.Where(u => u.Email == email).Select(u => u.UserId).First();
+        }
+
+        // THÊM: sảnh còn booking chưa kết thúc (chưa hủy, chưa hoàn tất) hay không
+        private bool HasUpcomingBookings(int venueId)
+        {
+            return db.Bookings.Any(b =>
+                b.VenueId == venueId &&
+                b.Status != BookingStatuses.Cancelled &&
+                b.Status != BookingStatuses.Completed &&
+                b.EventEndDateTime > DateTime.Now);
         }
 
         // GET: Venues
@@ -37,8 +48,8 @@ namespace EventVenueBooking.Controllers
                 RentalUnit = v.RentalUnit,
                 TypeName = v.VenueType != null ? v.VenueType.TypeName : "N/A",
 
-                // Lấy hình ảnh chính
-                PrimaryImageUrl = v.VenueImages.FirstOrDefault(img => img.IsPrimary).ImageUrl ?? "/images/default-venue.jpg",
+                // Lấy hình ảnh chính. SỬA: ảnh dự phòng thống nhất với trang chủ
+                PrimaryImageUrl = v.VenueImages.FirstOrDefault(img => img.IsPrimary).ImageUrl ?? "/Content/images/bg_landingpage.jpg",
 
                 Status = v.Status,
                 Location = v.Location,
@@ -60,8 +71,7 @@ namespace EventVenueBooking.Controllers
             }).ToList();
 
             // Thống kê số lượng cho 4 card trên UI
-            // SỬA: theo Venue.cs: 0 = Inactive, 1 = Active, 2 = UnderMaintenance
-            // (bản cũ đang đếm ngược: Active == 0, Inactive == 1)
+            // Theo Venue.cs: 0 = Inactive, 1 = Active, 2 = UnderMaintenance
             ViewBag.TotalVenues = venues.Count;
             ViewBag.ActiveVenues = venues.Count(v => v.Status == 1);
             ViewBag.InactiveVenues = venues.Count(v => v.Status == 0);
@@ -125,15 +135,15 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Create
-        // SỬA: bỏ CreatedAt và CreatedByUserId khỏi Bind, server tự điền từ người đăng nhập
+        // Bỏ CreatedAt và CreatedByUserId khỏi Bind, server tự điền từ người đăng nhập
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status")] Venue venue)
         {
-            venue.CreatedByUserId = CurrentUserId();    // THÊM
-            venue.CreatedAt = DateTime.Now;             // THÊM
-            ModelState.Remove("CreatedByUserId");       // THÊM: giá trị đã được server điền
-            ModelState.Remove("CreatedAt");             // THÊM
+            venue.CreatedByUserId = CurrentUserId();
+            venue.CreatedAt = DateTime.Now;
+            ModelState.Remove("CreatedByUserId");       // giá trị đã được server điền
+            ModelState.Remove("CreatedAt");
 
             if (ModelState.IsValid)
             {
@@ -165,12 +175,13 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // SỬA: không bind CreatedAt / CreatedByUserId; nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
+        // Không bind CreatedAt / CreatedByUserId; nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa.
+        // SỬA: không cho đổi sảnh khỏi trạng thái Active khi còn booking chưa kết thúc.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status")] Venue venue)
         {
-            ModelState.Remove("CreatedByUserId");       // THÊM: không lấy từ form
+            ModelState.Remove("CreatedByUserId");       // không lấy từ form
             ModelState.Remove("CreatedAt");
 
             if (ModelState.IsValid)
@@ -181,19 +192,30 @@ namespace EventVenueBooking.Controllers
                     return HttpNotFound();
                 }
 
-                existing.Name = venue.Name;
-                existing.VenueTypeId = venue.VenueTypeId;
-                existing.Capacity = venue.Capacity;
-                existing.Description = venue.Description;
-                existing.RentalRate = venue.RentalRate;
-                existing.RentalUnit = venue.RentalUnit;
-                existing.Location = venue.Location;
-                existing.Status = venue.Status;
-                // CreatedAt và CreatedByUserId giữ nguyên
+                if (existing.Status == VenueStatuses.Active
+                    && venue.Status != VenueStatuses.Active
+                    && HasUpcomingBookings(existing.VenueId))
+                {
+                    ModelState.AddModelError("Status",
+                        "Sảnh còn booking chưa hoàn tất, hãy xử lý các booking đó trước khi ngừng hoạt động hoặc bảo trì.");
+                }
+                else
+                {
+                    existing.Name = venue.Name;
+                    existing.VenueTypeId = venue.VenueTypeId;
+                    existing.Capacity = venue.Capacity;
+                    existing.Description = venue.Description;
+                    existing.RentalRate = venue.RentalRate;
+                    existing.RentalUnit = venue.RentalUnit;
+                    existing.Location = venue.Location;
+                    existing.Status = venue.Status;
+                    // CreatedAt và CreatedByUserId giữ nguyên
 
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
+
             ViewBag.CreatedByUserId = new SelectList(db.Users, "UserId", "FullName", venue.CreatedByUserId);
             ViewBag.VenueTypeId = new SelectList(db.VenueTypes, "VenueTypeId", "TypeName", venue.VenueTypeId);
             return View(venue);
@@ -215,16 +237,24 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Delete (không xóa thật, chỉ chuyển sang Inactive)
+        // SỬA: chặn khi sảnh còn booking chưa kết thúc
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
             Venue venue = db.Venues.Find(id);
-            if (venue == null)                      // THÊM: tránh NullReference
+            if (venue == null)
             {
                 return HttpNotFound();
             }
-            venue.Status = 0; // 0 = Inactive (đúng theo Venue.cs)
+
+            if (HasUpcomingBookings(id))
+            {
+                TempData["ErrorMessage"] = "Sảnh còn booking chưa hoàn tất, hãy xử lý các booking đó trước khi ngừng hoạt động.";
+                return RedirectToAction("Index");
+            }
+
+            venue.Status = VenueStatuses.Inactive;
             db.SaveChanges();
             return RedirectToAction("Index");
         }

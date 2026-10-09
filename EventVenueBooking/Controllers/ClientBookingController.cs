@@ -17,7 +17,8 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        private static readonly string[] PaymentMethods = { "Bank Transfer", "Credit Card", "E-Wallet" };
+        // THÊM: số lượng tối đa của mỗi dịch vụ đi kèm trong một booking (chỉnh theo nhóm chốt)
+        private const int MaxAddOnQuantity = 100;
 
         // UserId của người đang đăng nhập (ticket lưu Name = Email)
         private int CurrentUserId()
@@ -54,8 +55,10 @@ namespace EventVenueBooking.Controllers
             return true;
         }
 
-        // MỚI: kiểm tra dữ liệu đầu vào phía server. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
-        private string ValidateInput(int guestCount, int capacity, DateTime start, DateTime end)
+        // Kiểm tra dữ liệu đầu vào phía server. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
+        // SỬA: thêm kiểm tra số lượng dịch vụ đi kèm
+        private string ValidateInput(int guestCount, int capacity, DateTime start, DateTime end,
+                                     IEnumerable<AddOnRequest> addOns)
         {
             if (guestCount < 1)
                 return "Số khách phải lớn hơn 0.";
@@ -65,6 +68,8 @@ namespace EventVenueBooking.Controllers
                 return "Thời gian kết thúc phải sau thời gian bắt đầu.";
             if (start < DateTime.Now)
                 return "Không thể đặt sảnh trong quá khứ.";
+            if (addOns != null && addOns.Any(a => a.Quantity < 0 || a.Quantity > MaxAddOnQuantity))
+                return "Số lượng dịch vụ đi kèm không hợp lệ (tối đa " + MaxAddOnQuantity + " mỗi dịch vụ).";
             return null;
         }
 
@@ -99,9 +104,9 @@ namespace EventVenueBooking.Controllers
                 return View(model);
             }
 
-            // MỚI: kiểm tra số khách, thứ tự thời gian, quá khứ
+            // Kiểm tra số khách, thứ tự thời gian, quá khứ, số lượng add-on
             string error = ValidateInput(model.GuestCount, model.Capacity,
-                                         model.EventStart.Value, model.EventEnd.Value);
+                                         model.EventStart.Value, model.EventEnd.Value, model.AddOns);
             if (error != null)
             {
                 ModelState.AddModelError("", error);
@@ -138,9 +143,12 @@ namespace EventVenueBooking.Controllers
                 if (venue == null)
                     return Json(new { ok = false, message = "Địa điểm không tồn tại." });
 
-                // MỚI: kiểm tra đầu vào trước khi tính giá
+                // SỬA: sảnh không nhận đặt thì không báo giá
+                if (venue.Status != VenueStatuses.Active)
+                    return Json(new { ok = false, message = "Địa điểm hiện không nhận đặt." });
+
                 string error = ValidateInput(model.GuestCount, venue.Capacity,
-                                             model.EventStart.Value, model.EventEnd.Value);
+                                             model.EventStart.Value, model.EventEnd.Value, model.AddOns);
                 if (error != null)
                     return Json(new { ok = false, message = error });
 
@@ -158,7 +166,8 @@ namespace EventVenueBooking.Controllers
                     venueCost = quote.VenueCost,
                     addOnCost = quote.AddOnCost,
                     total = quote.TotalCost,
-                    deposit = Math.Round(quote.TotalCost * BookingService.DepositRate, 0),
+                    // SỬA: làm tròn giống BookingService.RecordPayment để tiền cọc tạm tính khớp tiền cọc thật
+                    deposit = Math.Round(quote.TotalCost * BookingService.DepositRate, 0, MidpointRounding.AwayFromZero),
                     lines = quote.AddOnLines.Select(l => new
                     {
                         name = l.Name,
@@ -183,17 +192,12 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: ClientBooking/Pay/5  (paymentType: 0 = đặt cọc, 1 = thanh toán phần còn lại)
+        // SỬA: bỏ danh sách phương thức riêng của controller, BookingService.RecordPayment kiểm tra tập trung
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Pay(int id, byte paymentType, string method)
         {
             if (GetOwnedBooking(id) == null) return HttpNotFound();
-
-            if (string.IsNullOrWhiteSpace(method) || !PaymentMethods.Contains(method))
-            {
-                TempData["BookingError"] = "Vui lòng chọn phương thức thanh toán hợp lệ.";
-                return RedirectToAction("Details", new { id });
-            }
 
             try
             {

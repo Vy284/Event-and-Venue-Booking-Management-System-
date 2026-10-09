@@ -104,5 +104,12 @@ namespace EventVenueBooking.Controllers
                 default: return "Unknown";
             }
         }
+
+        // THÊM: giải phóng kết nối DB giống các controller khác
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) db.Dispose();
+            base.Dispose(disposing);
+        }
     }
 }

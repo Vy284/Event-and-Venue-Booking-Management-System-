@@ -74,9 +74,10 @@ namespace EventVenueBooking.Controllers
 
                     TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
 
-                    if (user.Role == 2)
+                    // SỬA: Admin (2) và Coordinator (1) đều vào Dashboard
+                    if (user.Role == 2 || user.Role == 1)
                     {
-                        return RedirectToAction("Index", "Dashboard"); // Đã sửa từ "Dashboard", "Admin" sang "Index", "Dashboard"
+                        return RedirectToAction("Index", "Dashboard");
                     }
 
                     string returnUrl = Request.QueryString["ReturnUrl"];
@@ -301,7 +302,7 @@ namespace EventVenueBooking.Controllers
             }
         }
 
-        // GET: Account/TestRole
+        // GET: Account/TestRole  (chỉ để kiểm tra phân quyền, nhớ XÓA trước khi nộp)
         [Authorize]
         public ActionResult TestRole()
         {

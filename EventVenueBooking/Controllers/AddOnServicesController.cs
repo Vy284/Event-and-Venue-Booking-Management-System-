@@ -8,11 +8,11 @@ using System.Web;
 using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
-using EventVenueBooking.Filters;                    // THÊM
+using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]              // THÊM
+    [CustomAuthorize(Roles = "Admin")]
     public class AddOnServicesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -105,12 +105,16 @@ namespace EventVenueBooking.Controllers
             return View(addOnService);
         }
 
-        // POST: Delete
+        // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
             AddOnService addOnService = db.AddOnServices.Find(id);
+            if (addOnService == null)                       // SỬA: tránh NullReferenceException khi id không tồn tại
+            {
+                return HttpNotFound();
+            }
             addOnService.IsActive = false;
             db.SaveChanges();
             return RedirectToAction("Index");

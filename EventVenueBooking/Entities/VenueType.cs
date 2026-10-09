@@ -9,8 +9,8 @@ namespace EventVenueBooking.Entities
         [Key]
         public int VenueTypeId { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập tên địa điểm.")]
-        [MaxLength(100, ErrorMessage = "Tên địa điểm không được vượt quá 100 ký tự.")]
+        [Required(ErrorMessage = "Vui lòng nhập tên loại địa điểm.")]
+        [MaxLength(100, ErrorMessage = "Tên loại địa điểm không được vượt quá 100 ký tự.")]
         [Index(IsUnique = true)]
         public string TypeName { get; set; }
 

@@ -27,9 +27,10 @@ namespace EventVenueBooking.Entities
         public string Description { get; set; }
 
         // EF6 default convention maps decimal as decimal(18,2) — đủ dùng, không cần khai báo thêm
+        // SỬA: giá thuê phải lớn hơn 0 (tối thiểu 0.01), tránh tạo booking miễn phí do nhập nhầm
         [Required(ErrorMessage = "Vui lòng nhập giá thuê.")]
-        [Range(typeof(decimal), "0", "79228162514264337593543950335",
-            ErrorMessage = "Giá thuê không được nhỏ hơn 0.")]
+        [Range(typeof(decimal), "0.01", "9999999999999999.99",
+            ErrorMessage = "Giá thuê phải lớn hơn 0.")]
         public decimal RentalRate { get; set; }
 
         // 0 = Hour, 1 = Session, 2 = Day
