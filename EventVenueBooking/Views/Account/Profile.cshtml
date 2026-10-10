@@ -139,7 +139,11 @@
                                         <img src="@b.VenueImageUrl" alt="@b.VenueName" class="img-fluid rounded-3 object-fit-cover" style="aspect-ratio: 1/1;" />
                                     </div>
                                     <div class="col-9 col-md-6">
-                                        <h6 class="fw-bold mb-1 text-dark">@b.VenueName</h6>
+                                        <h6 class="fw-bold mb-1">
+                                            <a href="@Url.Action("Details", "Venue", new { id = b.VenueId })" class="text-dark text-decoration-none hover-link" style="transition: color 0.2s;">
+                                                @b.VenueName <i class="fa-solid fa-arrow-up-right-from-square small text-muted ms-1"></i>
+                                            </a>
+                                        </h6>
                                         <div class="small text-muted mb-1">
                                             <i class="fa-regular fa-clock me-1"></i>@b.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")
                                         </div>
