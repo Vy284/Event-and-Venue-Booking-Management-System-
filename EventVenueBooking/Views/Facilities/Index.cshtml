@@ -1,14 +1,21 @@
 ﻿@model IEnumerable<EventVenueBooking.Entities.Facility>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Facilities";
+    ViewBag.ActiveMenu = "Facilities";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    bool isAdmin = User.IsInRole("Admin");
 }
 
-<h2>Index</h2>
+<h2>Facilities</h2>
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
+@if (isAdmin)
+{
+    <p>
+        @Html.ActionLink("Create New", "Create")
+    </p>
+}
+
 <table class="table">
     <tr>
         <th>
@@ -20,20 +27,25 @@
         <th></th>
     </tr>
 
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.FacilityName)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.IsActive)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.FacilityId }) |
-            @Html.ActionLink("Details", "Details", new { id=item.FacilityId }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.FacilityId })
-        </td>
-    </tr>
-}
-
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FacilityName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                @Html.ActionLink("Details", "Details", new { id = item.FacilityId })
+                @if (isAdmin)
+                {
+                    <text> | </text>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.FacilityId })
+                    <text> | </text>
+                    @Html.ActionLink("Delete", "Delete", new { id = item.FacilityId })
+                }
+            </td>
+        </tr>
+    }
 </table>

@@ -6,7 +6,6 @@
     <title>@ViewBag.Title - VenueHub Event Admin</title>
     <!-- Boxicons / FontAwesome hỗ trợ Icon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
-
     <style>
         :root {
             --bg-main: #E3EDE6; /* Màu nền tổng thể xám xanh lá nhạt */
@@ -32,7 +31,6 @@
             height: 100vh;
             overflow: hidden;
         }
-
         /* ================= SIDEBAR ================= */
         .sidebar {
             width: 260px;
@@ -93,7 +91,6 @@
                 color: var(--primary-green);
                 box-shadow: 0 4px 12px rgba(24, 74, 59, 0.05);
             }
-
         /* Sign Out Bottom */
         .sidebar-bottom {
             display: flex;
@@ -116,7 +113,6 @@
             gap: 8px;
             cursor: pointer;
         }
-
         /* ================= MAIN CONTENT AREA ================= */
         .main-wrapper {
             flex-grow: 1;
@@ -136,7 +132,6 @@
             border: none;
             box-shadow: -4px 4px 15px rgba(0,0,0,0.02);
         }
-
         /* Header */
         .main-header {
             padding: 20px 30px;
@@ -225,7 +220,6 @@
             font-size: 11px;
             color: var(--text-muted);
         }
-
         /* Vùng nội dung các View chui vào */
         .page-body {
             padding: 0 30px 30px 30px;
@@ -234,15 +228,12 @@
     </style>
 </head>
 <body>
-
     <!-- SIDEBAR BÊN TRÁI -->
     <aside class="sidebar">
         <div>
             <div class="brand-logo">
                 <i class='bx bxs-shapes'></i> VenueHub
             </div>
-
-            @* SỬA 1: ẩn menu theo role. Venues, Facilities & Services, Users chỉ Admin thấy *@
             <ul class="nav-list">
                 <li>
                     <a href="@Url.Action("Index", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
@@ -259,36 +250,28 @@
                         <i class='bx bx-receipt'></i> Bookings
                     </a>
                 </li>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <li>
-                        <a href="@Url.Action("Index", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
-                            <i class='bx bx-building-house'></i> Venues
-                        </a>
-                    </li>
-                    <li>
-                        <a href="@Url.Action("Facilities_Services", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Facilities" ? "active" : "")">
-                            <i class='bx bx-cube'></i> Facilities & Services
-                        </a>
-                    </li>
-                }
-
+                @* Admin + Coordinator đều xem được *@
+                <li>
+                    <a href="@Url.Action("Index", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
+                        <i class='bx bx-building-house'></i> Venues
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Facilities_Services", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Facilities" ? "active" : "")">
+                        <i class='bx bx-cube'></i> Facilities & Services
+                    </a>
+                </li>
                 <li>
                     <a href="@Url.Action("Index", "Payments")" class="nav-link @(ViewBag.ActiveMenu == "Payments" ? "active" : "")">
                         <i class='bx bx-wallet'></i> Payments
                     </a>
                 </li>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <li>
-                        <a href="@Url.Action("Index", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
-                            <i class='bx bx-user'></i> Users
-                        </a>
-                    </li>
-                }
-
+                @* Admin + Coordinator đều xem được *@
+                <li>
+                    <a href="@Url.Action("Index", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
+                        <i class='bx bx-user'></i> Users
+                    </a>
+                </li>
                 <li>
                     <a href="@Url.Action("Feedback", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Feedback" ? "active" : "")">
                         <i class='bx bx-star'></i> Feedback
@@ -296,8 +279,6 @@
                 </li>
             </ul>
         </div>
-
-        @* SỬA 2: nút Sign Out gửi form POST tới Account/Logout *@
         <div class="sidebar-bottom">
             @using (Html.BeginForm("Logout", "Account", FormMethod.Post))
             {
@@ -308,16 +289,13 @@
             }
         </div>
     </aside>
-
     <!-- KHU VỰC CHÍNH (HEADER + BODY) -->
     <div class="main-wrapper">
         <div class="content-container">
-
             <!-- HEADER -->
             <header class="main-header">
                 <div class="header-title">
                     <h2>@(ViewBag.Title ?? "Dashboard")</h2>
-                    @* SỬA 3a: lấy tên người đăng nhập thay cho "Orlando" *@
                     <p>Hello @User.Identity.Name, welcome back!</p>
                 </div>
                 <div class="header-actions">
@@ -330,21 +308,17 @@
                     <div class="user-profile">
                         <img src="https://i.pravatar.cc/100?img=33" class="avatar" alt="User Avatar">
                         <div class="user-info">
-                            @* SỬA 3b: tên và role thật thay cho "Orlando Laurentius" / "Admin" *@
                             <div class="name">@User.Identity.Name</div>
                             <div class="role">@(User.IsInRole("Admin") ? "Admin" : "Coordinator")</div>
                         </div>
                     </div>
                 </div>
             </header>
-
             <!-- NỘI DUNG THAY ĐỔI CỦA TỪNG TRANG CON -->
             <main class="page-body">
                 @RenderBody()
             </main>
-
         </div>
     </div>
-
 </body>
 </html>

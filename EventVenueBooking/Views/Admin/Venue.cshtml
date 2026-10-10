@@ -1,14 +1,12 @@
 ﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueListViewModel>
-
 @{
     ViewBag.Title = "Venues Management";
     ViewBag.ActiveMenu = "Venues";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
-
+    bool isAdmin = User.IsInRole("Admin");
     var venueTypes = ViewBag.VenueTypes as System.Collections.Generic.IEnumerable<System.Web.Mvc.SelectListItem>;
     var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
-
 <style>
     /* THỐNG KÊ NHANH */
     .venue-stats {
@@ -70,7 +68,6 @@
         background: #FEEBEB;
         color: #E53935;
     }
-
     /* KHUNG CHÍNH / BẢNG DATA */
     .crud-card {
         background: #FFFFFF;
@@ -122,7 +119,6 @@
             opacity: 0.9;
             transform: translateY(-1px);
         }
-
     /* TABLE STYLES */
     .table-responsive {
         overflow-x: auto;
@@ -154,7 +150,6 @@
         .custom-table tbody tr:hover {
             background-color: #FAFCFA;
         }
-
     /* VENUE IMAGE & INFO CELL */
     .venue-cell {
         display: flex;
@@ -181,7 +176,6 @@
         color: #FFC107;
         font-size: 14px;
     }
-
     /* BADGES CHO TRẠNG THÁI (0 = Inactive, 1 = Active, 2 = Maintenance) */
     .status-badge {
         padding: 5px 12px;
@@ -205,7 +199,6 @@
         background: #FFF3E0;
         color: #E65100;
     }
-
     /* ACTION BUTTONS */
     .action-btns {
         display: flex;
@@ -244,7 +237,6 @@
     .btn-act:hover {
         opacity: 0.8;
     }
-
     /* THÔNG BÁO */
     .flash {
         padding: 12px 16px;
@@ -263,7 +255,6 @@
         background: #FFEBEE;
         color: #C62828;
     }
-
     /* MODAL POPUP */
     .modal-backdrop {
         position: fixed;
@@ -377,7 +368,6 @@
         font-weight: 600;
         cursor: pointer;
     }
-
     /* MODAL PHÓNG TO ẢNH */
     .img-zoom-box {
         background: transparent;
@@ -405,8 +395,6 @@
         cursor: pointer;
     }
 </style>
-
-@* Thông báo từ controller. Nếu layout admin đã hiện TempData rồi thì xóa hai khối này để khỏi hiện 2 lần *@
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="flash flash-success">@TempData["SuccessMessage"]</div>
@@ -415,7 +403,6 @@
 {
     <div class="flash flash-error">@TempData["ErrorMessage"]</div>
 }
-
 <!-- 1. THỐNG KÊ NHANH TỪ VIEWBAG -->
 <div class="venue-stats">
     <div class="stat-mini-card">
@@ -447,7 +434,6 @@
         <div class="stat-mini-icon icon-inactive"><i class='bx bx-x-circle'></i></div>
     </div>
 </div>
-
 <!-- 2. BẢNG DỮ LIỆU ĐỘNG TỪ MODEL -->
 <div class="crud-card">
     <div class="toolbar">
@@ -460,11 +446,13 @@
                 <option value="Maintenance">Maintenance</option>
             </select>
         </div>
-        <button type="button" class="btn-create" onclick="openCreateModal()">
-            <i class='bx bx-plus'></i> New Venue
-        </button>
+        @if (isAdmin)
+        {
+            <button type="button" class="btn-create" onclick="openCreateModal()">
+                <i class='bx bx-plus'></i> New Venue
+            </button>
+        }
     </div>
-
     <div class="table-responsive">
         <table class="custom-table" id="venueTable">
             <thead>
@@ -485,7 +473,6 @@
                     string statusText = item.Status == 1 ? "Active" : (item.Status == 2 ? "Maintenance" : "Inactive");
                     string statusClass = item.Status == 1 ? "badge-active" : (item.Status == 2 ? "badge-maintenance" : "badge-inactive");
                     string unitText = item.RentalUnit == 0 ? "Hour" : (item.RentalUnit == 1 ? "Session" : "Day");
-
                     <tr>
                         <td style="font-weight: 600; color: var(--text-muted);">#@item.VenueId</td>
                         <td>
@@ -522,23 +509,26 @@
                                         data-desc="@item.Description">
                                     <i class='bx bx-show'></i>
                                 </button>
-                                <button type="button" class="btn-act btn-edit" title="Edit" onclick="openEditModal(this)"
-                                        data-id="@item.VenueId"
-                                        data-name="@item.VenueName"
-                                        data-type="@item.TypeName"
-                                        data-capacity="@item.Capacity"
-                                        data-rate="@(item.PricePerHour.ToString("0.##", inv))"
-                                        data-unit="@item.RentalUnit"
-                                        data-location="@item.Location"
-                                        data-status="@item.Status"
-                                        data-desc="@item.Description">
-                                    <i class='bx bx-edit'></i>
-                                </button>
-                                <button type="button" class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal(this)"
-                                        data-id="@item.VenueId"
-                                        data-name="@item.VenueName">
-                                    <i class='bx bx-trash'></i>
-                                </button>
+                                @if (isAdmin)
+                                {
+                                    <button type="button" class="btn-act btn-edit" title="Edit" onclick="openEditModal(this)"
+                                            data-id="@item.VenueId"
+                                            data-name="@item.VenueName"
+                                            data-type="@item.TypeName"
+                                            data-capacity="@item.Capacity"
+                                            data-rate="@(item.PricePerHour.ToString("0.##", inv))"
+                                            data-unit="@item.RentalUnit"
+                                            data-location="@item.Location"
+                                            data-status="@item.Status"
+                                            data-desc="@item.Description">
+                                        <i class='bx bx-edit'></i>
+                                    </button>
+                                    <button type="button" class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal(this)"
+                                            data-id="@item.VenueId"
+                                            data-name="@item.VenueName">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -547,8 +537,7 @@
         </table>
     </div>
 </div>
-
-<!-- 3. MODAL CREATE / EDIT VENUE (gửi thật về VenuesController.Create / Edit) -->
+<!-- 3. MODAL CREATE / EDIT VENUE -->
 <div class="modal-backdrop" id="venueFormModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -559,13 +548,11 @@
         {
             @Html.AntiForgeryToken()
             <input type="hidden" id="venueId" name="VenueId" value="0">
-
             <div class="form-grid">
                 <div class="form-group full-width">
                     <label>Venue Name (*)</label>
                     <input type="text" class="form-control" id="venueName" name="Name" required maxlength="150" placeholder="Ex: Grand Ballroom">
                 </div>
-
                 <div class="form-group">
                     <label>Venue Type (*)</label>
                     <select class="form-control" id="venueTypeId" name="VenueTypeId" required>
@@ -578,17 +565,14 @@
                         }
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>Capacity (Guests) (*)</label>
                     <input type="number" class="form-control" id="capacity" name="Capacity" required min="1" placeholder="Ex: 500">
                 </div>
-
                 <div class="form-group">
                     <label>Rental Rate (VNĐ) (*)</label>
                     <input type="number" class="form-control" id="rentalRate" name="RentalRate" required min="0.01" step="any" placeholder="Ex: 2000000">
                 </div>
-
                 <div class="form-group">
                     <label>Rental Unit (*)</label>
                     <select class="form-control" id="rentalUnit" name="RentalUnit" required>
@@ -597,12 +581,10 @@
                         <option value="2">Per Day</option>
                     </select>
                 </div>
-
                 <div class="form-group full-width">
                     <label>Location / Address (*)</label>
                     <input type="text" class="form-control" id="location" name="Location" required maxlength="255" placeholder="Venue address...">
                 </div>
-
                 <div class="form-group full-width">
                     <label>Status</label>
                     <select class="form-control" id="status" name="Status">
@@ -611,13 +593,11 @@
                         <option value="2">Under Maintenance</option>
                     </select>
                 </div>
-
                 <div class="form-group full-width">
                     <label>Description</label>
                     <textarea class="form-control" id="description" name="Description" rows="3" placeholder="Brief details about the venue..."></textarea>
                 </div>
             </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('venueFormModal')">Cancel</button>
                 <button type="submit" class="btn-primary">Save Venue</button>
@@ -625,7 +605,6 @@
         }
     </div>
 </div>
-
 <!-- 4. MODAL VIEW DETAILS -->
 <div class="modal-backdrop" id="viewDetailsModal">
     <div class="modal-box">
@@ -654,7 +633,6 @@
         </div>
     </div>
 </div>
-
 <!-- 5. MODAL ZOOM IMAGE -->
 <div class="modal-backdrop" id="imageZoomModal" onclick="closeModal('imageZoomModal')">
     <div class="modal-box img-zoom-box" onclick="event.stopPropagation()">
@@ -662,19 +640,16 @@
         <img id="zoomedImg" src="" alt="Zoomed Venue Image">
     </div>
 </div>
-
-<!-- 6. MODAL DEACTIVATE (gửi thật về VenuesController.Delete) -->
+<!-- 6. MODAL DEACTIVATE -->
 <div class="modal-backdrop" id="deleteModal">
     <div class="modal-box" style="max-width: 400px; text-align: center;">
         @using (Html.BeginForm("Delete", "Venues", FormMethod.Post, new { id = "deleteForm" }))
         {
             @Html.AntiForgeryToken()
             <input type="hidden" id="deleteVenueId" name="id" value="0">
-
             <i class='bx bx-error-circle' style="font-size: 60px; color: #E53935; margin-bottom: 16px;"></i>
             <h3 style="margin-bottom: 8px;">Deactivate Venue?</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Are you sure you want to deactivate <strong id="delVenueName"></strong>? This will prevent new bookings.</p>
-
             <div style="display: flex; justify-content: center; gap: 12px;">
                 <button type="button" class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
                 <button type="submit" class="btn-primary" style="background:#C62828;">Yes, Deactivate</button>
@@ -682,22 +657,18 @@
         }
     </div>
 </div>
-
-<!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
+<!-- JAVASCRIPT -->
 <script>
         function openModal(id) {
             document.getElementById(id).classList.add('show');
         }
-
         function closeModal(id) {
             document.getElementById(id).classList.remove('show');
         }
-
         function zoomImage(src) {
             document.getElementById('zoomedImg').src = src;
             openModal('imageZoomModal');
         }
-
         function openCreateModal() {
             var form = document.getElementById('venueForm');
             form.reset();
@@ -708,13 +679,11 @@
             document.getElementById('venueTypeId').selectedIndex = 0;
             openModal('venueFormModal');
         }
-
         function openEditModal(btn) {
             var d = btn.dataset;
             var form = document.getElementById('venueForm');
             form.reset();
             form.action = form.dataset.editUrl;
-
             document.getElementById('modalTitle').innerText = "Edit Venue: " + d.name;
             document.getElementById('venueId').value = d.id;
             document.getElementById('venueName').value = d.name || '';
@@ -724,8 +693,6 @@
             document.getElementById('location').value = d.location || '';
             document.getElementById('status').value = d.status;
             document.getElementById('description').value = d.desc || '';
-
-            // Chọn loại sảnh theo tên; không khớp (loại đã bị tắt) thì để trống, bắt admin chọn lại
             var sel = document.getElementById('venueTypeId');
             sel.selectedIndex = -1;
             for (var i = 0; i < sel.options.length; i++) {
@@ -733,7 +700,6 @@
             }
             openModal('venueFormModal');
         }
-
         function openViewModal(btn) {
             var d = btn.dataset;
             document.getElementById('vName').innerText = d.name || '';
@@ -746,25 +712,20 @@
             document.getElementById('vDesc').innerText = d.desc || 'N/A';
             openModal('viewDetailsModal');
         }
-
         function openDeleteModal(btn) {
             document.getElementById('deleteVenueId').value = btn.dataset.id;
             document.getElementById('delVenueName').innerText = btn.dataset.name;
             openModal('deleteModal');
         }
-
         function filterTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const status = document.getElementById('statusFilter').value.toLowerCase();
             const rows = document.querySelectorAll('#venueTable tbody tr');
-
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
-                const rowStatus = row.children[6].innerText.trim().toLowerCase(); // cột Status (index 6, tính từ 0)
-
+                const rowStatus = row.children[6].innerText.trim().toLowerCase();
                 const matchesSearch = text.includes(search);
-                const matchesStatus = status === "" || rowStatus === status;      // so sánh bằng, không dùng includes
-
+                const matchesStatus = status === "" || rowStatus === status;
                 row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
             });
         }
