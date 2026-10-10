@@ -438,9 +438,10 @@
                 <option value="Unpaid">Chưa thanh toán</option>
             </select>
         </div>
-        <a class="btn-create" href="@Url.Action("Create", "Bookings")">
+        <!-- SỬA: Đổi từ thẻ <a> sang nút <button> gọi modal popup -->
+        <button type="button" class="btn-create" onclick="openModal('createBookingModal')">
             <i class='bx bx-plus'></i> New Booking
-        </a>
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -472,7 +473,6 @@
                             var parts = item.CustomerName.Trim().Split(' ');
                             if (parts.Length >= 2)
                             {
-                                // SỬA: bản cũ cộng 2 ký tự (char + char) ra số nên avatar hiện số; nối chuỗi thì đúng
                                 initials = string.Concat(parts[0][0], parts[parts.Length - 1][0]).ToUpper();
                             }
                             else if (parts.Length == 1 && parts[0].Length > 0)
@@ -515,7 +515,6 @@
                             <td style="font-weight: 700; color: var(--primary-green);">@item.TotalAmount.ToString("N0") VNĐ</td>
                             <td><span class="status-badge @stClass[item.Status]">@stText[item.Status]</span></td>
                             <td>
-                                @* SỬA: nhãn tiếng Việt; mới cọc thì hiện "Đang thanh toán" kèm số tiền còn lại *@
                                 @if (item.PaymentStatus == "Paid")
                                 {
                                     <span class="status-badge badge-completed">Đã thanh toán đủ</span>
@@ -533,7 +532,6 @@
                             <td>
                                 <div class="flow-wrap">
 
-                                    @* Chờ đặt cọc: thu cọc (hệ thống tự chuyển sang Đã xác nhận) *@
                                     @if (item.Status == BookingStatuses.Pending)
                                     {
                                         <form class="flow-form" method="post" action="@Url.Action("RecordPayment", "Bookings")">
@@ -551,7 +549,6 @@
                                         </form>
                                     }
 
-                                    @* Đã xác nhận: bắt đầu sự kiện *@
                                     @if (item.Status == BookingStatuses.Confirmed)
                                     {
                                         <form class="flow-form" method="post" action="@Url.Action("ChangeStatus", "Bookings")">
@@ -562,7 +559,6 @@
                                         </form>
                                     }
 
-                                    @* Đã xác nhận / đang diễn ra mà còn nợ: thu phần còn lại *@
                                     @if ((item.Status == BookingStatuses.Confirmed || item.Status == BookingStatuses.InProgress) && remaining > 0)
                                     {
                                         <form class="flow-form" method="post" action="@Url.Action("RecordPayment", "Bookings")">
@@ -580,7 +576,6 @@
                                         </form>
                                     }
 
-                                    @* Đang diễn ra và đã thu đủ: hoàn tất *@
                                     @if (item.Status == BookingStatuses.InProgress && remaining <= 0)
                                     {
                                         <form class="flow-form" method="post" action="@Url.Action("ChangeStatus", "Bookings")">
@@ -592,7 +587,6 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
-                                        @* SỬA: nút mắt mở trang chi tiết đầy đủ *@
                                         <a class="btn-act btn-view" title="Chi tiết" href="@Url.Action("Details", "Bookings", new { id = item.BookingId })"><i class='bx bx-show'></i></a>
                                         @if (item.Status == BookingStatuses.Pending || item.Status == BookingStatuses.Confirmed)
                                         {
@@ -615,7 +609,51 @@
     </div>
 </div>
 
-<!-- 3. MODAL CANCEL BOOKING -->
+<!-- 3. MODAL CREATE BOOKING (Mới thêm vào để hiển thị popup) -->
+<div class="modal-backdrop" id="createBookingModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Create New Booking</h3>
+            <button type="button" class="btn-close-modal" onclick="closeModal('createBookingModal')">&times;</button>
+        </div>
+        @using (Html.BeginForm("Create", "Bookings", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Client Name (*)</label>
+                    <input type="text" class="form-control" name="CustomerName" required placeholder="Ex: Nguyen Van A">
+                </div>
+                <div class="form-group">
+                    <label>Venue (*)</label>
+                    <input type="text" class="form-control" name="VenueName" required placeholder="Ex: Grand Ballroom">
+                </div>
+                <div class="form-group">
+                    <label>Event Type (*)</label>
+                    <input type="text" class="form-control" name="EventType" required placeholder="Ex: Wedding">
+                </div>
+                <div class="form-group">
+                    <label>Guests (*)</label>
+                    <input type="number" class="form-control" name="Guests" required min="1" placeholder="Ex: 100">
+                </div>
+                <div class="form-group">
+                    <label>Start Time (*)</label>
+                    <input type="datetime-local" class="form-control" name="BookingDate" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Notes / Description</label>
+                    <textarea class="form-control" name="Notes" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('createBookingModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Booking</button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- 4. MODAL CANCEL BOOKING -->
 <div class="modal-backdrop" id="cancelModal">
     <div class="modal-box" style="max-width: 450px;">
         <div class="modal-header">
