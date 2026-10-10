@@ -4,15 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - VenueHub Event Admin</title>
-    <!-- Boxicons / FontAwesome hỗ trợ Icon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
     <style>
         :root {
-            --bg-main: #E3EDE6; /* Màu nền tổng thể xám xanh lá nhạt */
-            --bg-card: #FFFFFF; /* Màu nền thẻ trắng */
-            --sidebar-bg: #E3EDE6; /* Màu nền Sidebar */
-            --primary-green: #184A3B; /* Màu xanh lá đậm thương hiệu */
-            --active-item-bg: #FFFFFF; /* Màu nền item đang chọn */
+            --bg-main: #E3EDE6;
+            --bg-card: #FFFFFF;
+            --sidebar-bg: #E3EDE6;
+            --primary-green: #184A3B;
+            --active-item-bg: #FFFFFF;
             --text-dark: #1C2A23;
             --text-muted: #738A7C;
             --border-color: #D3E0D7;
@@ -31,7 +30,7 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* ================= SIDEBAR ================= */
+
         .sidebar {
             width: 260px;
             background-color: var(--sidebar-bg);
@@ -51,7 +50,12 @@
             color: var(--primary-green);
             padding-left: 10px;
             margin-bottom: 30px;
+            text-decoration: none;
         }
+
+            .brand-logo:hover {
+                opacity: 0.85;
+            }
 
         .nav-list {
             list-style: none;
@@ -91,7 +95,7 @@
                 color: var(--primary-green);
                 box-shadow: 0 4px 12px rgba(24, 74, 59, 0.05);
             }
-        /* Sign Out Bottom */
+
         .sidebar-bottom {
             display: flex;
             flex-direction: column;
@@ -113,7 +117,7 @@
             gap: 8px;
             cursor: pointer;
         }
-        /* ================= MAIN CONTENT AREA ================= */
+
         .main-wrapper {
             flex-grow: 1;
             display: flex;
@@ -132,7 +136,7 @@
             border: none;
             box-shadow: -4px 4px 15px rgba(0,0,0,0.02);
         }
-        /* Header */
+
         .main-header {
             padding: 20px 30px;
             display: flex;
@@ -220,7 +224,7 @@
             font-size: 11px;
             color: var(--text-muted);
         }
-        /* Vùng nội dung các View chui vào */
+
         .page-body {
             padding: 0 30px 30px 30px;
             flex-grow: 1;
@@ -228,13 +232,18 @@
     </style>
 </head>
 <body>
-    <!-- SIDEBAR BÊN TRÁI -->
     <aside class="sidebar">
         <div>
-            <div class="brand-logo">
+            @* Logo bấm về trang chủ *@
+            <a href="@Url.Action("Index", "Home")" class="brand-logo">
                 <i class='bx bxs-shapes'></i> VenueHub
-            </div>
+            </a>
             <ul class="nav-list">
+                <li>
+                    <a href="@Url.Action("Index", "Home")" class="nav-link">
+                        <i class='bx bx-home-alt'></i> Home
+                    </a>
+                </li>
                 <li>
                     <a href="@Url.Action("Index", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
                         <i class='bx bx-grid-alt'></i> Dashboard
@@ -250,7 +259,6 @@
                         <i class='bx bx-receipt'></i> Bookings
                     </a>
                 </li>
-                @* Admin + Coordinator đều xem được *@
                 <li>
                     <a href="@Url.Action("Index", "Venues")" class="nav-link @(ViewBag.ActiveMenu == "Venues" ? "active" : "")">
                         <i class='bx bx-building-house'></i> Venues
@@ -266,7 +274,6 @@
                         <i class='bx bx-wallet'></i> Payments
                     </a>
                 </li>
-                @* Admin + Coordinator đều xem được *@
                 <li>
                     <a href="@Url.Action("Index", "Users")" class="nav-link @(ViewBag.ActiveMenu == "Users" ? "active" : "")">
                         <i class='bx bx-user'></i> Users
@@ -289,10 +296,8 @@
             }
         </div>
     </aside>
-    <!-- KHU VỰC CHÍNH (HEADER + BODY) -->
     <div class="main-wrapper">
         <div class="content-container">
-            <!-- HEADER -->
             <header class="main-header">
                 <div class="header-title">
                     <h2>@(ViewBag.Title ?? "Dashboard")</h2>
@@ -314,7 +319,6 @@
                     </div>
                 </div>
             </header>
-            <!-- NỘI DUNG THAY ĐỔI CỦA TỪNG TRANG CON -->
             <main class="page-body">
                 @RenderBody()
             </main>
