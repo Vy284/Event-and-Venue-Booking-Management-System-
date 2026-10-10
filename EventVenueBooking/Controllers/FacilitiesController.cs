@@ -12,7 +12,8 @@ using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    // SỬA: Coordinator được XEM (Index, Details). Thêm/sửa/xóa chỉ Admin.
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class FacilitiesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -39,6 +40,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Create
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Create()
         {
             return View();
@@ -47,6 +49,7 @@ namespace EventVenueBooking.Controllers
         // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Create([Bind(Include = "FacilityId,FacilityName,IsActive")] Facility facility)
         {
             if (ModelState.IsValid)
@@ -60,6 +63,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Edit
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -75,9 +79,10 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
+        // Có [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Edit([Bind(Include = "FacilityId,FacilityName,IsActive")] Facility facility)
         {
             if (ModelState.IsValid)
@@ -98,6 +103,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Delete
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -115,6 +121,7 @@ namespace EventVenueBooking.Controllers
         // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult DeleteConfirmed(int id)
         {
             Facility facility = db.Facilities.Find(id);

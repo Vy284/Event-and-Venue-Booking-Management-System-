@@ -1,0 +1,133 @@
+﻿@model EventVenueBooking.Entities.User
+@{
+    ViewBag.Title = "Edit Client";
+    ViewBag.ActiveMenu = "Users";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .uc-card {
+        background: #FFFFFF;
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        max-width: 620px;
+    }
+
+    .uc-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-green);
+        margin: 0 0 6px 0;
+    }
+
+    .uc-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    .uc-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+        .uc-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .uc-input {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+        width: 100%;
+    }
+
+    .uc-error {
+        background: #FFEBEE;
+        color: #C62828;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-size: 13px;
+    }
+
+        .uc-error ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+    .uc-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .uc-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .uc-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+
+<div class="uc-card">
+    <h3 class="uc-title">Edit Client #@Model.UserId</h3>
+    <p class="uc-sub">Chỉ sửa thông tin cá nhân. Đổi role, khóa tài khoản và đặt lại mật khẩu do Admin thực hiện.</p>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="uc-error">@Html.ValidationSummary(false)</div>
+    }
+
+    @using (Html.BeginForm("EditClient", "Users", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="userId" value="@Model.UserId" />
+
+        <div class="uc-field">
+            <label>Họ tên (*)</label>
+            <input type="text" name="fullName" class="uc-input" value="@Model.FullName" maxlength="100" required />
+        </div>
+        <div class="uc-field">
+            <label>Email (*)</label>
+            <input type="email" name="email" class="uc-input" value="@Model.Email" maxlength="100" required />
+        </div>
+        <div class="uc-field">
+            <label>Số điện thoại</label>
+            <input type="text" name="phone" class="uc-input" value="@Model.Phone" maxlength="20" />
+        </div>
+
+        <div class="uc-actions">
+            <a href="@Url.Action("Index", "Users")" class="uc-secondary">Quay lại danh sách</a>
+            <button type="submit" class="uc-primary">Lưu thay đổi</button>
+        </div>
+    }
+</div>

@@ -9,12 +9,13 @@ using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
 using EventVenueBooking.Filters;
-using EventVenueBooking.Services;                   // THÊM: để dùng BookingStatuses, VenueStatuses
+using EventVenueBooking.Services;                   // để dùng BookingStatuses, VenueStatuses
 using EventVenueBooking.ViewModels;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    // SỬA: Coordinator được XEM (Index, Details, Facilities_Services). Thêm/sửa/xóa chỉ Admin.
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class VenuesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -26,7 +27,7 @@ namespace EventVenueBooking.Controllers
             return db.Users.Where(u => u.Email == email).Select(u => u.UserId).First();
         }
 
-        // THÊM: sảnh còn booking chưa kết thúc (chưa hủy, chưa hoàn tất) hay không
+        // Sảnh còn booking chưa kết thúc (chưa hủy, chưa hoàn tất) hay không
         private bool HasUpcomingBookings(int venueId)
         {
             return db.Bookings.Any(b =>
@@ -48,7 +49,7 @@ namespace EventVenueBooking.Controllers
                 RentalUnit = v.RentalUnit,
                 TypeName = v.VenueType != null ? v.VenueType.TypeName : "N/A",
 
-                // Lấy hình ảnh chính. SỬA: ảnh dự phòng thống nhất với trang chủ
+                // Lấy hình ảnh chính. Ảnh dự phòng thống nhất với trang chủ
                 PrimaryImageUrl = v.VenueImages.FirstOrDefault(img => img.IsPrimary).ImageUrl ?? "/Content/images/bg_landingpage.jpg",
 
                 Status = v.Status,
@@ -127,6 +128,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Create
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult Create()
         {
             ViewBag.CreatedByUserId = new SelectList(db.Users, "UserId", "FullName");
@@ -138,6 +140,7 @@ namespace EventVenueBooking.Controllers
         // Bỏ CreatedAt và CreatedByUserId khỏi Bind, server tự điền từ người đăng nhập
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult Create([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status")] Venue venue)
         {
             venue.CreatedByUserId = CurrentUserId();
@@ -158,6 +161,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Edit/5
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -176,9 +180,10 @@ namespace EventVenueBooking.Controllers
 
         // POST: Edit
         // Không bind CreatedAt / CreatedByUserId; nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa.
-        // SỬA: không cho đổi sảnh khỏi trạng thái Active khi còn booking chưa kết thúc.
+        // Không cho đổi sảnh khỏi trạng thái Active khi còn booking chưa kết thúc.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult Edit([Bind(Include = "VenueId,Name,VenueTypeId,Capacity,Description,RentalRate,RentalUnit,Location,Status")] Venue venue)
         {
             ModelState.Remove("CreatedByUserId");       // không lấy từ form
@@ -222,6 +227,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Delete
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -237,9 +243,10 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Delete (không xóa thật, chỉ chuyển sang Inactive)
-        // SỬA: chặn khi sảnh còn booking chưa kết thúc
+        // Chặn khi sảnh còn booking chưa kết thúc
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA: chỉ Admin
         public ActionResult DeleteConfirmed(int id)
         {
             Venue venue = db.Venues.Find(id);

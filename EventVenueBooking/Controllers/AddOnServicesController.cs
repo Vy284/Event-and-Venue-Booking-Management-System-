@@ -12,7 +12,8 @@ using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    // SỬA: Coordinator được XEM (Index, Details). Thêm/sửa/xóa chỉ Admin.
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class AddOnServicesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -39,6 +40,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: /Create
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Create()
         {
             return View();
@@ -47,6 +49,7 @@ namespace EventVenueBooking.Controllers
         // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Create([Bind(Include = "AddOnId,Name,Description,Price,Category,IsActive")] AddOnService addOnService)
         {
             if (ModelState.IsValid)
@@ -60,6 +63,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Edit
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -75,10 +79,9 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: Edit
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Edit([Bind(Include = "AddOnId,Name,Description,Price,Category,IsActive")] AddOnService addOnService)
         {
             if (ModelState.IsValid)
@@ -91,6 +94,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Delete
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -108,10 +112,11 @@ namespace EventVenueBooking.Controllers
         // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult DeleteConfirmed(int id)
         {
             AddOnService addOnService = db.AddOnServices.Find(id);
-            if (addOnService == null)                       // SỬA: tránh NullReferenceException khi id không tồn tại
+            if (addOnService == null)
             {
                 return HttpNotFound();
             }
