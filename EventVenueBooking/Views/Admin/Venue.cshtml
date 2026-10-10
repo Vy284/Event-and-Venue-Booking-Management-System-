@@ -5,10 +5,12 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     bool isAdmin = User.IsInRole("Admin");
     var venueTypes = ViewBag.VenueTypes as System.Collections.Generic.IEnumerable<System.Web.Mvc.SelectListItem>;
+    var facilities = ViewBag.Facilities as System.Collections.Generic.IEnumerable<System.Web.Mvc.SelectListItem>;
+    var venueFacilityMap = ViewBag.VenueFacilityMap as System.Collections.Generic.IDictionary<int, System.Collections.Generic.List<int>>;
+    var venueTypeMap = ViewBag.VenueTypeMap as System.Collections.Generic.IDictionary<int, int>;
     var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 <style>
-    /* THỐNG KÊ NHANH */
     .venue-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -68,7 +70,7 @@
         background: #FEEBEB;
         color: #E53935;
     }
-    /* KHUNG CHÍNH / BẢNG DATA */
+
     .crud-card {
         background: #FFFFFF;
         border-radius: 20px;
@@ -119,7 +121,7 @@
             opacity: 0.9;
             transform: translateY(-1px);
         }
-    /* TABLE STYLES */
+
     .table-responsive {
         overflow-x: auto;
     }
@@ -150,7 +152,7 @@
         .custom-table tbody tr:hover {
             background-color: #FAFCFA;
         }
-    /* VENUE IMAGE & INFO CELL */
+
     .venue-cell {
         display: flex;
         align-items: center;
@@ -176,7 +178,7 @@
         color: #FFC107;
         font-size: 14px;
     }
-    /* BADGES CHO TRẠNG THÁI (0 = Inactive, 1 = Active, 2 = Maintenance) */
+
     .status-badge {
         padding: 5px 12px;
         border-radius: 20px;
@@ -199,7 +201,7 @@
         background: #FFF3E0;
         color: #E65100;
     }
-    /* ACTION BUTTONS */
+
     .action-btns {
         display: flex;
         align-items: center;
@@ -237,7 +239,7 @@
     .btn-act:hover {
         opacity: 0.8;
     }
-    /* THÔNG BÁO */
+
     .flash {
         padding: 12px 16px;
         border-radius: 10px;
@@ -255,7 +257,7 @@
         background: #FFEBEE;
         color: #C62828;
     }
-    /* MODAL POPUP */
+
     .modal-backdrop {
         position: fixed;
         top: 0;
@@ -340,6 +342,31 @@
         color: var(--text-dark);
     }
 
+    .facility-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+        max-height: 140px;
+        overflow-y: auto;
+        padding: 8px 10px;
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+    }
+
+    .facility-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-dark);
+    }
+
+        .facility-item input {
+            width: 16px;
+            height: 16px;
+        }
+
     .modal-footer {
         display: flex;
         justify-content: flex-end;
@@ -368,7 +395,7 @@
         font-weight: 600;
         cursor: pointer;
     }
-    /* MODAL PHÓNG TO ẢNH */
+
     .img-zoom-box {
         background: transparent;
         box-shadow: none;
@@ -395,6 +422,7 @@
         cursor: pointer;
     }
 </style>
+
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="flash flash-success">@TempData["SuccessMessage"]</div>
@@ -403,7 +431,7 @@
 {
     <div class="flash flash-error">@TempData["ErrorMessage"]</div>
 }
-<!-- 1. THỐNG KÊ NHANH TỪ VIEWBAG -->
+
 <div class="venue-stats">
     <div class="stat-mini-card">
         <div class="stat-mini-info">
@@ -434,7 +462,7 @@
         <div class="stat-mini-icon icon-inactive"><i class='bx bx-x-circle'></i></div>
     </div>
 </div>
-<!-- 2. BẢNG DỮ LIỆU ĐỘNG TỪ MODEL -->
+
 <div class="crud-card">
     <div class="toolbar">
         <div class="filter-group">
@@ -473,6 +501,18 @@
                     string statusText = item.Status == 1 ? "Active" : (item.Status == 2 ? "Maintenance" : "Inactive");
                     string statusClass = item.Status == 1 ? "badge-active" : (item.Status == 2 ? "badge-maintenance" : "badge-inactive");
                     string unitText = item.RentalUnit == 0 ? "Hour" : (item.RentalUnit == 1 ? "Session" : "Day");
+
+                    string facIds = "";
+                    if (venueFacilityMap != null && venueFacilityMap.ContainsKey(item.VenueId))
+                    {
+                        facIds = string.Join(",", venueFacilityMap[item.VenueId]);
+                    }
+                    int typeId = 0;
+                    if (venueTypeMap != null && venueTypeMap.ContainsKey(item.VenueId))
+                    {
+                        typeId = venueTypeMap[item.VenueId];
+                    }
+
                     <tr>
                         <td style="font-weight: 600; color: var(--text-muted);">#@item.VenueId</td>
                         <td>
@@ -514,13 +554,14 @@
                                     <button type="button" class="btn-act btn-edit" title="Edit" onclick="openEditModal(this)"
                                             data-id="@item.VenueId"
                                             data-name="@item.VenueName"
-                                            data-type="@item.TypeName"
+                                            data-typeid="@typeId"
                                             data-capacity="@item.Capacity"
                                             data-rate="@(item.PricePerHour.ToString("0.##", inv))"
                                             data-unit="@item.RentalUnit"
                                             data-location="@item.Location"
                                             data-status="@item.Status"
-                                            data-desc="@item.Description">
+                                            data-desc="@item.Description"
+                                            data-facilities="@facIds">
                                         <i class='bx bx-edit'></i>
                                     </button>
                                     <button type="button" class="btn-act btn-delete" title="Deactivate" onclick="openDeleteModal(this)"
@@ -537,7 +578,8 @@
         </table>
     </div>
 </div>
-<!-- 3. MODAL CREATE / EDIT VENUE -->
+
+<!-- MODAL CREATE / EDIT -->
 <div class="modal-backdrop" id="venueFormModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -597,6 +639,21 @@
                     <label>Description</label>
                     <textarea class="form-control" id="description" name="Description" rows="3" placeholder="Brief details about the venue..."></textarea>
                 </div>
+                <div class="form-group full-width">
+                    <label>Facilities</label>
+                    <div class="facility-grid" id="facilityList">
+                        @if (facilities != null)
+                        {
+                            foreach (var f in facilities)
+                            {
+                                <label class="facility-item">
+                                    <input type="checkbox" name="facilityIds" value="@f.Value" class="facility-cb" />
+                                    @f.Text
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('venueFormModal')">Cancel</button>
@@ -605,7 +662,8 @@
         }
     </div>
 </div>
-<!-- 4. MODAL VIEW DETAILS -->
+
+<!-- MODAL VIEW DETAILS -->
 <div class="modal-backdrop" id="viewDetailsModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -633,14 +691,16 @@
         </div>
     </div>
 </div>
-<!-- 5. MODAL ZOOM IMAGE -->
+
+<!-- MODAL ZOOM IMAGE -->
 <div class="modal-backdrop" id="imageZoomModal" onclick="closeModal('imageZoomModal')">
     <div class="modal-box img-zoom-box" onclick="event.stopPropagation()">
         <button type="button" class="btn-close-img" onclick="closeModal('imageZoomModal')">&times;</button>
         <img id="zoomedImg" src="" alt="Zoomed Venue Image">
     </div>
 </div>
-<!-- 6. MODAL DEACTIVATE -->
+
+<!-- MODAL DEACTIVATE -->
 <div class="modal-backdrop" id="deleteModal">
     <div class="modal-box" style="max-width: 400px; text-align: center;">
         @using (Html.BeginForm("Delete", "Venues", FormMethod.Post, new { id = "deleteForm" }))
@@ -657,7 +717,7 @@
         }
     </div>
 </div>
-<!-- JAVASCRIPT -->
+
 <script>
         function openModal(id) {
             document.getElementById(id).classList.add('show');
@@ -669,6 +729,11 @@
             document.getElementById('zoomedImg').src = src;
             openModal('imageZoomModal');
         }
+        function clearFacilityChecks() {
+            document.querySelectorAll('.facility-cb').forEach(function (cb) {
+                cb.checked = false;
+            });
+        }
         function openCreateModal() {
             var form = document.getElementById('venueForm');
             form.reset();
@@ -677,6 +742,7 @@
             document.getElementById('venueId').value = "0";
             document.getElementById('status').value = "1";
             document.getElementById('venueTypeId').selectedIndex = 0;
+            clearFacilityChecks();
             openModal('venueFormModal');
         }
         function openEditModal(btn) {
@@ -684,6 +750,7 @@
             var form = document.getElementById('venueForm');
             form.reset();
             form.action = form.dataset.editUrl;
+
             document.getElementById('modalTitle').innerText = "Edit Venue: " + d.name;
             document.getElementById('venueId').value = d.id;
             document.getElementById('venueName').value = d.name || '';
@@ -693,11 +760,17 @@
             document.getElementById('location').value = d.location || '';
             document.getElementById('status').value = d.status;
             document.getElementById('description').value = d.desc || '';
-            var sel = document.getElementById('venueTypeId');
-            sel.selectedIndex = -1;
-            for (var i = 0; i < sel.options.length; i++) {
-                if (sel.options[i].text === d.type) { sel.selectedIndex = i; break; }
-            }
+
+            // Chọn type theo Id
+            document.getElementById('venueTypeId').value = d.typeid || '';
+
+            // Tick facilities
+            clearFacilityChecks();
+            var ids = (d.facilities || '').split(',').filter(Boolean);
+            document.querySelectorAll('.facility-cb').forEach(function (cb) {
+                if (ids.indexOf(cb.value) >= 0) cb.checked = true;
+            });
+
             openModal('venueFormModal');
         }
         function openViewModal(btn) {
