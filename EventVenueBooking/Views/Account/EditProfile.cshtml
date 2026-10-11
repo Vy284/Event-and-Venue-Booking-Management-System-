@@ -1,0 +1,46 @@
+﻿@model EventVenueBooking.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Tài Khoản";
+}
+
+<div class="container py-5 mt-4 mb-5" style="max-width: 650px;">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="fw-bold m-0" style="color: #3b2e27;">Chỉnh Sửa Tài Khoản</h3>
+        <a href="@Url.Action("Profile", "Account")" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 p-4 mb-4" style="background-color: #ffffff; border: 1px solid #eae2d8 !important;">
+        <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: #3b2e27;">
+            <i class="fa-regular fa-user me-2"></i>Thông Tin Cá Nhân
+        </h5>
+
+        @using (Html.BeginForm("UpdateProfile", "Account", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label text-uppercase small fw-bold" style="color: #8c7a6b; letter-spacing: 1px;">Họ và Tên</label>
+                <input type="text" name="fullName" class="form-control rounded-3 py-2 fs-6" value="@Model.FullName" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-uppercase small fw-bold" style="color: #8c7a6b; letter-spacing: 1px;">Địa chỉ Email</label>
+                <input type="email" name="email" class="form-control rounded-3 py-2 fs-6" value="@Model.Email" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label text-uppercase small fw-bold" style="color: #8c7a6b; letter-spacing: 1px;">Số Điện Thoại</label>
+                <input type="tel" name="phone" class="form-control rounded-3 py-2 fs-6" value="@Model.Phone" placeholder="Chưa cập nhật số điện thoại" />
+            </div>
+
+            <button type="submit" class="btn btn-brown text-white rounded-pill px-4 py-2 fw-medium shadow-sm">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thông Tin
+            </button>
+        }
+    </div>
+
+</div>

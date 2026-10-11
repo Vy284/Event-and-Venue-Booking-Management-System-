@@ -21,6 +21,7 @@ namespace EventVenueBooking.ViewModels
     public class UserBookingViewModel
     {
         public int BookingId { get; set; }
+        public int VenueId { get; set; }
         public string VenueName { get; set; }
         public string VenueImageUrl { get; set; }
         public string EventTypeName { get; set; }

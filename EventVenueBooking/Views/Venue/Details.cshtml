@@ -83,8 +83,8 @@
                     <span class="text-muted"><i class="fa-solid fa-location-dot me-1 text-danger"></i>@Model.Location</span>
                 </div>
                 <h2 class="fw-bold mb-3" style="color: var(--primary-brown);">@Model.Name</h2>
-                <p class="text-secondary lead fs-6 mb-4">
-                    @(string.IsNullOrEmpty(Model.Description) ? "Không gian sang trọng, đẳng cấp phù hợp cho mọi loại hình sự kiện tiệc cưới, hội thảo và gặp mặt doanh nghiệp." : Model.Description)
+                <p class="text-secondary lead fw-normal fs-5 mb-4">
+                    @(string.IsNullOrEmpty(Model.Description) ? "Chưa có chú thích." : Model.Description)
                 </p>
 
                 <!-- Statistics -->
@@ -141,7 +141,7 @@
                     }
                     else
                     {
-                        <p class="text-muted mb-0">Chưa có thông tin tiện ích chi tiết.</p>
+                        <p class="text-muted fs-5 mb-0">Chưa có thông tin tiện ích chi tiết.</p>
                     }
                 </div>
             </div>
@@ -156,8 +156,8 @@
                         {
                             <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <div>
-                                    <h6 class="mb-1 fw-bold">@addon.Name</h6>
-                                    <small class="text-muted">@addon.Description</small>
+                                    <h6 class="mb-1 fw-bold fs-5">@addon.Name</h6>
+                                    <p class="text-muted fs-6">@addon.Description</p>
                                 </div>
                                 <div class="text-end">
                                     <span class="fw-bold text-danger d-block">+@addon.Price.ToString("N0") VNĐ</span>
@@ -219,10 +219,7 @@
             },
             locale: 'vi',
             // Load các đơn đặt của sảnh này từ Controller API
-            events: '/Venue/GetVenueBookings?venueId=' + venueId,
-            eventClick: function(info) {
-                alert('Khung giờ này đã được đặt: ' + info.event.title);
-            }
+            events: '/Venue/GetVenueBookings?venueId=' + venueId
         });
 
         calendar.render();
