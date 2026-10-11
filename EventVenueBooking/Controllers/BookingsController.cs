@@ -93,6 +93,8 @@ namespace EventVenueBooking.Controllers
             ViewBag.ConfirmedCount = bookings.Count(x => x.Status == BookingStatuses.Confirmed || x.Status == BookingStatuses.InProgress);
             ViewBag.CompletedCount = bookings.Count(x => x.Status == BookingStatuses.Completed);
             ViewBag.CancelledCount = bookings.Count(x => x.Status == BookingStatuses.Cancelled);
+            
+            PopulateDropdowns(null);
 
             return View("~/Views/Admin/Bookings.cshtml", bookings);
         }
