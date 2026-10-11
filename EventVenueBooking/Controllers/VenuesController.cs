@@ -1,16 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Entity;
-using System.Linq;
-using System.Net;
-using System.Web;
-using System.Web.Mvc;
 using EventVenueBooking.Database;
 using EventVenueBooking.Entities;
 using EventVenueBooking.Filters;
 using EventVenueBooking.Services;
 using EventVenueBooking.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Linq;
+using System.Net;
+using System.Web;
+using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
@@ -300,6 +301,179 @@ namespace EventVenueBooking.Controllers
             TempData["SuccessMessage"] = "Đã ngừng hoạt động sảnh.";
             return RedirectToAction("Index");
         }
+
+
+        // POST: Tạo hoặc cập nhật Facility
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
+        public ActionResult SaveFacility(
+            int id, string facilityName, bool isActive)
+        {
+            facilityName = (facilityName ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(facilityName))
+                return Json(new { success = false, message = "Vui lòng nhập tên tiện ích." });
+
+            if (facilityName.Length > 100)
+                return Json(new { success = false, message = "Tên tiện ích tối đa 100 ký tự." });
+
+            if (db.Facilities.Any(f =>
+                f.FacilityName == facilityName && f.FacilityId != id))
+            {
+                return Json(new { success = false, message = "Tên tiện ích đã tồn tại." });
+            }
+
+            Facility facility;
+
+            if (id == 0)
+            {
+                facility = new Facility();
+                db.Facilities.Add(facility);
+            }
+            else
+            {
+                facility = db.Facilities.Find(id);
+
+                if (facility == null)
+                    return Json(new { success = false, message = "Không tìm thấy tiện ích." });
+            }
+
+            facility.FacilityName = facilityName;
+            facility.IsActive = isActive;
+
+            try
+            {
+                db.SaveChanges();
+
+                return Json(new
+                {
+                    success = true,
+                    message = id == 0
+                        ? "Đã tạo tiện ích thành công."
+                        : "Đã cập nhật tiện ích thành công."
+                });
+            }
+            catch (DbUpdateException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Không lưu được. Có thể tên tiện ích đã tồn tại."
+                });
+            }
+        }
+
+        // POST: Tạo hoặc cập nhật Add-On Service
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
+        public ActionResult SaveAddOnService(
+            int id,
+            string name,
+            string category,
+            decimal? price,
+            bool isActive,
+            string description)
+        {
+            name = (name ?? "").Trim();
+            category = (category ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+                return Json(new { success = false, message = "Vui lòng nhập tên dịch vụ." });
+
+            if (name.Length > 150)
+                return Json(new { success = false, message = "Tên dịch vụ tối đa 150 ký tự." });
+
+            if (category.Length > 100)
+                return Json(new { success = false, message = "Category tối đa 100 ký tự." });
+
+            if (!price.HasValue || price.Value < 0)
+                return Json(new { success = false, message = "Giá dịch vụ phải lớn hơn hoặc bằng 0." });
+
+            if (db.AddOnServices.Any(s =>
+                s.Name == name && s.AddOnId != id))
+            {
+                return Json(new { success = false, message = "Tên dịch vụ đã tồn tại." });
+            }
+
+            AddOnService service;
+
+            if (id == 0)
+            {
+                service = new AddOnService();
+                db.AddOnServices.Add(service);
+            }
+            else
+            {
+                service = db.AddOnServices.Find(id);
+
+                if (service == null)
+                    return Json(new { success = false, message = "Không tìm thấy dịch vụ." });
+            }
+
+            service.Name = name;
+            service.Category = category;
+            service.Price = price.Value;
+            service.IsActive = isActive;
+            service.Description = description;
+
+            try
+            {
+                db.SaveChanges();
+
+                return Json(new
+                {
+                    success = true,
+                    message = id == 0
+                        ? "Đã tạo dịch vụ thành công."
+                        : "Đã cập nhật dịch vụ thành công."
+                });
+            }
+            catch (DbUpdateException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Không lưu được. Có thể tên dịch vụ đã tồn tại."
+                });
+            }
+        }
+
+        // POST: Deactivate Facility
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
+        public ActionResult DeactivateFacility(int id)
+        {
+            var facility = db.Facilities.Find(id);
+
+            if (facility == null)
+                return Json(new { success = false, message = "Không tìm thấy tiện ích." });
+
+            facility.IsActive = false;
+            db.SaveChanges();
+
+            return Json(new { success = true, message = "Đã vô hiệu hóa tiện ích." });
+        }
+
+        // POST: Deactivate Add-On Service
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
+        public ActionResult DeactivateAddOnService(int id)
+        {
+            var service = db.AddOnServices.Find(id);
+
+            if (service == null)
+                return Json(new { success = false, message = "Không tìm thấy dịch vụ." });
+
+            service.IsActive = false;
+            db.SaveChanges();
+
+            return Json(new { success = true, message = "Đã vô hiệu hóa dịch vụ." });
+        }
+
 
         protected override void Dispose(bool disposing)
         {
