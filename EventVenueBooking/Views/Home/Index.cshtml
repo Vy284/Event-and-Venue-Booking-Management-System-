@@ -6,6 +6,7 @@
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
     string currentDate = ViewBag.CurrentDate as string ?? "";
     var venueList = ViewBag.VenueSelectList as IEnumerable<SelectListItem>;
+    var homeAddOns = ViewBag.AddOnServices as List<EventVenueBooking.Entities.AddOnService>;
 }
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -194,22 +195,30 @@
 
         <!-- search bar -->
         <div class="row justify-content-center mb-4">
-            <div class="col-lg-9 col-xl-8">
+            <div class="col-lg-10">
                 <form id="search-form" action="@Url.Action("Index", "Home")" method="get" class="shadow-sm rounded-pill overflow-hidden bg-white p-2 border">
                     <input type="hidden" name="category" id="current-category-input" value="@activeCategory" />
 
                     <div class="row g-0 align-items-center">
                         <!-- Ô tìm từ khóa -->
-                        <div class="col-md-6 d-flex align-items-center ps-3 pe-2 border-end border-md-0">
+                        <div class="col-md-4 d-flex align-items-center ps-3 pe-2 border-end">
                             <i class="fa-solid fa-magnifying-glass text-muted me-2"></i>
                             <input type="text" name="search" id="search-input" class="form-control border-0 shadow-none ps-0"
-                                   placeholder="Tên sảnh, vị trí..."
-                                   value="@currentSearch" />
+                                   placeholder="Tên sảnh, vị trí..." value="@currentSearch" />
                         </div>
 
-                        <!-- Lịch mini -->
-                        <div class="col-md-4 d-flex align-items-center px-3 border-start">
-                            <input type="date" name="eventDate" id="date-input" value="@currentDate" />
+                        <!-- Ô nhập Sức chứa -->
+                        <div class="col-md-3 d-flex align-items-center px-3 border-end">
+                            <i class="fa-solid fa-users text-muted me-2"></i>
+                            <input type="number" name="minCapacity" id="capacity-input" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Sức chứa (người)" value="@ViewBag.CurrentCapacity" min="0" />
+                        </div>
+
+                        <!-- Ô nhập Giá tối đa -->
+                        <div class="col-md-3 d-flex align-items-center px-3">
+                            <i class="fa-solid fa-tag text-muted me-2"></i>
+                            <input type="number" name="maxPrice" id="price-input" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Giá tối đa (VNĐ)" value="@ViewBag.CurrentPrice" step="500000" min="0" />
                         </div>
 
                         <!-- Nút tìm kiếm -->
@@ -309,6 +318,7 @@
             <div class="col-md-6 col-lg-4">
                 <select id="calendar-venue-select" class="form-select form-select-lg rounded-pill border-secondary shadow-sm fs-6">
                     <option value="0">-- Chọn sảnh để xem lịch --</option>
+                    <option value="all" class="fw-bold text-primary">★ XEM TẤT CẢ SẢNH</option>
                     @if (venueList != null)
                     {
                         foreach (var v in venueList)
@@ -325,6 +335,37 @@
         </div>
     </div>
 </div>
+
+@if (homeAddOns != null && homeAddOns.Any())
+{
+    <div class="container my-5 pt-4">
+        <div class="text-center mb-4">
+            <h6 class="text-uppercase tracking-wider text-muted fw-bold small">DỊCH VỤ ĐI KÈM</h6>
+            <h2 class="fw-bold" style="color: var(--primary-brown);">Add-On Services</h2>
+            <p class="text-muted">Nâng tầm sự kiện của bạn với các gói dịch vụ bổ sung chuyên nghiệp</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            @foreach (var addon in homeAddOns)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-3 style-addon-card" style="background-color: #faf8f5; border: 1px solid #eae2d8 !important;">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-light text-dark border px-2 py-1">@addon.Category</span>
+                                    <span class="fw-bold text-danger fs-5">+@addon.Price.ToString("N0") VNĐ</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #3b2e27;">@addon.Name</h5>
+                                <p class="text-muted small mb-0">@(string.IsNullOrEmpty(addon.Description) ? "Dịch vụ chất lượng cao phục vụ xuyên suốt sự kiện." : addon.Description)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <!-- javascript to prevent reload page -->
 <script>

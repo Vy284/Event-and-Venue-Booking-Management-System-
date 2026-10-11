@@ -372,6 +372,7 @@
     <Content Include="Views\ClientBooking\Details.cshtml" />
     <Content Include="Views\Users\CreateClient.cshtml" />
     <Content Include="Views\Users\EditClient.cshtml" />
+    <Content Include="Views\Account\EditProfile.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
