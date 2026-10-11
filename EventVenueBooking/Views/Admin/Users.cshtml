@@ -152,6 +152,10 @@
             vertical-align: middle;
         }
 
+        .custom-table tbody tr:hover {
+            background-color: #FAFCFA;
+        }
+
     .user-cell {
         display: flex;
         align-items: center;
@@ -237,21 +241,6 @@
         color: #FF9800;
     }
 
-    .btn-role {
-        background: #F3E5F5;
-        color: #9C27B0;
-    }
-
-    .btn-toggle {
-        background: #F5F5F5;
-        color: #616161;
-    }
-
-    .btn-reset {
-        background: #E8F4FD;
-        color: #2196F3;
-    }
-
     .btn-act:hover {
         opacity: 0.8;
     }
@@ -273,6 +262,119 @@
         background: #FFEBEE;
         color: #C62828;
     }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(2px);
+    }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #FFFFFF;
+        width: 100%;
+        max-width: 520px;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #F0F4F1;
+        padding-bottom: 12px;
+    }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+    .form-control {
+        background: #F4F7FB;
+        border: 1px solid var(--border-color);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        color: var(--text-dark);
+        width: 100%;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #F0F4F1;
+    }
+
+    .btn-secondary {
+        background: #F4F7FB;
+        color: var(--text-muted);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: #FFF;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
 </style>
 
 @if (TempData["SuccessMessage"] != null)
@@ -284,39 +386,25 @@
     <div class="flash flash-error">@TempData["ErrorMessage"]</div>
 }
 
-<!-- 1. THỐNG KÊ -->
 <div class="booking-stats">
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Total Users</p>
-            <h3>@totalUsers</h3>
-        </div>
+        <div class="stat-mini-info"><p>Total Users</p><h3>@totalUsers</h3></div>
         <div class="stat-mini-icon icon-total"><i class='bx bx-group'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Active Users</p>
-            <h3>@activeUsers</h3>
-        </div>
+        <div class="stat-mini-info"><p>Active Users</p><h3>@activeUsers</h3></div>
         <div class="stat-mini-icon icon-active"><i class='bx bx-user-check'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Administrators</p>
-            <h3>@adminCount</h3>
-        </div>
+        <div class="stat-mini-info"><p>Administrators</p><h3>@adminCount</h3></div>
         <div class="stat-mini-icon icon-admin"><i class='bx bx-shield-quarter'></i></div>
     </div>
     <div class="stat-mini-card">
-        <div class="stat-mini-info">
-            <p>Clients</p>
-            <h3>@clientCount</h3>
-        </div>
+        <div class="stat-mini-info"><p>Clients</p><h3>@clientCount</h3></div>
         <div class="stat-mini-icon icon-client"><i class='bx bx-user'></i></div>
     </div>
 </div>
 
-<!-- 2. BẢNG -->
 <div class="crud-card">
     <div class="toolbar">
         <div class="filter-group">
@@ -328,10 +416,9 @@
                 <option value="Client">Client</option>
             </select>
         </div>
-        @* Cả Admin và Coordinator đều tạo Client được *@
-        <a href="@Url.Action("CreateClient", "Users")" class="btn-create">
-            <i class='bx bx-user-plus'></i> Add Client
-        </a>
+        <button type="button" class="btn-create" onclick="openCreateModal()">
+            <i class='bx bx-user-plus'></i> Add User
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -389,34 +476,10 @@
                         <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td>
                             <div class="action-btns">
-                                @* Sửa Client: cả Admin và Coordinator *@
-                                @if (user.RoleCode == 0)
-                                {
-                                    <a href="@Url.Action("EditClient", "Users", new { id = user.UserId })"
-                                       class="btn-act btn-edit" title="Edit Client">
-                                        <i class='bx bx-edit'></i>
-                                    </a>
-                                }
-
-                                @* Chỉ Admin: đổi role, khóa/mở, reset mật khẩu *@
-                                @if (isAdmin)
-                                {
-                                    <a href="@Url.Action("ChangeRole", "Users", new { id = user.UserId })"
-                                       class="btn-act btn-role" title="Change Role">
-                                        <i class='bx bx-shield'></i>
-                                    </a>
-                                    <a href="@Url.Action("ChangeIsActive", "Users", new { id = user.UserId })"
-                                       class="btn-act btn-toggle" title="Toggle Status">
-                                        <i class='bx bx-power-off'></i>
-                                    </a>
-                                    if (user.RoleCode != 2)
-                                    {
-                                        <a href="@Url.Action("AdminResetPassword", "Users", new { id = user.UserId })"
-                                           class="btn-act btn-reset" title="Reset Password">
-                                            <i class='bx bx-key'></i>
-                                        </a>
-                                    }
-                                }
+                                <!-- Nút Edit duy nhất gọn gàng, bấm vào mở popup chứa toàn bộ thông tin, role, status và đổi pass -->
+                                <button type="button" class="btn-act btn-edit" title="Edit User" onclick="openEditModal('@user.UserId', '@user.FullName', '@user.Email', '@user.Phone', '@user.RoleCode', '@user.IsActive.ToString().ToLower()')">
+                                    <i class='bx bx-edit'></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -432,18 +495,112 @@
     </div>
 </div>
 
-<script>
-        function filterTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const role = document.getElementById('roleFilter').value.toLowerCase();
-            const rows = document.querySelectorAll('#usersTable tbody tr');
-            rows.forEach(row => {
-                if (row.cells.length === 1) return;
-                const text = row.innerText.toLowerCase();
-                const rowRole = row.children[3].innerText.toLowerCase();
-                const matchesSearch = text.includes(search);
-                const matchesRole = role === "" || rowRole.includes(role);
-                row.style.display = (matchesSearch && matchesRole) ? "" : "none";
-            });
+<!-- MODAL ADD / EDIT USER TÍCH HỢP TẤT CẢ -->
+<div class="modal-backdrop" id="userFormModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New User</h3>
+            <button type="button" class="btn-close-modal" onclick="closeModal('userFormModal')">&times;</button>
+        </div>
+
+        @using (Html.BeginForm("CreateClient", "Users", FormMethod.Post, new { id = "userForm" }))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="userId" name="userId" value="0">
+
+            <div class="form-group">
+                <label>Full Name (*)</label>
+                <input type="text" class="form-control" id="fullName" name="fullName" required placeholder="Ex: Nguyen Van A">
+            </div>
+
+            <div class="form-group">
+                <label>Email (*)</label>
+                <input type="email" class="form-control" id="email" name="email" required placeholder="Ex: email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label id="passwordLabel">Password (*)</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Enter secure password">
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" class="form-control" id="phone" name="phone" placeholder="Ex: 0987654321">
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Role</label>
+                    <select class="form-control" id="roleSelect" name="role">
+                        <option value="0">Client</option>
+                        <option value="1">Coordinator</option>
+                        <option value="2">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="form-control" id="statusSelect" name="isActive">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('userFormModal')">Cancel</button>
+                <button type="submit" class="btn-primary" id="saveButton">Save User</button>
+            </div>
         }
+    </div>
+</div>
+
+<script>
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function openCreateModal() {
+        document.getElementById('modalTitle').innerText = "Add New User";
+        document.getElementById('userForm').action = '@Url.Action("CreateClient", "Users")';
+        document.getElementById('userId').value = "0";
+        document.getElementById('fullName').value = "";
+        document.getElementById('email').value = "";
+        document.getElementById('password').value = "";
+        document.getElementById('phone').value = "";
+        document.getElementById('roleSelect').value = "0";
+        document.getElementById('statusSelect').value = "true";
+        document.getElementById('passwordLabel').innerText = "Password (*)";
+        document.getElementById('password').placeholder = "Enter secure password";
+        document.getElementById('saveButton').innerText = "Save User";
+        openModal('userFormModal');
+    }
+
+    function openEditModal(id, fullName, email, phone, roleCode, isActive) {
+        document.getElementById('modalTitle').innerText = "Edit User #" + id;
+        document.getElementById('userForm').action = '@Url.Action("EditClient", "Users")';
+        document.getElementById('userId').value = id;
+        document.getElementById('fullName').value = fullName;
+        document.getElementById('email').value = email;
+        document.getElementById('phone').value = phone;
+        document.getElementById('roleSelect').value = roleCode;
+        document.getElementById('statusSelect').value = isActive;
+        document.getElementById('password').value = ""; // Để trống nếu không muốn đổi pass
+        document.getElementById('passwordLabel').innerText = "New Password (Leave blank to keep current)";
+        document.getElementById('password').placeholder = "Enter new password if needed";
+        document.getElementById('saveButton').innerText = "Save Changes";
+        openModal('userFormModal');
+    }
+
+    function filterTable() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const role = document.getElementById('roleFilter').value.toLowerCase();
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+        rows.forEach(row => {
+            if (row.cells.length === 1) return;
+            const text = row.innerText.toLowerCase();
+            const rowRole = row.children[3].innerText.toLowerCase();
+            const matchesSearch = text.includes(search);
+            const matchesRole = role === "" || rowRole.includes(role);
+            row.style.display = (matchesSearch && matchesRole) ? "" : "none";
+        });
+    }
 </script>

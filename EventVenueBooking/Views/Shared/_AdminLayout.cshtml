@@ -298,20 +298,19 @@
     </aside>
     <div class="main-wrapper">
         <div class="content-container">
+            <!-- HEADER -->
             <header class="main-header">
                 <div class="header-title">
                     <h2>@(ViewBag.Title ?? "Dashboard")</h2>
                     <p>Hello @User.Identity.Name, welcome back!</p>
                 </div>
                 <div class="header-actions">
-                    <div class="search-box">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Search anything...">
-                    </div>
-                    <div class="icon-btn"><i class='bx bx-bell'></i></div>
-                    <div class="icon-btn"><i class='bx bx-cog'></i></div>
+                    <!-- Đã xóa bỏ ô search, chuông thông báo và bánh răng cài đặt theo yêu cầu -->
                     <div class="user-profile">
-                        <img src="https://i.pravatar.cc/100?img=33" class="avatar" alt="User Avatar">
+                        <!-- Thay vì dùng thẻ img, dùng một div bo tròn CSS giống bên bảng Users -->
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #184A3B; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">
+                            @(User.IsInRole("Admin") ? "A" : "N")
+                        </div>
                         <div class="user-info">
                             <div class="name">@User.Identity.Name</div>
                             <div class="role">@(User.IsInRole("Admin") ? "Admin" : "Coordinator")</div>
