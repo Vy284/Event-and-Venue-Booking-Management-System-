@@ -5,7 +5,6 @@
 }
 
 <style>
-    /* cover banner dùng ảnh từ Index */
     .cover {
         height: 220px;
         background-image: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');
@@ -86,37 +85,35 @@
     </div>
 
     <div class="row g-4">
+        <!-- Cột trái: Chi tiết lý lịch (CHỈ XEM) -->
         <div class="col-lg-5">
             <div class="card">
                 <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                     <h5 class="fw-bold mb-0" style="color: #3b2e27;"><i class="fa-regular fa-id-card me-2"></i>Chi Tiết Lý Lịch</h5>
+                    <a href="@Url.Action("EditProfile", "Account")" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-medium">
+                        <i class="fa-solid fa-pen-to-square me-1"></i> Chỉnh Sửa
+                    </a>
                 </div>
 
-                <form action="@Url.Action("UpdateProfile", "Account")" method="post">
-                    @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <div class="info-label">Họ và Tên</div>
+                    <div class="info-value">@Model.FullName</div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="info-label">Họ và Tên</label>
-                        <input type="text" name="fullName" class="form-control rounded-3" value="@Model.FullName" required />
-                    </div>
+                <div class="mb-3">
+                    <div class="info-label">Địa chỉ Email</div>
+                    <div class="info-value text-muted">@Model.Email</div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="info-label">Địa chỉ Email (Chỉ đọc)</label>
-                        <input type="email" class="form-control rounded-3 bg-light text-muted" value="@Model.Email" readonly />
-                    </div>
+                <div class="mb-3">
+                    <div class="info-label">Số Điện Thoại</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.Phone) ? "Chưa cập nhật SĐT" : Model.Phone)</div>
+                </div>
 
-                    <div class="mb-4">
-                        <label class="info-label">Số Điện Thoại</label>
-                        <input type="tel" name="phone" class="form-control rounded-3" value="@Model.Phone" placeholder="Chưa cập nhật SĐT" />
-                    </div>
-
-                    <button type="submit" class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium">
-                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
-                    </button>
-                </form>
             </div>
         </div>
 
+        <!-- Cột phải: Lịch sử đặt sảnh -->
         <div class="col-lg-7">
             <div class="card">
                 <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
@@ -139,7 +136,11 @@
                                         <img src="@b.VenueImageUrl" alt="@b.VenueName" class="img-fluid rounded-3 object-fit-cover" style="aspect-ratio: 1/1;" />
                                     </div>
                                     <div class="col-9 col-md-6">
-                                        <h6 class="fw-bold mb-1 text-dark">@b.VenueName</h6>
+                                        <h6 class="fw-bold mb-1">
+                                            <a href="@Url.Action("Details", "Venue", new { id = b.VenueId })" class="text-dark text-decoration-none hover-link" style="transition: color 0.2s;">
+                                                @b.VenueName <i class="fa-solid fa-arrow-up-right-from-square small text-muted ms-1"></i>
+                                            </a>
+                                        </h6>
                                         <div class="small text-muted mb-1">
                                             <i class="fa-regular fa-clock me-1"></i>@b.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")
                                         </div>
@@ -147,7 +148,7 @@
                                             <i class="fa-solid fa-users me-1"></i>@b.GuestCount Khách • <span class="fw-semibold">@b.EventTypeName</span>
                                         </div>
                                     </div>
-                                    <div class="col-12 col-md-4 text-md-end border-top border-md-0 pt-2 pt-md-0">
+                                    <div class="col-12 col-md-4 text-md-end pt-2 pt-md-0">
                                         <div class="fw-bold text-dark mb-1">@b.TotalCost.ToString("N0") VNĐ</div>
                                         @if (b.Status == 0)
                                         {

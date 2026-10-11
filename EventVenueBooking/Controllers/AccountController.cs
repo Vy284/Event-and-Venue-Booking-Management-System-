@@ -13,29 +13,25 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // Helper đổi Role ID thành chuỗi tên Role cho FormsAuthentication
-        private string GetRoleName(int role)
+        //Get role
+        private string GetRoleName(byte role)
         {
             switch (role)
             {
-                case 2: return "Admin";
-                case 1: return "Coordinator";
-                case 0: return "Client";
-                default: return "Client";
+                case 2:
+                    return "Admin";
+
+                case 1:
+                    return "Coordinator";
+
+                default:
+                    return "Client";
             }
         }
 
-        // GET: Account/Login
-        [AllowAnonymous]
-        public ActionResult Login()
-        {
-            TempData["OpenLoginModal"] = true;
-            return RedirectToAction("Index", "Home");
-        }
-
         // POST: Account/Login
-        [AllowAnonymous]
         [HttpPost]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model)
         {
@@ -43,6 +39,10 @@ namespace EventVenueBooking.Controllers
             {
                 if (!ModelState.IsValid)
                 {
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Thông tin đăng nhập không hợp lệ!" });
+
+                    TempData["LoginData"] = new LoginViewModel { Email = model.Email };
                     TempData["OpenLoginModal"] = true;
                     TempData["ErrorMessage"] = "Thông tin đăng nhập không hợp lệ!";
                     return RedirectToAction("Index", "Home");
@@ -59,62 +59,42 @@ namespace EventVenueBooking.Controllers
                     string roleName = GetRoleName(user.Role);
 
                     var ticket = new FormsAuthenticationTicket(
-                        1,
-                        user.Email,
-                        DateTime.Now,
-                        DateTime.Now.AddMinutes(30),
-                        false,
-                        roleName,
-                        FormsAuthentication.FormsCookiePath
+                        1, user.Email, DateTime.Now, DateTime.Now.AddMinutes(30), false, roleName, FormsAuthentication.FormsCookiePath
                     );
 
                     string encryptedTicket = FormsAuthentication.Encrypt(ticket);
-                    var cookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
-                    Response.Cookies.Add(cookie);
+                    Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket));
 
                     TempData["SuccessMessage"] = "Đăng nhập thành công! Chào mừng " + (user.FullName ?? user.Email);
 
-                    // SỬA: Admin (2) và Coordinator (1) đều vào Dashboard
-                    if (user.Role == 2 || user.Role == 1)
-                    {
-                        return RedirectToAction("Index", "Dashboard");
-                    }
-
-                    string returnUrl = Request.QueryString["ReturnUrl"];
-                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    {
-                        return Redirect(returnUrl);
-                    }
-
-                    return RedirectToAction("Index", "Home");
+                    // NẾU LÀ AJAX: Trả về JSON thông báo thành công + link chuyển trang
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, redirectUrl = Request.UrlReferrer?.ToString() ?? Url.Action("Index", "Home") });
                 }
                 else
                 {
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Email hoặc mật khẩu không đúng!" });
+
+                    TempData["LoginData"] = new LoginViewModel { Email = model.Email };
                     TempData["OpenLoginModal"] = true;
-                    TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng hoặc tài khoản bị khóa!";
-                    return RedirectToAction("Index", "Home");
+                    TempData["ErrorMessage"] = "Email hoặc mật khẩu không đúng!";
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("LỖI LOGIN: " + ex.ToString());
-                TempData["OpenLoginModal"] = true;
-                TempData["ErrorMessage"] = "Hệ thống gặp sự cố kết nối. Vui lòng thử lại!";
-                return RedirectToAction("Index", "Home");
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Lỗi hệ thống, vui lòng thử lại!" });
+                return View("Error");
             }
-        }
 
-        // GET: Account/Register
-        [AllowAnonymous]
-        public ActionResult Register()
-        {
-            TempData["OpenRegisterModal"] = true;
-            return RedirectToAction("Index", "Home");
+            return Redirect(Request.UrlReferrer?.ToString() ?? "/Home/Index");
         }
 
         // POST: Account/Register
-        [AllowAnonymous]
         [HttpPost]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public ActionResult Register(RegisterViewModel model)
         {
@@ -133,6 +113,9 @@ namespace EventVenueBooking.Controllers
 
                     if (isExist)
                     {
+                        if (Request.IsAjaxRequest())
+                            return Json(new { success = false, message = "Email đã được đăng ký!" });
+
                         TempData["ErrorMessage"] = "Email đã được đăng ký!";
                         TempData["RegisterData"] = registerData;
                         TempData["OpenRegisterModal"] = true;
@@ -145,7 +128,7 @@ namespace EventVenueBooking.Controllers
                         Email = model.Email,
                         Phone = model.Phone,
                         PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                        Role = 0, // Client mặc định
+                        Role = 0,
                         IsActive = true,
                         CreatedAt = DateTime.Now
                     };
@@ -158,25 +141,19 @@ namespace EventVenueBooking.Controllers
                     Session["UserRole"] = user.Role;
 
                     string roleName = GetRoleName(user.Role);
-
-                    var ticket = new FormsAuthenticationTicket(
-                        1,
-                        user.Email,
-                        DateTime.Now,
-                        DateTime.Now.AddMinutes(30),
-                        false,
-                        roleName,
-                        FormsAuthentication.FormsCookiePath
-                    );
-
-                    string encryptedTicket = FormsAuthentication.Encrypt(ticket);
-                    var cookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
-                    Response.Cookies.Add(cookie);
+                    var ticket = new FormsAuthenticationTicket(1, user.Email, DateTime.Now, DateTime.Now.AddMinutes(30), false, roleName, FormsAuthentication.FormsCookiePath);
+                    Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, FormsAuthentication.Encrypt(ticket)));
 
                     TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
+
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, redirectUrl = Url.Action("Index", "Home") });
                 }
                 else
                 {
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, message = "Thông tin đăng ký không hợp lệ!" });
+
                     TempData["ErrorMessage"] = "Thông tin đăng ký không hợp lệ, vui lòng kiểm tra lại!";
                     TempData["RegisterData"] = registerData;
                     TempData["OpenRegisterModal"] = true;
@@ -186,11 +163,13 @@ namespace EventVenueBooking.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("LỖI REGISTER: " + ex.ToString());
-                TempData["ErrorMessage"] = "Sự cố hệ thống khi đăng ký. Vui lòng thử lại!";
-                return RedirectToAction("Index", "Home");
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Lỗi hệ thống xảy ra!" });
+                return View("Error");
             }
         }
+
 
         // GET: Account/Logout
         public ActionResult Logout()
@@ -207,13 +186,15 @@ namespace EventVenueBooking.Controllers
         {
             try
             {
+                // Kiểm tra đăng nhập qua Session
                 var sessionUser = Session["User"] as UserEntity;
                 if (sessionUser == null)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem trang cá nhân!";
+                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem tài khoản!";
                     return RedirectToAction("Index", "Home");
                 }
 
+                // Lấy thông tin mới nhất từ DB
                 var user = db.Users.FirstOrDefault(u => u.UserId == sessionUser.UserId);
                 if (user == null) return HttpNotFound();
 
@@ -232,6 +213,7 @@ namespace EventVenueBooking.Controllers
                     Bookings = user.Bookings.OrderByDescending(b => b.CreatedAt).Select(b => new UserBookingViewModel
                     {
                         BookingId = b.BookingId,
+                        VenueId = b.VenueId,
                         VenueName = b.Venue != null ? b.Venue.Name : "Sảnh sự kiện",
                         VenueImageUrl = db.VenueImages
                                         .Where(img => img.VenueId == b.VenueId && img.IsPrimary)
@@ -266,33 +248,47 @@ namespace EventVenueBooking.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    TempData["ErrorMessage"] = "Thông tin cập nhật không hợp lệ.";
+                    TempData["ErrorMessage"] =
+                        "Thông tin cập nhật không hợp lệ.";
+
                     return RedirectToAction("Profile");
                 }
 
                 var sessionUser = Session["User"] as UserEntity;
+
                 if (sessionUser == null)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để cập nhật thông tin!";
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để cập nhật thông tin!";
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 var user = db.Users.Find(sessionUser.UserId);
+
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy tài khoản.";
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 user.FullName = model.FullName.Trim();
-                user.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+
+                user.Phone = string.IsNullOrWhiteSpace(model.Phone)
+                    ? null
+                    : model.Phone.Trim();
 
                 db.SaveChanges();
 
+                // Cập nhật lại Session
                 Session["User"] = user;
                 Session["UserName"] = user.FullName;
 
-                TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                TempData["SuccessMessage"] =
+                    "Cập nhật thông tin cá nhân thành công!";
+
                 return RedirectToAction("Profile");
             }
             catch (Exception ex)
@@ -302,7 +298,8 @@ namespace EventVenueBooking.Controllers
             }
         }
 
-        // GET: Account/TestRole  (chỉ để kiểm tra phân quyền, nhớ XÓA trước khi nộp)
+
+        //test
         [Authorize]
         public ActionResult TestRole()
         {
@@ -315,13 +312,12 @@ namespace EventVenueBooking.Controllers
             );
         }
 
-        // GET: Account/ChangeEmail
+        //GET: Account/ChangeEmail
         [Authorize]
         public ActionResult ChangeEmail()
         {
             return View();
         }
-
         // POST: Account/ChangeEmail
         [Authorize]
         [HttpPost]
@@ -336,33 +332,48 @@ namespace EventVenueBooking.Controllers
                 }
 
                 var sessionUser = Session["User"] as UserEntity;
+
                 if (sessionUser == null)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để thay đổi email.";
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để thay đổi email.";
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 var user = db.Users.Find(sessionUser.UserId);
+
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy tài khoản.";
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 string newEmail = model.NewEmail.Trim();
-                bool emailExists = db.Users.Any(u => u.Email == newEmail && u.UserId != user.UserId);
+
+                bool emailExists = db.Users.Any(u =>
+                    u.Email == newEmail &&
+                    u.UserId != user.UserId);
 
                 if (emailExists)
                 {
-                    ModelState.AddModelError("NewEmail", "Email này đã được sử dụng.");
+                    ModelState.AddModelError(
+                        "NewEmail",
+                        "Email này đã được sử dụng.");
+
                     return View(model);
                 }
 
                 user.Email = newEmail;
+
                 db.SaveChanges();
 
                 Session["User"] = user;
 
+                // Tạo lại authentication ticket vì Email đang
+                // được dùng làm Name của FormsAuthenticationTicket.
                 string roleName = GetRoleName(user.Role);
 
                 var ticket = new FormsAuthenticationTicket(
@@ -371,15 +382,21 @@ namespace EventVenueBooking.Controllers
                     DateTime.Now,
                     DateTime.Now.AddMinutes(30),
                     false,
-                    roleName,
-                    FormsAuthentication.FormsCookiePath
+                    roleName
                 );
 
-                string encryptedTicket = FormsAuthentication.Encrypt(ticket);
-                var cookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
+                string encryptedTicket =
+                    FormsAuthentication.Encrypt(ticket);
+
+                var cookie = new HttpCookie(
+                    FormsAuthentication.FormsCookieName,
+                    encryptedTicket);
+
                 Response.Cookies.Add(cookie);
 
-                TempData["SuccessMessage"] = "Thay đổi email thành công!";
+                TempData["SuccessMessage"] =
+                    "Thay đổi email thành công!";
+
                 return RedirectToAction("Profile");
             }
             catch (Exception ex)
@@ -389,13 +406,12 @@ namespace EventVenueBooking.Controllers
             }
         }
 
-        // GET: Account/ChangePassword
+        //GET: Account/ChangePassword
         [Authorize]
         public ActionResult ChangePassword()
         {
             return View();
         }
-
         // POST: Account/ChangePassword
         [Authorize]
         [HttpPost]
@@ -410,31 +426,47 @@ namespace EventVenueBooking.Controllers
                 }
 
                 var sessionUser = Session["User"] as UserEntity;
+
                 if (sessionUser == null)
                 {
-                    TempData["ErrorMessage"] = "Vui lòng đăng nhập để thay đổi mật khẩu.";
+                    TempData["ErrorMessage"] =
+                        "Vui lòng đăng nhập để thay đổi mật khẩu.";
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 var user = db.Users.Find(sessionUser.UserId);
+
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy tài khoản.";
+                    TempData["ErrorMessage"] =
+                        "Không tìm thấy tài khoản.";
+
                     return RedirectToAction("Index", "Home");
                 }
 
-                bool currentPasswordCorrect = BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.PasswordHash);
+                bool currentPasswordCorrect =
+                    BCrypt.Net.BCrypt.Verify(
+                        model.CurrentPassword,
+                        user.PasswordHash);
 
                 if (!currentPasswordCorrect)
                 {
-                    ModelState.AddModelError("CurrentPassword", "Mật khẩu hiện tại không chính xác.");
+                    ModelState.AddModelError(
+                        "CurrentPassword",
+                        "Mật khẩu hiện tại không chính xác.");
+
                     return View(model);
                 }
 
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+                user.PasswordHash =
+                    BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+
                 db.SaveChanges();
 
-                TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
+                TempData["SuccessMessage"] =
+                    "Đổi mật khẩu thành công!";
+
                 return RedirectToAction("Profile");
             }
             catch (Exception ex)
@@ -443,7 +475,6 @@ namespace EventVenueBooking.Controllers
                 return View("Error");
             }
         }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();
