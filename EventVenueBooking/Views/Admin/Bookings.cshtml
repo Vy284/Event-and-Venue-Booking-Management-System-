@@ -228,7 +228,7 @@
         transition: 0.2s;
     }
 
-    /* nút mắt giờ là thẻ <a> */
+    /* nút dạng thẻ <a> */
     a.btn-act {
         text-decoration: none;
     }
@@ -236,6 +236,11 @@
     .btn-view {
         background: #E8F4FD;
         color: #2196F3;
+    }
+
+    .btn-pdf {
+        background: #E1F5FE;
+        color: #0288D1;
     }
 
     .btn-cancel-act {
@@ -438,7 +443,6 @@
                 <option value="Unpaid">Chưa thanh toán</option>
             </select>
         </div>
-        <!-- SỬA: Đổi từ thẻ <a> sang nút <button> gọi modal popup -->
         <button type="button" class="btn-create" onclick="openModal('createBookingModal')">
             <i class='bx bx-plus'></i> New Booking
         </button>
@@ -587,6 +591,10 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
+                                        <!-- NÚT XUẤT PDF VỚI ICON UPLOAD NẰM CẠNH NÚT CON MẮT -->
+                                        <a class="btn-act btn-pdf" title="Xuất PDF hợp đồng" href="@Url.Action("ExportContractPdf", "Bookings", new { id = item.BookingId })" target="_blank">
+                                            <i class='bx bx-upload'></i>
+                                        </a>
                                         <a class="btn-act btn-view" title="Chi tiết" href="@Url.Action("Details", "Bookings", new { id = item.BookingId })"><i class='bx bx-show'></i></a>
                                         @if (item.Status == BookingStatuses.Pending || item.Status == BookingStatuses.Confirmed)
                                         {
@@ -609,7 +617,7 @@
     </div>
 </div>
 
-<!-- 3. MODAL CREATE BOOKING (Mới thêm vào để hiển thị popup) -->
+<!-- 3. MODAL CREATE BOOKING -->
 <div class="modal-backdrop" id="createBookingModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -640,10 +648,26 @@
                     <label>Start Time (*)</label>
                     <input type="datetime-local" class="form-control" name="BookingDate" required>
                 </div>
+
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>Notes / Description</label>
-                    <textarea class="form-control" name="Notes" rows="3" placeholder="Additional details..."></textarea>
+                    <label>Add-On Services</label>
+                    <div style="background: #F4F7FB; border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 10px; max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        @if (ViewBag.AddOnServices != null)
+                        {
+                            foreach (var service in (IEnumerable<SelectListItem>)ViewBag.AddOnServices)
+                            {
+                                <label style="font-size: 13px; font-weight: normal; color: var(--text-dark); display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" name="SelectedAddOnIds" value="@service.Value" /> @service.Text
+                                </label>
+                            }
+                        }
+                        else
+                        {
+                            <span style="font-size: 12px; color: var(--text-muted);">Không có dịch vụ đi kèm nào có sẵn.</span>
+                        }
+                    </div>
                 </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('createBookingModal')">Cancel</button>
@@ -678,27 +702,27 @@
 
 <!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
 <script>
-        function openModal(id) {
-            document.getElementById(id).classList.add('show');
-        }
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show');
-        }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
 
-        function openCancelModal(id) {
-            document.getElementById('cancelBookingId').value = id;
-            document.getElementById('cancelReason').value = "";
-            openModal('cancelModal');
-        }
+    function openCancelModal(id) {
+        document.getElementById('cancelBookingId').value = id;
+        document.getElementById('cancelReason').value = "";
+        openModal('cancelModal');
+    }
 
-        function filterTable() {
-            var q = document.getElementById('searchInput').value.toLowerCase();
-            var pay = document.getElementById('statusFilter').value;
-            document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
-                var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
-                var okPay = !pay || tr.getAttribute('data-pay') === pay;
-                tr.style.display = (okText && okPay) ? '' : 'none';
-            });
-        }
+    function filterTable() {
+        var q = document.getElementById('searchInput').value.toLowerCase();
+        var pay = document.getElementById('statusFilter').value;
+        document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
+            var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
+            var okPay = !pay || tr.getAttribute('data-pay') === pay;
+            tr.style.display = (okText && okPay) ? '' : 'none';
+        });
+    }
 </script>
