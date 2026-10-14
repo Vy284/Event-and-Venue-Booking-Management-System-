@@ -5,6 +5,7 @@
 }
 
 <style>
+    /* cover banner dùng ảnh từ Index */
     .cover {
         height: 220px;
         background-image: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('@Url.Content("~/Content/images/bg_landingpage.jpg")');
@@ -32,7 +33,7 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     }
 
-    .card {
+    .card-custom {
         background-color: #ffffff;
         border: 1px solid #eae2d8;
         border-radius: 16px;
@@ -47,12 +48,6 @@
         color: #8c7a6b;
         font-weight: 600;
         margin-bottom: 4px;
-    }
-
-    .info-value {
-        font-size: 1.05rem;
-        color: #2b2b2b;
-        font-weight: 500;
     }
 
     .booking-history-card {
@@ -71,7 +66,6 @@
 <div class="cover"></div>
 
 <div class="container mb-5">
-    <!-- Profile Header -->
     <div class="profile-header d-flex align-items-end gap-3 px-3">
         <div class="avatar">
             @(string.IsNullOrEmpty(Model.FullName) ? "U" : Model.FullName.Substring(0, 1).ToUpper())
@@ -85,37 +79,81 @@
     </div>
 
     <div class="row g-4">
-        <!-- Cột trái: Chi tiết lý lịch (CHỈ XEM) -->
+        <!-- Tài khoản  -->
         <div class="col-lg-5">
-            <div class="card">
+            <div class="card-custom mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                     <h5 class="fw-bold mb-0" style="color: #3b2e27;"><i class="fa-regular fa-id-card me-2"></i>Chi Tiết Lý Lịch</h5>
-                    <a href="@Url.Action("EditProfile", "Account")" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-medium">
-                        <i class="fa-solid fa-pen-to-square me-1"></i> Chỉnh Sửa
-                    </a>
                 </div>
 
-                <div class="mb-3">
-                    <div class="info-label">Họ và Tên</div>
-                    <div class="info-value">@Model.FullName</div>
-                </div>
+                <form action="@Url.Action("UpdateProfile", "Account")" method="post">
+                    @Html.AntiForgeryToken()
 
-                <div class="mb-3">
-                    <div class="info-label">Địa chỉ Email</div>
-                    <div class="info-value text-muted">@Model.Email</div>
-                </div>
+                    <div class="mb-3">
+                        <label class="info-label">Họ và Tên</label>
+                        <input type="text" name="fullName" class="form-control rounded-3" value="@Model.FullName" required />
+                    </div>
 
-                <div class="mb-3">
-                    <div class="info-label">Số Điện Thoại</div>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.Phone) ? "Chưa cập nhật SĐT" : Model.Phone)</div>
-                </div>
+                    <div class="mb-4">
+                        <label class="info-label">Số Điện Thoại</label>
+                        <input type="tel" name="phone" class="form-control rounded-3" value="@Model.Phone" placeholder="Chưa cập nhật SĐT" />
+                    </div>
 
+                    <div class="mb-3">
+                        <label class="info-label">Địa chỉ Email hiện tại (Chỉ đọc)</label>
+                        <input type="email" class="form-control rounded-3 bg-light text-muted" value="@Model.Email" readonly />
+                    </div>
+
+                    @using (Html.BeginForm("ChangeEmail", "Account", FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="info-label">Địa chỉ Email Mới</label>
+                            <input type="email" name="newEmail" class="form-control rounded-3 py-2 fs-6" placeholder="nhapemailmoi@example.com" required />
+                        </div>
+                    }
+
+                        <button type="submit" class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium shadow-sm">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
+                        </button>
+                    </form>
+            </div>
+
+            <!-- Form đổi mật khẩu -->
+            <div class="card-custom" id="change-password">
+                <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: #3b2e27;">
+                    <i class="fa-solid fa-lock me-2"></i>Đổi Mật Khẩu
+                </h5>
+
+                @using (Html.BeginForm("ChangePassword", "Account", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="info-label">Mật Khẩu Hiện Tại</label>
+                        <input type="password" name="currentPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="info-label">Mật Khẩu Mới</label>
+                        <input type="password" name="newPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="info-label">Xác Nhận Mật Khẩu Mới</label>
+                        <input type="password" name="confirmPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-medium shadow-sm">
+                        <i class="fa-solid fa-key me-1"></i> Cập Nhật Mật Khẩu
+                    </button>
+                }
             </div>
         </div>
 
-        <!-- Cột phải: Lịch sử đặt sảnh -->
+        <!-- Lịch sử đặt sảnh -->
         <div class="col-lg-7">
-            <div class="card">
+            <div class="card-custom">
                 <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                     <h5 class="fw-bold mb-0" style="color: #3b2e27;">
                         <i class="fa-solid fa-calendar-check me-2"></i>Lịch Sử Đặt Sảnh (@Model.Bookings.Count)
@@ -136,11 +174,9 @@
                                         <img src="@b.VenueImageUrl" alt="@b.VenueName" class="img-fluid rounded-3 object-fit-cover" style="aspect-ratio: 1/1;" />
                                     </div>
                                     <div class="col-9 col-md-6">
-                                        <h6 class="fw-bold mb-1">
-                                            <a href="@Url.Action("Details", "Venue", new { id = b.VenueId })" class="text-dark text-decoration-none hover-link" style="transition: color 0.2s;">
-                                                @b.VenueName <i class="fa-solid fa-arrow-up-right-from-square small text-muted ms-1"></i>
-                                            </a>
-                                        </h6>
+                                        <a href="@Url.Action("Details", "Venue", new { id = b.VenueId })" class="text-dark text-decoration-none fw-medium hover-link" style="transition: color 0.2s;">
+                                            @b.VenueName <i class="fa-solid fa-arrow-up-right-from-square small text-muted ms-1"></i>
+                                        </a>
                                         <div class="small text-muted mb-1">
                                             <i class="fa-regular fa-clock me-1"></i>@b.EventStartDateTime.ToString("dd/MM/yyyy HH:mm")
                                         </div>

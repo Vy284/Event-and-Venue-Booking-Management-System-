@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueCardViewModel>
+@using EventVenueBooking.Database
 
 @{
     ViewData["Title"] = "Trang chủ";
@@ -6,7 +7,8 @@
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
     string currentDate = ViewBag.CurrentDate as string ?? "";
     var venueList = ViewBag.VenueSelectList as IEnumerable<SelectListItem>;
-    var homeAddOns = ViewBag.AddOnServices as List<EventVenueBooking.Entities.AddOnService>;
+    var db = new ApplicationDbContext();
+    var homeAddOns = db.AddOnServices.Where(a => a.IsActive).ToList();
 }
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -210,7 +212,7 @@
                         <!-- Ô nhập Sức chứa -->
                         <div class="col-md-3 d-flex align-items-center px-3 border-end">
                             <i class="fa-solid fa-users text-muted me-2"></i>
-                            <input type="number" name="minCapacity" id="capacity-input" class="form-control border-0 shadow-none ps-0"
+                            <input type="number" name="maxCapacity" id="capacity-input" class="form-control border-0 shadow-none ps-0"
                                    placeholder="Sức chứa (người)" value="@ViewBag.CurrentCapacity" min="0" />
                         </div>
 
@@ -336,15 +338,16 @@
     </div>
 </div>
 
-@if (homeAddOns != null && homeAddOns.Any())
-{
-    <div class="container my-5 pt-4">
-        <div class="text-center mb-4">
-            <h6 class="text-uppercase tracking-wider text-muted fw-bold small">DỊCH VỤ ĐI KÈM</h6>
-            <h2 class="fw-bold" style="color: var(--primary-brown);">Add-On Services</h2>
-            <p class="text-muted">Nâng tầm sự kiện của bạn với các gói dịch vụ bổ sung chuyên nghiệp</p>
-        </div>
+<!-- Add-On Services -->
+<div id="addon-services" class="container my-5 pt-4">
+    <div class="text-center mb-4">
+        <h6 class="text-uppercase tracking-wider text-muted fw-bold small">DỊCH VỤ ĐI KÈM</h6>
+        <h2 class="fw-bold" style="color: var(--primary-brown);">Add-On Services</h2>
+        <p class="text-muted">Nâng tầm sự kiện của bạn với các gói dịch vụ bổ sung chuyên nghiệp</p>
+    </div>
 
+    @if (homeAddOns != null && homeAddOns.Any())
+    {
         <div class="row g-4 justify-content-center">
             @foreach (var addon in homeAddOns)
             {
@@ -364,8 +367,14 @@
                 </div>
             }
         </div>
-    </div>
-}
+    }
+    else
+    {
+        <div class="text-center py-4">
+            <p class="text-muted fs-5 mb-0">Hiện chưa có dịch vụ đi kèm nào.</p>
+        </div>
+    }
+</div>
 
 <!-- javascript to prevent reload page -->
 <script>
