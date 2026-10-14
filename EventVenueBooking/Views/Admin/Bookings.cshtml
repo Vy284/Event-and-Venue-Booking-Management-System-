@@ -628,10 +628,17 @@
         {
             @Html.AntiForgeryToken()
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>Client Name (*)</label>
-                    <input type="text" class="form-control" name="CustomerName" required placeholder="Ex: Nguyen Van A">
+                    <label>Client (*)</label>
+                    @Html.DropDownList(
+                        "clientUserId",
+                        (SelectList)ViewBag.ClientUserId,
+                        "-- Select a client --",
+                        new { @class = "form-control", required = "required" }
+                    )
                 </div>
+
                 <div class="form-group">
                     <label>Venue (*)</label>
                     <input type="text" class="form-control" name="VenueName" required placeholder="Ex: Grand Ballroom">
@@ -668,6 +675,10 @@
                     </div>
                 </div>
 
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Notes / Description</label>
+                    <textarea class="form-control" name="Notes" rows="3" placeholder="Additional details..."></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('createBookingModal')">Cancel</button>
