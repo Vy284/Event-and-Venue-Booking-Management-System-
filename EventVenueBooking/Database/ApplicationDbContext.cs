@@ -83,6 +83,36 @@ namespace EventVenueBooking.Database
                 .HasForeignKey(v => v.CreatedByUserId)
                 .WillCascadeOnDelete(false);
 
+            modelBuilder.Entity<Venue>()
+                .HasRequired(v => v.VenueType)
+                .WithMany(t => t.Venues)
+                .HasForeignKey(v => v.VenueTypeId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<Booking>()
+                .HasRequired(b => b.Venue)
+                .WithMany(v => v.Bookings)
+                .HasForeignKey(b => b.VenueId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<Booking>()
+                .HasRequired(b => b.EventType)
+                .WithMany(e => e.Bookings)
+                .HasForeignKey(b => b.EventTypeId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<Payment>()
+                .HasRequired(p => p.Booking)
+                .WithMany(b => b.Payments)
+                .HasForeignKey(p => p.BookingId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<BookingAddOn>()
+                .HasRequired(ba => ba.AddOnService)
+                .WithMany(a => a.BookingAddOns)
+                .HasForeignKey(ba => ba.AddOnId)
+                .WillCascadeOnDelete(false);
+
             modelBuilder.Entity<Payment>()
                 .HasRequired(p => p.RecordedByUser)
                 .WithMany(u => u.RecordedPayments)
