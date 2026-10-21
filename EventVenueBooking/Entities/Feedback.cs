@@ -10,13 +10,14 @@ namespace EventVenueBooking.Entities
         public int FeedbackId { get; set; }
 
         // UNIQUE — mỗi Booking chỉ được 1 Feedback
-        [Required]
+        [Required(ErrorMessage = "Không tìm thấy booking cần đánh giá.")]
         [Index(IsUnique = true)]
         [ForeignKey("Booking")]
         public int BookingId { get; set; }
         public virtual Booking Booking { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn số sao đánh giá.")]
+        [Range(1, 5, ErrorMessage = "Đánh giá phải từ 1 đến 5 sao.")]
         public byte Rating { get; set; } // 1-5, validate ở code (DAL/Service)
 
         public string Comment { get; set; }
