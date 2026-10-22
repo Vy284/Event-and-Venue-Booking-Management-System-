@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Web.Mvc;
+using System.Web.Routing;
 
 namespace EventVenueBooking.Filters
 {
@@ -7,10 +8,12 @@ namespace EventVenueBooking.Filters
     {
         protected override void HandleUnauthorizedRequest(AuthorizationContext filterContext)
         {
+            var request = filterContext.HttpContext.Request;
+            var response = filterContext.HttpContext.Response;
+
             if (filterContext.HttpContext.User.Identity.IsAuthenticated)
             {
                 // Đã đăng nhập nhưng sai role -> 403 kèm trang thông báo, không đá về Login (tránh vòng lặp)
-                var response = filterContext.HttpContext.Response;
                 response.StatusCode = (int)HttpStatusCode.Forbidden;
                 response.TrySkipIisCustomErrors = true;   // để IIS không thay bằng trang lỗi mặc định
 
@@ -23,9 +26,29 @@ namespace EventVenueBooking.Filters
                               "<a href='javascript:history.back()'>Quay lại</a></div>"
                 };
             }
+            else if (request.IsAjaxRequest())
+            {
+                // Gọi bằng AJAX/fetch: trả JSON để JS tự mở modal đăng nhập
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                response.TrySkipIisCustomErrors = true;
+                response.SuppressFormsAuthenticationRedirect = true;   // không cho Forms Auth đổi 401 thành redirect
+
+                filterContext.Result = new JsonResult
+                {
+                    Data = new { success = false, requireLogin = true, message = "Vui lòng đăng nhập để tiếp tục." },
+                    JsonRequestBehavior = JsonRequestBehavior.AllowGet
+                };
+            }
             else
             {
-                base.HandleUnauthorizedRequest(filterContext); // chưa đăng nhập -> về Login
+                // Chưa đăng nhập -> về trang chủ, mở modal đăng nhập (không có Account/Login.cshtml)
+                filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new
+                {
+                    controller = "Home",
+                    action = "Index",
+                    showLogin = true,
+                    returnUrl = request.RawUrl
+                }));
             }
         }
     }

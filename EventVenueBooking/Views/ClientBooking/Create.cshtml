@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Đặt sảnh - " + Model.VenueName;
     string unitLabel = Model.RentalUnit == 0 ? "giờ" : Model.RentalUnit == 1 ? "buổi (4 giờ)" : "ngày (8 giờ)";
+    string minStart = DateTime.Now.ToString("yyyy-MM-dd'T'HH:mm");
 }
 
 <div class="container py-5 mt-4">
@@ -49,13 +50,13 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Bắt đầu</label>
-                            <input type="datetime-local" name="EventStart" class="form-control"
-                                   value="@(Model.EventStart.HasValue ? Model.EventStart.Value.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                            <input type="datetime-local" name="EventStart" class="form-control" min="@minStart"
+                                   value="@(Model.EventStart.HasValue ? Model.EventStart.Value.ToString("yyyy-MM-dd'T'HH:mm") : "")" required />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Kết thúc</label>
-                            <input type="datetime-local" name="EventEnd" class="form-control"
-                                   value="@(Model.EventEnd.HasValue ? Model.EventEnd.Value.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                            <input type="datetime-local" name="EventEnd" class="form-control" min="@minStart"
+                                   value="@(Model.EventEnd.HasValue ? Model.EventEnd.Value.ToString("yyyy-MM-dd'T'HH:mm") : "")" required />
                         </div>
                     </div>
                 </div>
@@ -78,8 +79,9 @@
                                 <div class="text-end">
                                     <div class="fw-bold text-danger mb-1">+@addon.Price.ToString("N0") VNĐ</div>
                                     <input type="hidden" name="AddOns[@i].AddOnId" value="@addon.AddOnId" />
+                                    @* max = 100 khớp MaxAddOnQuantity trong ClientBookingController *@
                                     <input type="number" name="AddOns[@i].Quantity" class="form-control form-control-sm ms-auto"
-                                           style="width: 90px;" min="0" max="999" value="@qty" />
+                                           style="width: 90px;" min="0" max="100" value="@qty" />
                                 </div>
                             </div>
                         }
@@ -96,7 +98,7 @@
                     <h5 class="text-muted small text-uppercase fw-bold mb-3">Giá tạm tính</h5>
                     <div id="quote-box" class="small">Chọn thời gian để xem giá tạm tính.</div>
                     <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-brown py-3 fw-bold shadow">
+                        <button type="submit" id="btn-submit" class="btn btn-brown py-3 fw-bold shadow">
                             <i class="fa-regular fa-calendar-check me-2"></i>XÁC NHẬN ĐẶT SẢNH
                         </button>
                     </div>
@@ -113,8 +115,12 @@
     (function () {
         var form = document.getElementById('booking-form');
         var box = document.getElementById('quote-box');
+        var btnSubmit = document.getElementById('btn-submit');
+        var startInput = form.elements['EventStart'];
+        var endInput = form.elements['EventEnd'];
         var unitNames = ['giờ', 'buổi', 'ngày'];
         var timer = null;
+        var seq = 0;   // số thứ tự yêu cầu, để bỏ qua kết quả cũ về muộn
 
         function money(n) { return Number(n).toLocaleString('vi-VN') + ' VNĐ'; }
         function esc(s) {
@@ -127,13 +133,26 @@
         }
 
         function requestQuote() {
-            if (!form.elements['EventStart'].value || !form.elements['EventEnd'].value) {
+            var mine = ++seq;
+
+            if (!startInput.value || !endInput.value) {
                 box.textContent = 'Chọn thời gian bắt đầu và kết thúc để xem giá tạm tính.';
                 return;
             }
-            fetch('@Url.Action("Quote", "ClientBooking")', { method: 'POST', body: new FormData(form) })
+
+            fetch('@Url.Action("Quote", "ClientBooking")', {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
+                    if (mine !== seq) return;   // đã có yêu cầu mới hơn
+
+                    if (d.requireLogin) {
+                        box.innerHTML = '<span class="text-danger">Phiên đăng nhập đã hết hạn, vui lòng tải lại trang và đăng nhập lại.</span>';
+                        return;
+                    }
                     if (!d.ok) { box.innerHTML = '<span class="text-danger">' + esc(d.message) + '</span>'; return; }
 
                     var html = '';
@@ -149,12 +168,30 @@
                     html += '<div class="text-muted mt-2">Tiền cọc cần thanh toán: <strong>' + money(d.deposit) + '</strong></div>';
                     box.innerHTML = html;
                 })
-                .catch(function () { box.textContent = 'Không tính được giá, vui lòng thử lại.'; });
+                .catch(function () {
+                    if (mine === seq) box.textContent = 'Không tính được giá, vui lòng thử lại.';
+                });
         }
 
         function schedule() { clearTimeout(timer); timer = setTimeout(requestQuote, 300); }
         form.addEventListener('input', schedule);
         form.addEventListener('change', schedule);
+
+        // Giờ kết thúc không được sớm hơn giờ bắt đầu
+        startInput.addEventListener('change', function () {
+            if (startInput.value) endInput.min = startInput.value;
+        });
+        if (startInput.value) endInput.min = startInput.value;
+
+        // Chống bấm đúp tạo 2 booking
+        form.addEventListener('submit', function () {
+            if (btnSubmit) btnSubmit.disabled = true;
+        });
+        // Quay lại bằng nút Back thì mở khóa nút
+        window.addEventListener('pageshow', function () {
+            if (btnSubmit) btnSubmit.disabled = false;
+        });
+
         requestQuote();
     })();
 </script>

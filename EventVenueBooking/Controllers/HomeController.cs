@@ -8,14 +8,14 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
-    [AllowAnonymous]                                // THÊM: trang chủ cho mọi người xem
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        public ActionResult Index(string search, string category, string eventDate)
+        public ActionResult Index(string search, string category, string eventDate, int? maxCapacity, decimal? maxPrice)
         {
-            // SỬA: Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance. Chỉ hiện sảnh Active.
+            // Venue.Status 0 = Inactive, 1 = Active, 2 = UnderMaintenance. Chỉ hiện sảnh Active.
             var query = db.Venues.Where(v => v.Status == 1).AsQueryable();
 
             // Lọc theo Tên sảnh hoặc Vị trí
@@ -32,35 +32,44 @@ namespace EventVenueBooking.Controllers
 
                 if (categoryLower == "wedding")
                 {
-                    // Đám cưới -> Ballroom / Garden
                     query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("ballroom")
                                           || v.VenueType.TypeName.ToLower().Contains("garden")
                                           || v.Name.ToLower().Contains("wedding"));
                 }
                 else if (categoryLower == "corporate")
                 {
-                    // Hội thảo -> Ballroom / Indoor
                     query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("ballroom")
                                           || v.VenueType.TypeName.ToLower().Contains("indoor")
                                           || v.Name.ToLower().Contains("corporate"));
                 }
                 else if (categoryLower == "birthday")
                 {
-                    // Sinh nhật -> Rooftop / Garden
                     query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("rooftop")
                                           || v.VenueType.TypeName.ToLower().Contains("garden"));
                 }
                 else if (categoryLower == "social")
                 {
-                    // Tiệc -> Rooftop / Garden
                     query = query.Where(v => v.VenueType.TypeName.ToLower().Contains("rooftop")
                                           || v.VenueType.TypeName.ToLower().Contains("lounge"));
                 }
                 else
                 {
-                    // Trường hợp tìm trực tiếp theo loại DB
                     query = query.Where(v => v.VenueType.TypeName.ToLower().Contains(category.ToLower()));
                 }
+            }
+
+            // Lọc theo số khách: chỉ giữ sảnh chứa được ít nhất ngần ấy người
+            if (maxCapacity.HasValue && maxCapacity.Value > 0)
+            {
+                int cap = maxCapacity.Value;
+                query = query.Where(v => v.Capacity >= cap);
+            }
+
+            // Lọc theo giá tối đa
+            if (maxPrice.HasValue && maxPrice.Value > 0)
+            {
+                decimal price = maxPrice.Value;
+                query = query.Where(v => v.RentalRate <= price);
             }
 
             // Lọc tìm theo ngày
@@ -87,18 +96,60 @@ namespace EventVenueBooking.Controllers
                 RentalRate = v.RentalRate,
                 RentalUnit = v.RentalUnit,
                 ImageUrl = db.VenueImages.FirstOrDefault(img => img.VenueId == v.VenueId && img.IsPrimary).ImageUrl
-                           ?? "/Content/images/bg_landingpage.jpg" // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
+                           ?? "/Content/images/bg_landingpage.jpg"
             }).ToList();
 
-            // SỬA: cũng chỉ lấy sảnh Active (Status == 1)
             ViewBag.VenueSelectList = new SelectList(db.Venues.Where(v => v.Status == 1).Select(v => new { v.VenueId, v.Name }), "VenueId", "Name");
+
+            // Dịch vụ đi kèm đang hoạt động, cho Index.cshtml (thay cho việc gọi db trực tiếp trong View)
+            ViewBag.HomeAddOns = db.AddOnServices
+                .Where(a => a.IsActive)
+                .OrderBy(a => a.Category)
+                .ThenBy(a => a.Name)
+                .ToList();
 
             // Lưu lại để giữ trạng thái trên View
             ViewBag.CurrentSearch = search;
             ViewBag.CurrentCategory = string.IsNullOrEmpty(category) ? "All" : category;
             ViewBag.CurrentDate = eventDate;
+            ViewBag.CurrentMaxCapacity = maxCapacity;
+            ViewBag.CurrentMaxPrice = maxPrice;
 
             return View(venues);
+        }
+
+        // Trả lịch đặt cho Calendar ("XEM TẤT CẢ SẢNH"; chọn 1 sảnh thì truyền venueId)
+        [HttpGet]
+        public JsonResult GetAllBookings(int? venueId)
+        {
+            var bookingQuery = db.Bookings.Where(b => b.Status != 4);   // 4 = đã huỷ
+
+            if (venueId.HasValue)
+            {
+                bookingQuery = bookingQuery.Where(b => b.VenueId == venueId.Value);
+            }
+
+            // Lấy dữ liệu ra trước rồi mới format ngày (ToString không dịch được sang SQL)
+            var raw = bookingQuery
+                .Select(b => new
+                {
+                    b.BookingId,
+                    VenueName = b.Venue.Name,
+                    b.EventStartDateTime,
+                    b.EventEndDateTime
+                })
+                .ToList();
+
+            // Chỉ trả thông tin tối thiểu, KHÔNG trả tên/SĐT khách vì trang này công khai
+            var events = raw.Select(b => new
+            {
+                id = b.BookingId,
+                title = b.VenueName + " (Đã đặt)",
+                start = b.EventStartDateTime.ToString("s"),
+                end = b.EventEndDateTime.ToString("s")
+            });
+
+            return Json(events, JsonRequestBehavior.AllowGet);
         }
 
         protected override void Dispose(bool disposing)

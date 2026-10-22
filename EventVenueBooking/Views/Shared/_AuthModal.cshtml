@@ -6,6 +6,13 @@
     var loginError = shouldOpenLogin ? TempData["ErrorMessage"] as string : null;
     var registerError = shouldOpenRegister ? TempData["ErrorMessage"] as string : null;
 
+    // CustomAuthorize chuyển khách chưa đăng nhập về Home/Index?showLogin=true&returnUrl=...
+    bool showLoginFromQuery = string.Equals(Request.QueryString["showLogin"], "true", StringComparison.OrdinalIgnoreCase);
+    string rawReturnUrl = Request.QueryString["returnUrl"];
+    // Chỉ nhận URL nội bộ để tránh open-redirect
+    string returnUrl = (!string.IsNullOrEmpty(rawReturnUrl) && Url.IsLocalUrl(rawReturnUrl)) ? rawReturnUrl : "";
+
+    bool openLoginNow = shouldOpenLogin || showLoginFromQuery;
 }
 
 <style>
@@ -77,23 +84,24 @@
                                     </div>
                                 }
 
-                            <form action="@Url.Action("Login", "Account")" method="post" id="loginForm">
-                                @Html.AntiForgeryToken()
-                                <div class="mb-3">
-                                    <input type="email" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mb-4 fs-6 fst-italic">
-                                    <div class="form-check">
-                                        <input class="form-check-input border-secondary" type="checkbox" id="rememberMe">
-                                        <label class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                                <form action="@Url.Action("Login", "Account")" method="post" id="loginForm">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <div class="mb-3">
+                                        <input type="email" name="Email" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
                                     </div>
-                                    <a href="#" class="text-decoration-none text-muted">Quên mật khẩu?</a>
-                                </div>
-                                <button type="submit" id="btnLoginSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">ĐĂNG NHẬP</button>
-                            </form>
+                                    <div class="mb-3">
+                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 fs-6 fst-italic">
+                                        <div class="form-check">
+                                            <input class="form-check-input border-secondary" type="checkbox" id="rememberMe">
+                                            <label class="form-check-label text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                                        </div>
+                                        <a href="#" class="text-decoration-none text-muted">Quên mật khẩu?</a>
+                                    </div>
+                                    <button type="submit" id="btnLoginSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">ĐĂNG NHẬP</button>
+                                </form>
                             </div>
 
                             <!-- Register Tab -->
@@ -115,26 +123,27 @@
                                     </div>
                                 }
 
-                            <form action="@Url.Action("Register", "Account")" method="post" id="registerForm">
-                                @Html.AntiForgeryToken()
-                                <div class="mb-3">
-                                    <input type="text" name="FullName" value="@(oldRegister != null ? oldRegister.FullName : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Họ và tên" required />
-                                </div>
-                                <div class="mb-3">
-                                    <input type="email" name="Email" value="@(oldRegister != null ? oldRegister.Email : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
-                                </div>
-                                <div class="mb-3">
-                                    <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Số điện thoại" />
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
-                                </div>
-                                <div class="mb-3">
-                                    <input type="password" name="ConfirmPassword" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Xác nhận mật khẩu" required />
-                                </div>
-                                <button type="submit" id="btnRegisterSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
-                            </form>
-                                </div>
+                                <form action="@Url.Action("Register", "Account")" method="post" id="registerForm">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <div class="mb-3">
+                                        <input type="text" name="FullName" value="@(oldRegister != null ? oldRegister.FullName : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Họ và tên" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="email" name="Email" value="@(oldRegister != null ? oldRegister.Email : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Địa chỉ Email" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="tel" name="Phone" value="@(oldRegister != null ? oldRegister.Phone : "")" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Số điện thoại" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="password" name="Password" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Mật khẩu" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="password" name="ConfirmPassword" class="form-control border-0 px-3 shadow-sm bg-white fs-6" placeholder="Xác nhận mật khẩu" required />
+                                    </div>
+                                    <button type="submit" id="btnRegisterSubmit" class="btn w-100 py-3 text-white fw-bold shadow-sm fs-5" style="background-color: #C2A682; border-radius: 8px; letter-spacing: 1px;">TẠO TÀI KHOẢN</button>
+                                </form>
+                            </div>
                         </div>
 
                     </div>
@@ -146,6 +155,21 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+
+        // Tự mở modal khi bị chuyển từ trang cần đăng nhập (showLogin) hoặc khi server yêu cầu (TempData)
+        var openLogin = @(openLoginNow ? "true" : "false");
+        var openRegister = @(shouldOpenRegister ? "true" : "false");
+
+        if ((openLogin || openRegister) && window.bootstrap) {
+            var modalEl = document.getElementById("authModal");
+            if (modalEl) {
+                if (openRegister) {
+                    var regTab = document.getElementById("pills-register-tab");
+                    if (regTab) window.bootstrap.Tab.getOrCreateInstance(regTab).show();
+                }
+                window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        }
 
         // Submit Login AJAX
         var loginForm = document.getElementById("loginForm");

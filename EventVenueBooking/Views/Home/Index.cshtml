@@ -1,17 +1,17 @@
 ﻿@model IEnumerable<EventVenueBooking.ViewModels.VenueCardViewModel>
-@using EventVenueBooking.Database
+@using EventVenueBooking.Entities
 
 @{
     ViewData["Title"] = "Trang chủ";
     string activeCategory = ViewBag.CurrentCategory as string ?? "All";
     string currentSearch = ViewBag.CurrentSearch as string ?? "";
-    string currentDate = ViewBag.CurrentDate as string ?? "";
     var venueList = ViewBag.VenueSelectList as IEnumerable<SelectListItem>;
-    var db = new ApplicationDbContext();
-    var homeAddOns = db.AddOnServices.Where(a => a.IsActive).ToList();
+    // Dữ liệu dịch vụ do HomeController truyền sang, không gọi DB trong View
+    var homeAddOns = ViewBag.HomeAddOns as IEnumerable<AddOnService>;
 }
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/vi.global.min.js"></script>
 
 <style>
     .venue-card-editorial {
@@ -209,18 +209,18 @@
                                    placeholder="Tên sảnh, vị trí..." value="@currentSearch" />
                         </div>
 
-                        <!-- Ô nhập Sức chứa -->
+                        <!-- Ô nhập Sức chứa tối đa -->
                         <div class="col-md-3 d-flex align-items-center px-3 border-end">
                             <i class="fa-solid fa-users text-muted me-2"></i>
                             <input type="number" name="maxCapacity" id="capacity-input" class="form-control border-0 shadow-none ps-0"
-                                   placeholder="Sức chứa (người)" value="@ViewBag.CurrentCapacity" min="0" />
+                                   placeholder="Số khách (người)" value="@ViewBag.CurrentMaxCapacity" min="0" />
                         </div>
 
                         <!-- Ô nhập Giá tối đa -->
                         <div class="col-md-3 d-flex align-items-center px-3">
                             <i class="fa-solid fa-tag text-muted me-2"></i>
                             <input type="number" name="maxPrice" id="price-input" class="form-control border-0 shadow-none ps-0"
-                                   placeholder="Giá tối đa (VNĐ)" value="@ViewBag.CurrentPrice" step="500000" min="0" />
+                                   placeholder="Giá tối đa (VNĐ)" value="@ViewBag.CurrentMaxPrice" step="500000" min="0" />
                         </div>
 
                         <!-- Nút tìm kiếm -->
@@ -356,7 +356,7 @@
                         <div class="card-body d-flex flex-column justify-content-between">
                             <div>
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-light text-dark border px-2 py-1">@addon.Category</span>
+                                    <span class="badge bg-light text-dark border px-2 py-1">@(addon.Category ?? "Khác")</span>
                                     <span class="fw-bold text-danger fs-5">+@addon.Price.ToString("N0") VNĐ</span>
                                 </div>
                                 <h5 class="fw-bold mb-2" style="color: #3b2e27;">@addon.Name</h5>
@@ -382,28 +382,49 @@
 
         const cardsContainer = document.getElementById('venue-cards-container');
         const categoryInput = document.getElementById('current-category-input');
-        const searchInput = document.getElementById('search-input');
-        const dateInput = document.getElementById('date-input');
         const searchForm = document.getElementById('search-form');
         const categoryBtns = document.querySelectorAll('.category-btn');
+        const baseUrl = '@Url.Action("Index", "Home")';
+        const bookingsUrl = '@Url.Action("GetAllBookings", "Home")';
 
+        // Lấy giá trị của một ô input/select theo id
+        function getVal(id) {
+            const el = document.getElementById(id);
+            return (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) ? el.value : '';
+        }
+
+        // Ghép URL tìm kiếm từ các ô trong form (search, maxCapacity, maxPrice) và danh mục
+        function buildUrl(category) {
+            const parts = ['category=' + encodeURIComponent(category)];
+            const fields = [
+                ['search', 'search-input'],
+                ['maxCapacity', 'capacity-input'],
+                ['maxPrice', 'price-input']
+            ];
+            fields.forEach(function (f) {
+                const v = getVal(f[1]);
+                if (v !== '') parts.push(f[0] + '=' + encodeURIComponent(v));
+            });
+            return baseUrl + '?' + parts.join('&');
+        }
+
+        // Tải lại danh sách sảnh bằng AJAX, không reload trang
         function loadVenues(url, selectedCategory) {
             if (cardsContainer) cardsContainer.style.opacity = '0.4';
 
             fetch(url)
                 .then(function (response) { return response.text(); })
                 .then(function (htmlText) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const doc = new DOMParser().parseFromString(htmlText, 'text/html');
                     const newCards = doc.getElementById('venue-cards-container');
 
                     if (newCards && cardsContainer) {
                         cardsContainer.innerHTML = newCards.innerHTML;
-                        cardsContainer.style.opacity = '1';
                     }
+                    if (cardsContainer) cardsContainer.style.opacity = '1';
 
                     if (selectedCategory) {
-                        if (categoryInput && 'value' in categoryInput) {
+                        if (categoryInput instanceof HTMLInputElement) {
                             categoryInput.value = selectedCategory;
                         }
                         categoryBtns.forEach(function (btn) {
@@ -423,16 +444,12 @@
                 });
         }
 
-        // Tìm theo buttons
+        // Lọc theo nút danh mục (giữ nguyên từ khóa, sức chứa, giá đang nhập)
         categoryBtns.forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = e.currentTarget;
-                if (target) {
-                    const href = target.getAttribute('href') || '';
-                    const cat = target.getAttribute('data-category') || '';
-                    loadVenues(href, cat);
-                }
+                const cat = btn.getAttribute('data-category') || 'All';
+                loadVenues(buildUrl(cat), cat);
             });
         });
 
@@ -440,22 +457,18 @@
         if (searchForm) {
             searchForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                const searchVal = (searchInput && 'value' in searchInput) ? searchInput.value : '';
-                const dateVal = (dateInput && 'value' in dateInput) ? dateInput.value : '';
-                const currentCat = (categoryInput && 'value' in categoryInput) ? categoryInput.value : 'All';
-                const baseUrl = '@Url.Action("Index", "Home")';
-                const url = baseUrl + '?category=' + encodeURIComponent(currentCat) + '&search=' + encodeURIComponent(searchVal) + '&eventDate=' + encodeURIComponent(dateVal);
-                loadVenues(url, currentCat);
+                const currentCat = getVal('current-category-input') || 'All';
+                loadVenues(buildUrl(currentCat), currentCat);
             });
         }
 
-        // calendar initialization
-        var calendarEl = document.getElementById('index-availability-calendar');
-        var calendarSelect = document.getElementById('calendar-venue-select');
-        var globalFullCalendar = window['FullCalendar'];
+        // Khởi tạo calendar
+        const calendarEl = document.getElementById('index-availability-calendar');
+        const calendarSelect = document.getElementById('calendar-venue-select');
+        const FC = window['FullCalendar'];
 
-        if (calendarEl && globalFullCalendar) {
-            var calendar = new globalFullCalendar.Calendar(calendarEl, {
+        if (calendarEl && FC) {
+            const calendar = new FC.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
@@ -468,17 +481,21 @@
             });
             calendar.render();
 
-            if (calendarSelect) {
-                calendarSelect.addEventListener('change', function (e) {
-                    var selectTarget = e.target;
-                    var selectedVenueId = (selectTarget && 'value' in selectTarget) ? selectTarget.value : '';
+            if (calendarSelect instanceof HTMLSelectElement) {
+                const selectEl = calendarSelect;
+                selectEl.addEventListener('change', function () {
+                    const selectedVenueId = selectEl.value;
                     calendar.removeAllEventSources();
-                    if (selectedVenueId && selectedVenueId !== "0") {
-                        calendar.addEventSource('/Venue/GetVenueBookings?venueId=' + selectedVenueId);
+
+                    if (selectedVenueId === 'all') {
+                        // Xem tất cả sảnh
+                        calendar.addEventSource(bookingsUrl);
+                    } else if (selectedVenueId && selectedVenueId !== '0') {
+                        // Xem một sảnh
+                        calendar.addEventSource(bookingsUrl + '?venueId=' + encodeURIComponent(selectedVenueId));
                     }
                 });
             }
         }
-
     });
 </script>

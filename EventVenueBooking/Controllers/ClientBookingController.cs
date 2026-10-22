@@ -17,10 +17,10 @@ namespace EventVenueBooking.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // THÊM: số lượng tối đa của mỗi dịch vụ đi kèm trong một booking (chỉnh theo nhóm chốt)
+        // Số lượng tối đa của mỗi dịch vụ đi kèm trong một booking (chỉnh theo nhóm chốt)
         private const int MaxAddOnQuantity = 100;
 
-        // UserId của người đang đăng nhập (ticket lưu Name = Email)
+        // UserId của người đang đăng nhập (ticket lưu Name = Email). Trả 0 nếu không tìm thấy.
         private int CurrentUserId()
         {
             string email = User.Identity.Name;
@@ -31,6 +31,8 @@ namespace EventVenueBooking.Controllers
         private Booking GetOwnedBooking(int id)
         {
             int userId = CurrentUserId();
+            if (userId == 0) return null;
+
             return db.Bookings
                 .Include(b => b.Venue)
                 .Include(b => b.EventType)
@@ -56,7 +58,6 @@ namespace EventVenueBooking.Controllers
         }
 
         // Kiểm tra dữ liệu đầu vào phía server. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
-        // SỬA: thêm kiểm tra số lượng dịch vụ đi kèm
         private string ValidateInput(int guestCount, int capacity, DateTime start, DateTime end,
                                      IEnumerable<AddOnRequest> addOns)
         {
@@ -98,9 +99,24 @@ namespace EventVenueBooking.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // Tài khoản trong cookie không còn khớp DB -> đăng nhập lại
+            int userId = CurrentUserId();
+            if (userId == 0)
+            {
+                TempData["ErrorMessage"] = "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại.";
+                return RedirectToAction("Logout", "Account");
+            }
+
             if (model.EventStart == null || model.EventEnd == null)
             {
                 ModelState.AddModelError("", "Vui lòng chọn thời gian bắt đầu và kết thúc.");
+                return View(model);
+            }
+
+            // Loại sự kiện phải tồn tại và đang hoạt động
+            if (!db.EventTypes.Any(e => e.EventTypeId == model.EventTypeId && e.IsActive))
+            {
+                ModelState.AddModelError("", "Loại sự kiện không hợp lệ.");
                 return View(model);
             }
 
@@ -116,7 +132,7 @@ namespace EventVenueBooking.Controllers
             try
             {
                 var booking = new BookingService(db).CreateBooking(
-                    CurrentUserId(), model.VenueId, model.EventTypeId, model.GuestCount,
+                    userId, model.VenueId, model.EventTypeId, model.GuestCount,
                     model.EventStart.Value, model.EventEnd.Value, model.AddOns);
 
                 TempData["BookingSuccess"] = "Đặt sảnh thành công! Vui lòng đặt cọc để xác nhận booking.";
@@ -143,7 +159,7 @@ namespace EventVenueBooking.Controllers
                 if (venue == null)
                     return Json(new { ok = false, message = "Địa điểm không tồn tại." });
 
-                // SỬA: sảnh không nhận đặt thì không báo giá
+                // Sảnh không nhận đặt thì không báo giá
                 if (venue.Status != VenueStatuses.Active)
                     return Json(new { ok = false, message = "Địa điểm hiện không nhận đặt." });
 
@@ -166,7 +182,7 @@ namespace EventVenueBooking.Controllers
                     venueCost = quote.VenueCost,
                     addOnCost = quote.AddOnCost,
                     total = quote.TotalCost,
-                    // SỬA: làm tròn giống BookingService.RecordPayment để tiền cọc tạm tính khớp tiền cọc thật
+                    // Làm tròn giống BookingService.RecordPayment để tiền cọc tạm tính khớp tiền cọc thật
                     deposit = Math.Round(quote.TotalCost * BookingService.DepositRate, 0, MidpointRounding.AwayFromZero),
                     lines = quote.AddOnLines.Select(l => new
                     {
@@ -192,7 +208,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: ClientBooking/Pay/5  (paymentType: 0 = đặt cọc, 1 = thanh toán phần còn lại)
-        // SỬA: bỏ danh sách phương thức riêng của controller, BookingService.RecordPayment kiểm tra tập trung
+        // BookingService.RecordPayment kiểm tra phương thức thanh toán tập trung
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Pay(int id, byte paymentType, string method)
