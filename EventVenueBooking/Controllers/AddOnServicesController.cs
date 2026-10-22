@@ -56,7 +56,7 @@ namespace EventVenueBooking.Controllers
             {
                 db.AddOnServices.Add(addOnService);
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Facilities_Services", "Venues");   // SỬA
             }
 
             return View(addOnService);
@@ -88,7 +88,7 @@ namespace EventVenueBooking.Controllers
             {
                 db.Entry(addOnService).State = EntityState.Modified;
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Facilities_Services", "Venues");   // SỬA
             }
             return View(addOnService);
         }
@@ -122,7 +122,7 @@ namespace EventVenueBooking.Controllers
             }
             addOnService.IsActive = false;
             db.SaveChanges();
-            return RedirectToAction("Index");
+            return RedirectToAction("Facilities_Services", "Venues");       // SỬA
         }
 
         protected override void Dispose(bool disposing)

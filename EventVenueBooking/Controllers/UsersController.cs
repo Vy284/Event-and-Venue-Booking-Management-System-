@@ -12,6 +12,7 @@ using System.Web.Security;
 
 namespace EventVenueBooking.Controllers
 {
+    // SỬA: Coordinator được XEM (Index, Feedback). Tạo/sửa user chỉ Admin.
     [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class UsersController : Controller
     {
@@ -60,6 +61,7 @@ namespace EventVenueBooking.Controllers
         // ================= TẠO MỚI USER TỪ POPUP =================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult CreateClient(string fullName, string email, string phone, string password)
         {
             fullName = (fullName ?? "").Trim();
@@ -114,6 +116,7 @@ namespace EventVenueBooking.Controllers
         // ================= CẬP NHẬT TỪ POPUP =================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]              // SỬA
         public ActionResult EditClient(int userId, string fullName, string email, string phone, string password)
         {
             var user = db.Users.Find(userId);

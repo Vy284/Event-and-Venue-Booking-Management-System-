@@ -56,7 +56,7 @@ namespace EventVenueBooking.Controllers
             {
                 db.Facilities.Add(facility);
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Facilities_Services", "Venues");   // SỬA
             }
 
             return View(facility);
@@ -97,7 +97,7 @@ namespace EventVenueBooking.Controllers
                 existing.IsActive = facility.IsActive;
 
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Facilities_Services", "Venues");   // SỬA
             }
             return View(facility);
         }
@@ -128,7 +128,7 @@ namespace EventVenueBooking.Controllers
             if (facility == null) return HttpNotFound();
             facility.IsActive = false;
             db.SaveChanges();
-            return RedirectToAction("Index");
+            return RedirectToAction("Facilities_Services", "Venues");       // SỬA
         }
 
         protected override void Dispose(bool disposing)

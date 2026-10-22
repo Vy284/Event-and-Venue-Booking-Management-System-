@@ -416,9 +416,12 @@
                 <option value="Client">Client</option>
             </select>
         </div>
-        <button type="button" class="btn-create" onclick="openCreateModal()">
-            <i class='bx bx-user-plus'></i> Add User
-        </button>
+        @if (isAdmin)
+        {
+            <button type="button" class="btn-create" onclick="openCreateModal()">
+                <i class='bx bx-user-plus'></i> Add User
+            </button>
+        }
     </div>
 
     <div class="table-responsive">
@@ -476,10 +479,17 @@
                         <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td>
                             <div class="action-btns">
-                                <!-- Nút Edit duy nhất gọn gàng, bấm vào mở popup chứa toàn bộ thông tin, role, status và đổi pass -->
-                                <button type="button" class="btn-act btn-edit" title="Edit User" onclick="openEditModal('@user.UserId', '@user.FullName', '@user.Email', '@user.Phone', '@user.RoleCode', '@user.IsActive.ToString().ToLower()')">
-                                    <i class='bx bx-edit'></i>
-                                </button>
+                                @if (isAdmin)
+                                {
+                                    <!-- Nút Edit duy nhất gọn gàng, bấm vào mở popup chứa toàn bộ thông tin, role, status và đổi pass -->
+                                    <button type="button" class="btn-act btn-edit" title="Edit User" onclick="openEditModal('@user.UserId', '@user.FullName', '@user.Email', '@user.Phone', '@user.RoleCode', '@user.IsActive.ToString().ToLower()')">
+                                        <i class='bx bx-edit'></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted); font-size: 12px;">View only</span>
+                                }
                             </div>
                         </td>
                     </tr>
