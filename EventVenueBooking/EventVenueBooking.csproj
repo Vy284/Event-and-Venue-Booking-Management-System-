@@ -175,6 +175,10 @@
     <Compile Include="Migrations\202609251500110_FixVenueFacilityMapping.Designer.cs">
       <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202610211546438_DisableCascadeDelete.cs" />
+    <Compile Include="Migrations\202610211546438_DisableCascadeDelete.Designer.cs">
+      <DependentUpon>202610211546438_DisableCascadeDelete.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\BookingService.cs" />
@@ -412,6 +416,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202609251500110_FixVenueFacilityMapping.resx">
       <DependentUpon>202609251500110_FixVenueFacilityMapping.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202610211546438_DisableCascadeDelete.resx">
+      <DependentUpon>202610211546438_DisableCascadeDelete.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
