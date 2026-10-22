@@ -143,6 +143,7 @@
     <Compile Include="Controllers\DashboardController.cs" />
     <Compile Include="Controllers\EventTypesController.cs" />
     <Compile Include="Controllers\FacilitiesController.cs" />
+    <Compile Include="Controllers\FeedbackController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PaymentsController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
@@ -382,6 +383,7 @@
     <Folder Include="App_Data\" />
     <Folder Include="DAL\" />
     <Folder Include="Models\" />
+    <Folder Include="Views\Feedback\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

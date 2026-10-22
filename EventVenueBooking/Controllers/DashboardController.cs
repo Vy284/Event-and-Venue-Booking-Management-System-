@@ -92,6 +92,52 @@ namespace EventVenueBooking.Controllers
             return View("~/Views/Admin/Calendar.cshtml", model);
         }
 
+        // GET: Dashboard/ExportRevenueExcel (Xuất file Excel doanh thu)
+        [HttpGet]
+        public ActionResult ExportRevenueExcel()
+        {
+            var payments = db.Payments
+                .Where(p => p.PaymentStatus == PaymentStatuses.Completed)
+                .Include(p => p.Booking.ClientUser)
+                .Include(p => p.Booking.Venue)
+                .OrderByDescending(p => p.PaymentDate)
+                .ToList();
+
+            string htmlTable = "<table border='1'>" +
+                                "<tr style='background-color:#f2f2f2; font-weight:bold;'>" +
+                                "<th>Mã Thanh Toán</th>" +
+                                "<th>Khách Hàng</th>" +
+                                "<th>Sảnh Đặt</th>" +
+                                "<th>Số Tiền (VNĐ)</th>" +
+                                "<th>Ngày Thanh Toán</th>" +
+                                "</tr>";
+
+            foreach (var p in payments)
+            {
+                string customerName = p.Booking != null && p.Booking.ClientUser != null ? p.Booking.ClientUser.FullName : "N/A";
+                string venueName = p.Booking != null && p.Booking.Venue != null ? p.Booking.Venue.Name : "N/A";
+
+                htmlTable += $"<tr>" +
+                             $"<td>{p.PaymentId}</td>" +
+                             $"<td>{customerName}</td>" +
+                             $"<td>{venueName}</td>" +
+                             $"<td>{p.Amount}</td>" +
+                             $"<td>{p.PaymentDate:dd/MM/yyyy HH:mm}</td>" +
+                             $"</tr>";
+            }
+            htmlTable += "</table>";
+
+            Response.Clear();
+            Response.ContentType = "application/vnd.ms-excel";
+            Response.AddHeader("content-disposition", "attachment;filename=DoanhThu_EventVenue_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
+            Response.Charset = "utf-8";
+            Response.Write("\uFEFF"); // Hỗ trợ hiển thị tiếng Việt UTF-8 chuẩn trên Excel
+            Response.Output.Write(htmlTable);
+            Response.End();
+
+            return new EmptyResult();
+        }
+
         private string GetStatusString(byte statusByte)
         {
             switch (statusByte)
@@ -105,7 +151,6 @@ namespace EventVenueBooking.Controllers
             }
         }
 
-        // THÊM: giải phóng kết nối DB giống các controller khác
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();

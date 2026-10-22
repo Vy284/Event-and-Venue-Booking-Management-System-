@@ -202,7 +202,6 @@
         color: #C62828;
     }
 
-    /* Đang thanh toán (mới cọc, còn nợ) */
     .badge-partial {
         background: #FFF8DC;
         color: #8A6D0B;
@@ -226,10 +225,6 @@
         font-size: 16px;
         cursor: pointer;
         transition: 0.2s;
-    }
-
-    /* nút dạng thẻ <a> */
-    a.btn-act {
         text-decoration: none;
     }
 
@@ -535,7 +530,6 @@
                             </td>
                             <td>
                                 <div class="flow-wrap">
-
                                     @if (item.Status == BookingStatuses.Pending)
                                     {
                                         <form class="flow-form" method="post" action="@Url.Action("RecordPayment", "Bookings")">
@@ -591,7 +585,7 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
-                                        <!-- NÚT XUẤT PDF VỚI ICON UPLOAD NẰM CẠNH NÚT CON MẮT -->
+                                        <!-- Nút xuất PDF hợp đồng (trỏ đúng action ExportContractPdf) -->
                                         <a class="btn-act btn-pdf" title="Xuất PDF hợp đồng" href="@Url.Action("ExportContractPdf", "Bookings", new { id = item.BookingId })" target="_blank">
                                             <i class='bx bx-upload'></i>
                                         </a>
@@ -628,7 +622,6 @@
         {
             @Html.AntiForgeryToken()
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Client (*)</label>
                     @Html.DropDownList(
@@ -638,7 +631,6 @@
                         new { @class = "form-control", required = "required" }
                     )
                 </div>
-
                 <div class="form-group">
                     <label>Venue (*)</label>
                     <input type="text" class="form-control" name="VenueName" required placeholder="Ex: Grand Ballroom">
@@ -655,7 +647,6 @@
                     <label>Start Time (*)</label>
                     <input type="datetime-local" class="form-control" name="BookingDate" required>
                 </div>
-
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Add-On Services</label>
                     <div style="background: #F4F7FB; border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 10px; max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
@@ -674,7 +665,6 @@
                         }
                     </div>
                 </div>
-
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Notes / Description</label>
                     <textarea class="form-control" name="Notes" rows="3" placeholder="Additional details..."></textarea>
@@ -713,27 +703,22 @@
 
 <!-- JAVASCRIPT XỬ LÝ SỰ KIỆN -->
 <script>
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
+        function openModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
+        function openCancelModal(id) {
+            document.getElementById('cancelBookingId').value = id;
+            document.getElementById('cancelReason').value = "";
+            openModal('cancelModal');
+        }
 
-    function openCancelModal(id) {
-        document.getElementById('cancelBookingId').value = id;
-        document.getElementById('cancelReason').value = "";
-        openModal('cancelModal');
-    }
-
-    function filterTable() {
-        var q = document.getElementById('searchInput').value.toLowerCase();
-        var pay = document.getElementById('statusFilter').value;
-        document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
-            var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
-            var okPay = !pay || tr.getAttribute('data-pay') === pay;
-            tr.style.display = (okText && okPay) ? '' : 'none';
-        });
-    }
+        function filterTable() {
+            var q = document.getElementById('searchInput').value.toLowerCase();
+            var pay = document.getElementById('statusFilter').value;
+            document.querySelectorAll('#bookingTable tbody tr[data-pay]').forEach(function (tr) {
+                var okText = tr.textContent.toLowerCase().indexOf(q) !== -1;
+                var okPay = !pay || tr.getAttribute('data-pay') === pay;
+                tr.style.display = (okText && okPay) ? '' : 'none';
+            });
+        }
 </script>
