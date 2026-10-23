@@ -89,7 +89,7 @@ namespace EventVenueBooking.Controllers
             ViewBag.CompletedCount = bookings.Count(x => x.Status == BookingStatuses.Completed);
             ViewBag.CancelledCount = bookings.Count(x => x.Status == BookingStatuses.Cancelled);
 
-            // Nạp danh sách Add-on cho checkbox trong popup New Booking của Admin (Đã sửa lỗi EF bằng .ToList() trước .Select())
+            // Nạp danh sách Add-on cho checkbox trong popup New Booking của Admin
             ViewBag.AddOnServices = db.AddOnServices.Where(a => a.IsActive)
                 .ToList()
                 .Select(a => new SelectListItem
@@ -136,22 +136,17 @@ namespace EventVenueBooking.Controllers
             return View();
         }
 
-        // POST: Create (Ánh xạ chuẩn xác từ popup Admin sang BookingService)
+        // POST: Create (popup Admin) - chọn sảnh/loại sự kiện bằng dropdown, có giờ kết thúc
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(int clientUserId, string VenueName, string EventType, int Guests,
-                                   DateTime BookingDate, List<int> SelectedAddOnIds, string Notes)
+        public ActionResult Create(int clientUserId, int venueId, int eventTypeId, int guestCount,
+                                   DateTime eventStartDateTime, DateTime eventEndDateTime,
+                                   List<int> SelectedAddOnIds)
         {
             try
             {
-                var venue = db.Venues.FirstOrDefault(v => v.Name.ToLower() == VenueName.ToLower() && v.Status == VenueStatuses.Active);
-                int venueId = venue != null ? venue.VenueId : db.Venues.Where(v => v.Status == VenueStatuses.Active).Select(v => v.VenueId).FirstOrDefault();
-
-                var eventType = db.EventTypes.FirstOrDefault(e => e.TypeName.ToLower() == EventType.ToLower() && e.IsActive);
-                int eventTypeId = eventType != null ? eventType.EventTypeId : db.EventTypes.Where(e => e.IsActive).Select(e => e.EventTypeId).FirstOrDefault();
-
-                DateTime startDateTime = BookingDate;
-                DateTime endDateTime = startDateTime.AddHours(4);
+                if (eventEndDateTime <= eventStartDateTime)
+                    throw new BookingException("Thời gian kết thúc phải sau thời gian bắt đầu.");
 
                 List<AddOnRequest> addOnRequests = null;
                 if (SelectedAddOnIds != null && SelectedAddOnIds.Any())
@@ -164,19 +159,18 @@ namespace EventVenueBooking.Controllers
                 }
 
                 new BookingService(db).CreateBooking(
-                    clientUserId, venueId, eventTypeId, Guests,
-                    startDateTime, endDateTime, addOnRequests);
+                    clientUserId, venueId, eventTypeId, guestCount,
+                    eventStartDateTime, eventEndDateTime, addOnRequests);
 
                 TempData["SuccessMessage"] = "Tạo booking thành công.";
-                return RedirectToAction("Index");
             }
             catch (BookingException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = "Lỗi hệ thống: " + ex.Message;
+                TempData["ErrorMessage"] = "Lỗi hệ thống, vui lòng thử lại.";
             }
 
             return RedirectToAction("Index");
@@ -369,20 +363,20 @@ namespace EventVenueBooking.Controllers
                     <div class='info-row'>- Hotline hỗ trợ: 1900 xxxx</div>
 
                     <div class='section-title' style='margin-top: 15px;'>II. BÊN SỬ DỤNG DỊCH VỤ (KHÁCH HÀNG)</div>
-                    <div class='info-row'>- Họ và tên khách hàng: <strong>{(booking.ClientUser != null ? booking.ClientUser.FullName : "N/A")}</strong></div>
-                    <div class='info-row'>- Email: {(booking.ClientUser != null ? booking.ClientUser.Email : "N/A")}</div>
-                    <div class='info-row'>- Số điện thoại: {(booking.ClientUser != null && !string.IsNullOrEmpty(booking.ClientUser.Phone) ? booking.ClientUser.Phone : "N/A")}</div>
+                    <div class='info-row'>- Họ và tên khách hàng: <strong>{HttpUtility.HtmlEncode(booking.ClientUser != null ? booking.ClientUser.FullName : "N/A")}</strong></div>
+                    <div class='info-row'>- Email: {HttpUtility.HtmlEncode(booking.ClientUser != null ? booking.ClientUser.Email : "N/A")}</div>
+                    <div class='info-row'>- Số điện thoại: {HttpUtility.HtmlEncode(booking.ClientUser != null && !string.IsNullOrEmpty(booking.ClientUser.Phone) ? booking.ClientUser.Phone : "N/A")}</div>
 
                     <div class='section-title' style='margin-top: 15px;'>III. NỘI DUNG VÀ CHI PHÍ ĐẶT SẢNH</div>
-                    <div class='info-row'>- Sảnh sự kiện: <strong>{(booking.Venue != null ? booking.Venue.Name : "N/A")}</strong></div>
-                    <div class='info-row'>- Vị trí / Địa điểm: {(booking.Venue != null ? booking.Venue.Location : "N/A")}</div>
-                    <div class='info-row'>- Loại sự kiện: {(booking.EventType != null ? booking.EventType.TypeName : "N/A")}</div>
+                    <div class='info-row'>- Sảnh sự kiện: <strong>{HttpUtility.HtmlEncode(booking.Venue != null ? booking.Venue.Name : "N/A")}</strong></div>
+                    <div class='info-row'>- Vị trí / Địa điểm: {HttpUtility.HtmlEncode(booking.Venue != null ? booking.Venue.Location : "N/A")}</div>
+                    <div class='info-row'>- Loại sự kiện: {HttpUtility.HtmlEncode(booking.EventType != null ? booking.EventType.TypeName : "N/A")}</div>
                     <div class='info-row'>- Thời gian bắt đầu: <strong>{booking.EventStartDateTime:dd/MM/yyyy HH:mm}</strong></div>
                     <div class='info-row'>- Thời gian kết thúc: <strong>{booking.EventEndDateTime:dd/MM/yyyy HH:mm}</strong></div>
                     <div class='info-row'>- Số lượng khách tham dự: {booking.GuestCount} người</div>
                     
                     <div class='info-row' style='margin-top: 10px;'><strong>Tổng giá trị hợp đồng:</strong> <span style='color: red; font-size: 16px; font-weight: bold;'>{booking.TotalCost:N0} VNĐ</span></div>
-                    <div class='info-row'>- Trạng thái đơn đặt: {(booking.Status == 1 ? "Đã xác nhận" : (booking.Status == 3 ? "Hoàn thành" : "Đang xử lý"))}</div>
+                    <div class='info-row'>- Trạng thái đơn đặt: {(new[] { "Chờ đặt cọc", "Đã xác nhận", "Đang diễn ra", "Hoàn thành", "Đã hủy" })[booking.Status]}</div>
 
                     <table class='footer-table'>
                         <tr>

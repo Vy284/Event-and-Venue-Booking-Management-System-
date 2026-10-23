@@ -1,11 +1,25 @@
-﻿@{
+﻿@model EventVenueBooking.ViewModels.AdminDashboardViewModel
+@using System.Globalization
+
+@{
     ViewBag.Title = "Dashboard";
     ViewBag.ActiveMenu = "Dashboard";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var inv = CultureInfo.InvariantCulture;
+    string[] fillClasses = { "fill-purple", "fill-green", "fill-orange" };
+
+    // Chuỗi mảng JS cho Chart.js (số dùng InvariantCulture để luôn có dấu chấm thập phân)
+    string statusLabelsJs = "[" + string.Join(",", Model.StatusCounts.Select(s => "'" + s.Name + "'")) + "]";
+    string statusDataJs = "[" + string.Join(",", Model.StatusCounts.Select(s => s.Count.ToString(inv))) + "]";
+    string statusColorsJs = "[" + string.Join(",", Model.StatusCounts.Select(s => "'" + s.Color + "'")) + "]";
+    string revenueLabelsJs = "[" + string.Join(",", Model.RevenueLabels.Select(l => "'" + l + "'")) + "]";
+    string venueSeriesJs = "[" + string.Join(",", Model.VenueCostSeries.Select(v => v.ToString("0", inv))) + "]";
+    string addOnSeriesJs = "[" + string.Join(",", Model.AddOnCostSeries.Select(v => v.ToString("0", inv))) + "]";
 }
 
 <!-- Tải Chart.js để vẽ biểu đồ -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
     /* RESET MÀU NỀN TRONG LAYOUT CHÍNH */
@@ -45,7 +59,7 @@
         display: flex;
         align-items: center;
         gap: 4px;
-        cursor: pointer;
+        cursor: default;
     }
 
     /* HÀNG TOP - 3 STATS CARDS */
@@ -269,7 +283,7 @@
 
     .event-row {
         display: grid;
-        grid-template-columns: 80px 1fr 100px;
+        grid-template-columns: 130px 1fr 110px;
         align-items: center;
         gap: 15px;
     }
@@ -328,7 +342,7 @@
             <div class="stat-icon icon-orange"><i class='bx bx-calendar-event'></i></div>
             <div class="stat-info">
                 <h5>Upcoming Events</h5>
-                <h3>345</h3>
+                <h3>@Model.UpcomingEvents.ToString("N0")</h3>
             </div>
         </div>
     </div>
@@ -337,7 +351,7 @@
             <div class="stat-icon icon-orange"><i class='bx bx-check-square'></i></div>
             <div class="stat-info">
                 <h5>Total Bookings</h5>
-                <h3>1,798</h3>
+                <h3>@Model.TotalBookings.ToString("N0")</h3>
             </div>
         </div>
     </div>
@@ -346,7 +360,7 @@
             <div class="stat-icon icon-orange"><i class='bx bx-wallet'></i></div>
             <div class="stat-info">
                 <h5>Total Revenue</h5>
-                <h3>$52,000</h3>
+                <h3>@Model.TotalRevenue.ToString("N0") VNĐ</h3>
             </div>
         </div>
     </div>
@@ -366,48 +380,31 @@
     <div class="dash-card">
         <div class="card-header">
             <div class="card-title">Booking Status</div>
-            <button class="dropdown-btn">This Week <i class='bx bx-chevron-down'></i></button>
+            <span class="dropdown-btn">All time</span>
         </div>
 
         <div class="chart-donut-container">
             <canvas id="statusChart"></canvas>
             <div class="donut-inner-text">
                 <p>Total Bookings</p>
-                <h4>2,780</h4>
+                <h4>@Model.TotalBookings.ToString("N0")</h4>
             </div>
         </div>
 
         <div class="status-list">
-            <div class="status-item">
-                <div class="status-left">
-                    <div class="status-color color-green"></div>
-                    <div class="status-text">
-                        <h6>Confirmed</h6>
-                        <h4>1,251</h4>
+            @foreach (var s in Model.StatusCounts)
+            {
+                <div class="status-item">
+                    <div class="status-left">
+                        <div class="status-color" style="background: @s.Color;"></div>
+                        <div class="status-text">
+                            <h6>@s.Name</h6>
+                            <h4>@s.Count.ToString("N0")</h4>
+                        </div>
                     </div>
+                    <div class="status-percent">@s.Percent.ToString("0")%</div>
                 </div>
-                <div class="status-percent">45%</div>
-            </div>
-            <div class="status-item">
-                <div class="status-left">
-                    <div class="status-color color-orange"></div>
-                    <div class="status-text">
-                        <h6>Pending</h6>
-                        <h4>834</h4>
-                    </div>
-                </div>
-                <div class="status-percent">30%</div>
-            </div>
-            <div class="status-item">
-                <div class="status-left">
-                    <div class="status-color color-purple"></div>
-                    <div class="status-text">
-                        <h6>Cancelled</h6>
-                        <h4>695</h4>
-                    </div>
-                </div>
-                <div class="status-percent">25%</div>
-            </div>
+            }
         </div>
     </div>
 
@@ -418,13 +415,13 @@
         <div class="dash-card">
             <div class="card-header">
                 <div class="card-title">Revenue Breakdown</div>
-                <button class="dropdown-btn">Last 8 Months <i class='bx bx-chevron-down'></i></button>
+                <span class="dropdown-btn">Last 8 Months</span>
             </div>
 
             <div class="revenue-header-info">
                 <div class="revenue-total">
-                    <p>Total Revenue</p>
-                    <h3>$52,000</h3>
+                    <p>Booked value (excl. cancelled)</p>
+                    <h3>@Model.RevenueSeriesTotal.ToString("N0") VNĐ</h3>
                 </div>
                 <div class="legend-list">
                     <div class="legend-item">
@@ -445,33 +442,30 @@
         <div class="dash-card">
             <div class="card-header" style="margin-bottom: 15px;">
                 <div class="card-title">Top Event Types</div>
-                <button class="dropdown-btn">Popular <i class='bx bx-chevron-down'></i></button>
+                <span class="dropdown-btn">Top 5</span>
             </div>
 
             <div class="event-type-list">
-                <div class="event-row">
-                    <div class="event-name">Wedding</div>
-                    <div class="progress-bar-wrapper">
-                        <div class="progress-fill fill-purple" style="width: 50%;">40%</div>
-                    </div>
-                    <div class="event-count">20,000 Bookings</div>
-                </div>
-
-                <div class="event-row">
-                    <div class="event-name">Conference</div>
-                    <div class="progress-bar-wrapper">
-                        <div class="progress-fill fill-green" style="width: 42%;">35%</div>
-                    </div>
-                    <div class="event-count">17,500 Bookings</div>
-                </div>
-
-                <div class="event-row">
-                    <div class="event-name">Party</div>
-                    <div class="progress-bar-wrapper">
-                        <div class="progress-fill fill-orange" style="width: 20%;">15%</div>
-                    </div>
-                    <div class="event-count">12,500 Bookings</div>
-                </div>
+                @if (Model.TopEventTypes.Any())
+                {
+                    int idx = 0;
+                    foreach (var e in Model.TopEventTypes)
+                    {
+                        <div class="event-row">
+                            <div class="event-name">@e.Name</div>
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-fill @fillClasses[idx % fillClasses.Length]"
+                                     style="width: @(e.Percent.ToString("0", inv))%; min-width: 36px;">@e.Percent.ToString("0")%</div>
+                                </div>
+                                <div class="event-count">@e.Count.ToString("N0") Bookings</div>
+                            </div>
+                            idx++;
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Chưa có booking nào.</p>
+                    }
             </div>
         </div>
 
@@ -480,17 +474,28 @@
 
 <!-- SCRIPTS KHỞI TẠO BIỂU ĐỒ BẰNG CHART.JS -->
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
+        var ChartJs = /** @type {any} */ (window).Chart;
+        if (!ChartJs) return;
 
-            // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
-            const ctxDonut = document.getElementById('statusChart').getContext('2d');
-            new Chart(ctxDonut, {
+        // Dữ liệu thật do DashboardController truyền sang
+        const statusLabels = @Html.Raw(statusLabelsJs);
+        const statusData = @Html.Raw(statusDataJs);
+        const statusColors = @Html.Raw(statusColorsJs);
+        const revenueLabels = @Html.Raw(revenueLabelsJs);
+        const venueSeries = @Html.Raw(venueSeriesJs);
+        const addOnSeries = @Html.Raw(addOnSeriesJs);
+
+        // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
+        var donutCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('statusChart'));
+        if (donutCanvas) {
+            new ChartJs(donutCanvas.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Confirmed', 'Pending', 'Cancelled'],
+                    labels: statusLabels,
                     datasets: [{
-                        data: [45, 30, 25],
-                        backgroundColor: ['#184A3B', '#F7C17F', '#DCE0FA'],
+                        data: statusData,
+                        backgroundColor: statusColors,
                         borderWidth: 0,
                         hoverOffset: 4
                     }]
@@ -505,17 +510,19 @@
                     }
                 }
             });
+        }
 
-            // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
-            const ctxBar = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctxBar, {
+        // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
+        var barCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('revenueChart'));
+        if (barCanvas) {
+            new ChartJs(barCanvas.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    labels: revenueLabels,
                     datasets: [
                         {
                             label: 'Venue Cost',
-                            data: [45000, 38000, 48000, 60000, 45000, 40000, 48000, 42000],
+                            data: venueSeries,
                             backgroundColor: '#DCE0FA',
                             borderRadius: 6,
                             barPercentage: 0.5,
@@ -523,7 +530,7 @@
                         },
                         {
                             label: 'Add-on Cost',
-                            data: [20000, 15000, 18000, 30000, 20000, 15000, 12000, 22000],
+                            data: addOnSeries,
                             backgroundColor: '#184A3B',
                             borderRadius: 6,
                             barPercentage: 0.5,
@@ -538,34 +545,32 @@
                         legend: { display: false },
                         tooltip: {
                             mode: 'index',
-                            intersect: false,
+                            intersect: false
                         }
                     },
                     scales: {
                         x: {
-                            grid: { display: false, drawBorder: false },
+                            grid: { display: false },
                             ticks: { color: '#738A7C', font: { size: 12 } }
                         },
                         y: {
-                            grid: {
-                                color: '#F4F7FB',
-                                drawBorder: false,
-                                borderDash: [5, 5]
-                            },
+                            grid: { color: '#F4F7FB' },
                             ticks: {
                                 color: '#738A7C',
                                 font: { size: 12 },
-                                stepSize: 15000,
+                                /** @param {number|string} value */
                                 callback: function (value) {
-                                    if (value === 0) return '0';
-                                    return (value / 1000) + 'K';
+                                    var n = Number(value);
+                                    if (n === 0) return '0';
+                                    if (n >= 1000000) return (n / 1000000) + 'M';
+                                    return (n / 1000) + 'K';
                                 }
                             },
-                            beginAtZero: true,
-                            max: 60000
+                            beginAtZero: true
                         }
                     }
                 }
             });
-        });
+        }
+    });
 </script>

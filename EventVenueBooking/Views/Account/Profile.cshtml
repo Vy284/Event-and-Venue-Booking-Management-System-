@@ -229,6 +229,14 @@
                                         {
                                             <span class="badge bg-secondary">Đã Hủy</span>
                                         }
+
+                                        <!-- Nút Xem chi tiết đơn đặt sảnh -->
+                                        <div class="mt-2">
+                                            <a href="@Url.Action("Details", "ClientBooking", new { id = b.BookingId })"
+                                               class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                                <i class="fa-regular fa-eye me-1"></i>Xem chi tiết
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

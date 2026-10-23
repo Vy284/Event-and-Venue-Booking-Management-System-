@@ -344,7 +344,7 @@ namespace EventVenueBooking.Controllers
         [CustomAuthorize]
         public ActionResult ChangeEmail()
         {
-            return View();
+            return RedirectToAction("Profile");
         }
 
         // POST: Account/ChangeEmail
@@ -357,7 +357,13 @@ namespace EventVenueBooking.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return View(model);
+                    string firstError = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .FirstOrDefault(m => !string.IsNullOrEmpty(m));
+
+                    TempData["ErrorMessage"] = firstError ?? "Thông tin thay đổi email không hợp lệ.";
+                    return RedirectToAction("Profile");
                 }
 
                 var user = GetCurrentUser();
@@ -372,10 +378,6 @@ namespace EventVenueBooking.Controllers
                     newEmail,
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    ModelState.AddModelError(
-                        "NewEmail",
-                        "Email mới phải khác email hiện tại.");
-
                     TempData["ErrorMessage"] = "Email mới phải khác email hiện tại.";
                     return RedirectToAction("Profile");
                 }
@@ -387,8 +389,8 @@ namespace EventVenueBooking.Controllers
 
                 if (emailExists)
                 {
-                    ModelState.AddModelError("NewEmail", "Email này đã được sử dụng.");
-                    return View(model);
+                    TempData["ErrorMessage"] = "Email này đã được sử dụng.";
+                    return RedirectToAction("Profile");
                 }
 
                 user.Email = newEmail;
@@ -425,7 +427,8 @@ namespace EventVenueBooking.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
-                return View("Error");
+                TempData["ErrorMessage"] = "Lỗi hệ thống, vui lòng thử lại!";
+                return RedirectToAction("Profile");
             }
         }
 

@@ -53,7 +53,7 @@ namespace EventVenueBooking.Controllers
             m.Capacity = venue.Capacity;
             m.EventTypes = db.EventTypes.Where(e => e.IsActive).ToList();
             m.AvailableAddOns = db.AddOnServices.Where(a => a.IsActive)
-                                        .OrderBy(a => a.Category).ThenBy(a => a.Name).ToList();
+                                  .OrderBy(a => a.Category).ThenBy(a => a.Name).ToList();
             return true;
         }
 
@@ -122,7 +122,7 @@ namespace EventVenueBooking.Controllers
 
             // Kiểm tra số khách, thứ tự thời gian, quá khứ, số lượng add-on
             string error = ValidateInput(model.GuestCount, model.Capacity,
-                                       model.EventStart.Value, model.EventEnd.Value, model.AddOns);
+                                         model.EventStart.Value, model.EventEnd.Value, model.AddOns);
             if (error != null)
             {
                 ModelState.AddModelError("", error);
@@ -228,6 +228,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // POST: ClientBooking/Cancel/5
+        // Khách chỉ được hủy khi booking còn Pending (chưa đặt cọc); đã cọc thì liên hệ nhân viên
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Cancel(int id, string reason)
@@ -235,10 +236,9 @@ namespace EventVenueBooking.Controllers
             var booking = GetOwnedBooking(id);
             if (booking == null) return HttpNotFound();
 
-            // Đã đặt cọc (Confirmed trở đi) thì khách không được hủy
             if (booking.Status != BookingStatuses.Pending)
             {
-                TempData["BookingError"] = "Booking đã đặt cọc nên không thể hủy. Vui lòng liên hệ nhân viên nếu cần hỗ trợ.";
+                TempData["BookingError"] = "Chỉ có thể hủy booking đang chờ đặt cọc. Nếu đã đặt cọc, vui lòng liên hệ nhân viên để được hỗ trợ.";
                 return RedirectToAction("Details", new { id });
             }
 

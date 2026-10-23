@@ -244,11 +244,14 @@
                         <i class='bx bx-home-alt'></i> Home
                     </a>
                 </li>
-                <li>
-                    <a href="@Url.Action("Index", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
-                        <i class='bx bx-grid-alt'></i> Dashboard
-                    </a>
-                </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a href="@Url.Action("Index", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
+                            <i class='bx bx-grid-alt'></i> Dashboard
+                        </a>
+                    </li>
+                }
                 <li>
                     <a href="@Url.Action("Calendar", "Dashboard")" class="nav-link @(ViewBag.ActiveMenu == "Calendar" ? "active" : "")">
                         <i class='bx bx-calendar'></i> Calendar

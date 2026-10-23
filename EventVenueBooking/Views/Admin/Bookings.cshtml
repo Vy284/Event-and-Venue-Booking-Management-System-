@@ -585,8 +585,8 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
-                                        <!-- Nút xuất PDF hợp đồng (trỏ đúng action ExportContractPdf) -->
-                                        <a class="btn-act btn-pdf" title="Xuất PDF hợp đồng" href="@Url.Action("ExportContractPdf", "Bookings", new { id = item.BookingId })" target="_blank">
+                                        <!-- Nút xuất hợp đồng (file thật là Word .doc) -->
+                                        <a class="btn-act btn-pdf" title="Xuất hợp đồng" href="@Url.Action("ExportContractPdf", "Bookings", new { id = item.BookingId })" target="_blank">
                                             <i class='bx bx-upload'></i>
                                         </a>
                                         <a class="btn-act btn-view" title="Chi tiết" href="@Url.Action("Details", "Bookings", new { id = item.BookingId })"><i class='bx bx-show'></i></a>
@@ -633,19 +633,33 @@
                 </div>
                 <div class="form-group">
                     <label>Venue (*)</label>
-                    <input type="text" class="form-control" name="VenueName" required placeholder="Ex: Grand Ballroom">
+                    @Html.DropDownList(
+                        "venueId",
+                        (SelectList)ViewBag.VenueId,
+                        "-- Select a venue --",
+                        new { @class = "form-control", required = "required" }
+                    )
                 </div>
                 <div class="form-group">
                     <label>Event Type (*)</label>
-                    <input type="text" class="form-control" name="EventType" required placeholder="Ex: Wedding">
+                    @Html.DropDownList(
+                        "eventTypeId",
+                        (SelectList)ViewBag.EventTypeId,
+                        "-- Select event type --",
+                        new { @class = "form-control", required = "required" }
+                    )
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="grid-column: span 2;">
                     <label>Guests (*)</label>
-                    <input type="number" class="form-control" name="Guests" required min="1" placeholder="Ex: 100">
+                    <input type="number" class="form-control" name="guestCount" required min="1" placeholder="Ex: 100">
                 </div>
                 <div class="form-group">
                     <label>Start Time (*)</label>
-                    <input type="datetime-local" class="form-control" name="BookingDate" required>
+                    <input type="datetime-local" class="form-control" name="eventStartDateTime" required>
+                </div>
+                <div class="form-group">
+                    <label>End Time (*)</label>
+                    <input type="datetime-local" class="form-control" name="eventEndDateTime" required>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label>Add-On Services</label>
@@ -664,10 +678,6 @@
                             <span style="font-size: 12px; color: var(--text-muted);">Không có dịch vụ đi kèm nào có sẵn.</span>
                         }
                     </div>
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Notes / Description</label>
-                    <textarea class="form-control" name="Notes" rows="3" placeholder="Additional details..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
