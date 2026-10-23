@@ -31,7 +31,7 @@
         </ol>
     </nav>
 
-    @* THÊM: hiển thị thông báo từ controller (đặt sảnh / thanh toán / hủy) *@
+    @* Hiển thị thông báo từ controller (đặt sảnh / thanh toán / hủy) *@
     @if (TempData["BookingSuccess"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -179,7 +179,7 @@
                     <div class="alert alert-success mb-0">Đã thanh toán đủ.</div>
                 }
 
-                @if (Model.Status == BookingStatuses.Pending || Model.Status == BookingStatuses.Confirmed)
+                @if (Model.Status == BookingStatuses.Pending)
                 {
                     <hr />
                     using (Html.BeginForm("Cancel", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post,

@@ -481,8 +481,14 @@
                             <div class="action-btns">
                                 @if (isAdmin)
                                 {
-                                    <!-- Nút Edit duy nhất gọn gàng, bấm vào mở popup chứa toàn bộ thông tin, role, status và đổi pass -->
-                                    <button type="button" class="btn-act btn-edit" title="Edit User" onclick="openEditModal('@user.UserId', '@user.FullName', '@user.Email', '@user.Phone', '@user.RoleCode', '@user.IsActive.ToString().ToLower()')">
+                                    <button type="button" class="btn-act btn-edit" title="Edit User"
+                                            data-id="@user.UserId"
+                                            data-fullname="@user.FullName"
+                                            data-email="@user.Email"
+                                            data-phone="@user.Phone"
+                                            data-role="@user.RoleCode"
+                                            data-active="@user.IsActive.ToString().ToLower()"
+                                            onclick="openEditModalFromButton(this)">
                                         <i class='bx bx-edit'></i>
                                     </button>
                                 }
@@ -568,6 +574,21 @@
     function openModal(id) { document.getElementById(id).classList.add('show'); }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
+    // currentRole = null: tạo mới (mở hết)
+    // currentRole = 0: Client -> chỉ còn option Client
+    // currentRole = 1/2: nhân viên -> bỏ option Client
+    function setRoleOptions(currentRole) {
+        var sel = document.getElementById('roleSelect');
+        Array.from(sel.options).forEach(function (o) {
+            var off = false;
+            if (currentRole !== null) {
+                off = (String(currentRole) === '0') ? (o.value !== '0') : (o.value === '0');
+            }
+            o.disabled = off;
+            o.hidden = off;
+        });
+    }
+
     function openCreateModal() {
         document.getElementById('modalTitle').innerText = "Add New User";
         document.getElementById('userForm').action = '@Url.Action("CreateClient", "Users")';
@@ -576,6 +597,7 @@
         document.getElementById('email').value = "";
         document.getElementById('password').value = "";
         document.getElementById('phone').value = "";
+        setRoleOptions(null); // tạo mới: chọn role nào cũng được
         document.getElementById('roleSelect').value = "0";
         document.getElementById('statusSelect').value = "true";
         document.getElementById('passwordLabel').innerText = "Password (*)";
@@ -591,13 +613,25 @@
         document.getElementById('fullName').value = fullName;
         document.getElementById('email').value = email;
         document.getElementById('phone').value = phone;
+        setRoleOptions(roleCode); // khóa role theo quy tắc Client / nhân viên
         document.getElementById('roleSelect').value = roleCode;
         document.getElementById('statusSelect').value = isActive;
-        document.getElementById('password').value = ""; // Để trống nếu không muốn đổi pass
+        document.getElementById('password').value = "";
         document.getElementById('passwordLabel').innerText = "New Password (Leave blank to keep current)";
         document.getElementById('password').placeholder = "Enter new password if needed";
         document.getElementById('saveButton').innerText = "Save Changes";
         openModal('userFormModal');
+    }
+
+    function openEditModalFromButton(btn) {
+        openEditModal(
+            btn.getAttribute('data-id'),
+            btn.getAttribute('data-fullname'),
+            btn.getAttribute('data-email'),
+            btn.getAttribute('data-phone'),
+            btn.getAttribute('data-role'),
+            btn.getAttribute('data-active')
+        );
     }
 
     function filterTable() {

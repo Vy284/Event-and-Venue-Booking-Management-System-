@@ -321,7 +321,7 @@
     }
 </style>
 
-<!-- 1. HÀNG TOP - CARDS THỐNG KÊ[cite: 28] -->
+<!-- 1. HÀNG TOP - CARDS THỐNG KÊ -->
 <div class="stats-grid">
     <div class="dash-card">
         <div class="stat-card-inner">
@@ -354,15 +354,15 @@
 
 <!-- NÚT EXPORT EXCEL NẰM Ở GIỮA 3 BOX TRÊN VÀ PHẦN DASHBOARD BÊN DƯỚI -->
 <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-    <a href="@Url.Action("ExportExcel", "Dashboard")" class="btn-export">
+    <a href="@Url.Action("ExportRevenueExcel", "Dashboard")" class="btn-export">
         <i class='bx bx-file' style="font-size: 16px;"></i> Export Excel
     </a>
 </div>
 
-<!-- 2. HÀNG CHÍNH - LƯỚI 2 CỘT[cite: 28] -->
+<!-- 2. HÀNG CHÍNH - LƯỚI 2 CỘT -->
 <div class="main-grid">
 
-    <!-- CỘT TRÁI: BOOKING STATUS[cite: 28] -->
+    <!-- CỘT TRÁI: BOOKING STATUS -->
     <div class="dash-card">
         <div class="card-header">
             <div class="card-title">Booking Status</div>
@@ -411,7 +411,7 @@
         </div>
     </div>
 
-    <!-- CỘT PHẢI[cite: 28] -->
+    <!-- CỘT PHẢI -->
     <div class="right-grid">
 
         <!-- BIỂU ĐỒ CỘT DOANH THU -->
@@ -478,94 +478,94 @@
     </div>
 </div>
 
-<!-- SCRIPTS KHỞI TẠO BIỂU ĐỒ BẰNG CHART.JS[cite: 28] -->
+<!-- SCRIPTS KHỞI TẠO BIỂU ĐỒ BẰNG CHART.JS -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
 
-        // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
-        const ctxDonut = document.getElementById('statusChart').getContext('2d');
-        new Chart(ctxDonut, {
-            type: 'doughnut',
-            data: {
-                labels: ['Confirmed', 'Pending', 'Cancelled'],
-                datasets: [{
-                    data: [45, 30, 25],
-                    backgroundColor: ['#184A3B', '#F7C17F', '#DCE0FA'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: true }
-                }
-            }
-        });
-
-        // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
-        const ctxBar = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-                datasets: [
-                    {
-                        label: 'Venue Cost',
-                        data: [45000, 38000, 48000, 60000, 45000, 40000, 48000, 42000],
-                        backgroundColor: '#DCE0FA',
-                        borderRadius: 6,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.5
-                    },
-                    {
-                        label: 'Add-on Cost',
-                        data: [20000, 15000, 18000, 30000, 20000, 15000, 12000, 22000],
-                        backgroundColor: '#184A3B',
-                        borderRadius: 6,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.5
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                    }
+            // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
+            const ctxDonut = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Confirmed', 'Pending', 'Cancelled'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: ['#184A3B', '#F7C17F', '#DCE0FA'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
                 },
-                scales: {
-                    x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { color: '#738A7C', font: { size: 12 } }
-                    },
-                    y: {
-                        grid: {
-                            color: '#F4F7FB',
-                            drawBorder: false,
-                            borderDash: [5, 5]
-                        },
-                        ticks: {
-                            color: '#738A7C',
-                            font: { size: 12 },
-                            stepSize: 15000,
-                            callback: function (value) {
-                                if (value === 0) return '0';
-                                return (value / 1000) + 'K';
-                            }
-                        },
-                        beginAtZero: true,
-                        max: 60000
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
                     }
                 }
-            }
+            });
+
+            // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
+            const ctxBar = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    datasets: [
+                        {
+                            label: 'Venue Cost',
+                            data: [45000, 38000, 48000, 60000, 45000, 40000, 48000, 42000],
+                            backgroundColor: '#DCE0FA',
+                            borderRadius: 6,
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.5
+                        },
+                        {
+                            label: 'Add-on Cost',
+                            data: [20000, 15000, 18000, 30000, 20000, 15000, 12000, 22000],
+                            backgroundColor: '#184A3B',
+                            borderRadius: 6,
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#738A7C', font: { size: 12 } }
+                        },
+                        y: {
+                            grid: {
+                                color: '#F4F7FB',
+                                drawBorder: false,
+                                borderDash: [5, 5]
+                            },
+                            ticks: {
+                                color: '#738A7C',
+                                font: { size: 12 },
+                                stepSize: 15000,
+                                callback: function (value) {
+                                    if (value === 0) return '0';
+                                    return (value / 1000) + 'K';
+                                }
+                            },
+                            beginAtZero: true,
+                            max: 60000
+                        }
+                    }
+                }
+            });
         });
-    });
 </script>
