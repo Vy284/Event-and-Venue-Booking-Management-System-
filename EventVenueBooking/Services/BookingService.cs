@@ -40,11 +40,10 @@ namespace EventVenueBooking.Services
         public const byte Pending = 0, Completed = 1, Refunded = 2;
     }
 
-    // THÊM: danh sách phương thức thanh toán hợp lệ, dùng chung cho mọi đường ghi Payment
+    // Danh sách phương thức thanh toán hợp lệ (Đã thêm "Cash")
     public static class PaymentMethods
     {
-        // Nếu form admin còn dùng "Cash" thì thêm vào mảng này
-        public static readonly string[] All = { "Bank Transfer", "Credit Card", "E-Wallet" };
+        public static readonly string[] All = { "Cash", "Bank Transfer", "Credit Card", "E-Wallet" };
 
         // Trả về tên chuẩn nếu hợp lệ (không phân biệt hoa thường), ngược lại trả về null
         public static string Normalize(string method)
@@ -94,7 +93,7 @@ namespace EventVenueBooking.Services
     // ===== Service =====
     public class BookingService
     {
-        public const decimal DepositRate = 0.30m;   // tỉ lệ cọc: đã chốt với nhóm (30%)
+        public const decimal DepositRate = 0.30m;   // tỉ lệ cọc: 30%
 
         private readonly ApplicationDbContext _db;
 
@@ -122,7 +121,7 @@ namespace EventVenueBooking.Services
                 b.BookingId != exclude);
         }
 
-        // 3. Tính tiền (không lưu DB, dùng được cho trang xem trước giá)
+        // 3. Tính tiền (không lưu DB, dùng cho trang xem trước giá)
         public PriceQuote CalculatePrice(Venue venue, DateTime start, DateTime end, IEnumerable<AddOnRequest> addOns)
         {
             if (end <= start)
@@ -158,7 +157,7 @@ namespace EventVenueBooking.Services
                     AddOnId = svc.AddOnId,
                     Name = svc.Name,
                     Quantity = r.Quantity,
-                    UnitPrice = svc.Price,          // giá hiện tại lấy từ DB, không tin giá từ form
+                    UnitPrice = svc.Price,
                     Subtotal = svc.Price * r.Quantity
                 });
             }
@@ -177,20 +176,16 @@ namespace EventVenueBooking.Services
             if (guestCount < 1)
                 throw new BookingException("Số lượng khách phải lớn hơn 0.");
 
-            // SỬA: ClientUserId phải là tài khoản Client (Role = 0), còn hoạt động
             var client = _db.Users.Find(clientUserId);
             if (client == null || !client.IsActive || client.Role != 0)
                 throw new BookingException("Tài khoản khách hàng không hợp lệ.");
 
-            // SỬA: EventType phải còn hoạt động
             var eventType = _db.EventTypes.Find(eventTypeId);
             if (eventType == null || !eventType.IsActive)
                 throw new BookingException("Loại sự kiện không hợp lệ hoặc đã ngừng sử dụng.");
 
             using (var tx = _db.Database.BeginTransaction())
             {
-                // Khóa dòng Venue để 2 người đặt cùng lúc phải xếp hàng.
-                // "Venues" là tên bảng EF tạo mặc định; sai thì sửa theo DB.
                 _db.Database.ExecuteSqlCommand(
                     "SELECT VenueId FROM Venues WITH (UPDLOCK, ROWLOCK) WHERE VenueId = @p0", venueId);
 
@@ -216,7 +211,6 @@ namespace EventVenueBooking.Services
                     EventEndDateTime = end,
                     Status = BookingStatuses.Pending,
 
-                    // Snapshot giá tại thời điểm đặt
                     VenueRateAtBooking = quote.VenueRate,
                     RentalUnitAtBooking = quote.RentalUnit,
                     RentalQuantity = quote.RentalQuantity,
@@ -244,10 +238,7 @@ namespace EventVenueBooking.Services
             }
         }
 
-        // 5. Ghi nhận thanh toán (cọc = DepositRate * TotalCost; Final = phần còn lại)
-        //    Có transaction + khóa dòng booking (chống ghi trùng khi bấm 2 lần),
-        //    chặn booking Completed, làm tròn tiền cọc chuẩn.
-        //    SỬA: phương thức thanh toán kiểm tra theo danh sách cố định PaymentMethods.
+        // 5. Ghi nhận thanh toán
         public Payment RecordPayment(int bookingId, byte paymentType, string method, int recordedByUserId)
         {
             method = PaymentMethods.Normalize(method);
@@ -256,8 +247,6 @@ namespace EventVenueBooking.Services
 
             using (var tx = _db.Database.BeginTransaction())
             {
-                // Khóa dòng booking để bấm 2 lần / 2 request song song không ghi trùng.
-                // "Bookings" là tên bảng EF tạo mặc định; sai thì sửa theo DB.
                 _db.Database.ExecuteSqlCommand(
                     "SELECT BookingId FROM Bookings WITH (UPDLOCK, ROWLOCK) WHERE BookingId = @p0", bookingId);
 
@@ -299,7 +288,7 @@ namespace EventVenueBooking.Services
                     Amount = amount,
                     PaymentType = paymentType,
                     PaymentMethod = method,
-                    PaymentStatus = PaymentStatuses.Completed,   // thanh toán giả lập: coi như thành công ngay
+                    PaymentStatus = PaymentStatuses.Completed,
                     PaymentDate = DateTime.Now,
                     RecordedByUserId = recordedByUserId
                 };
@@ -318,7 +307,7 @@ namespace EventVenueBooking.Services
             }
         }
 
-        // 6. Hủy booking (hủy thì các khoản đã thu chuyển Refunded - chốt chính sách với nhóm)
+        // 6. Hủy booking
         public void CancelBooking(int bookingId, int cancelledByUserId, string reason)
         {
             var booking = _db.Bookings.Include(b => b.Payments).FirstOrDefault(b => b.BookingId == bookingId);
@@ -351,6 +340,19 @@ namespace EventVenueBooking.Services
                 (booking.Status == BookingStatuses.InProgress && newStatus == BookingStatuses.Completed);
             if (!allowed)
                 throw new BookingException("Không thể chuyển trạng thái booking theo cách này.");
+
+            // Kiểm tra nghiệp vụ: Bắt buộc phải có khoản cọc hoàn thành khi chuyển từ Pending sang Confirmed
+            if (booking.Status == BookingStatuses.Pending && newStatus == BookingStatuses.Confirmed)
+            {
+                bool hasCompletedDeposit = booking.Payments != null && booking.Payments.Any(p =>
+                    p.PaymentType == PaymentTypes.Deposit &&
+                    p.PaymentStatus == PaymentStatuses.Completed);
+
+                if (!hasCompletedDeposit)
+                {
+                    throw new BookingException("Không thể chuyển sang trạng thái Đã xác nhận (Confirmed) vì khách hàng chưa hoàn thành thanh toán tiền cọc.");
+                }
+            }
 
             if (newStatus == BookingStatuses.Completed)
             {

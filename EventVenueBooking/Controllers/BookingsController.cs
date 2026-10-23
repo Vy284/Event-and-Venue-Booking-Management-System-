@@ -225,13 +225,32 @@ namespace EventVenueBooking.Controllers
             return View(booking);
         }
 
-        // Đổi trạng thái
+        // Đổi trạng thái (Đã được bổ sung kiểm tra bắt buộc thanh toán tiền cọc)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ChangeStatus(int id, byte status, string returnTo = null)
         {
             try
             {
+                var booking = db.Bookings.Include(b => b.Payments).FirstOrDefault(b => b.BookingId == id);
+                if (booking == null)
+                {
+                    return HttpNotFound();
+                }
+
+                // Kiểm tra nghiệp vụ: Nếu chuyển từ Pending sang Confirmed thủ công, bắt buộc phải có tiền cọc hoàn thành
+                if (booking.Status == BookingStatuses.Pending && status == BookingStatuses.Confirmed)
+                {
+                    bool hasCompletedDeposit = booking.Payments != null && booking.Payments.Any(p =>
+                        p.PaymentType == PaymentTypes.Deposit &&
+                        p.PaymentStatus == PaymentStatuses.Completed);
+
+                    if (!hasCompletedDeposit)
+                    {
+                        throw new BookingException("Không thể chuyển sang trạng thái Đã xác nhận (Confirmed) vì khách hàng chưa hoàn thành thanh toán tiền cọc.");
+                    }
+                }
+
                 new BookingService(db).ChangeStatus(id, status, CurrentUserId());
                 TempData["SuccessMessage"] = "Đã cập nhật trạng thái booking.";
             }
