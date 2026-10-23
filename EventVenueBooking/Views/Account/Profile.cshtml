@@ -86,37 +86,56 @@
                     <h5 class="fw-bold mb-0" style="color: #3b2e27;"><i class="fa-regular fa-id-card me-2"></i>Chi Tiết Lý Lịch</h5>
                 </div>
 
+
                 <form action="@Url.Action("UpdateProfile", "Account")" method="post">
                     @Html.AntiForgeryToken()
 
                     <div class="mb-3">
                         <label class="info-label">Họ và Tên</label>
-                        <input type="text" name="fullName" class="form-control rounded-3" value="@Model.FullName" required />
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="info-label">Số Điện Thoại</label>
-                        <input type="tel" name="phone" class="form-control rounded-3" value="@Model.Phone" placeholder="Chưa cập nhật SĐT" />
+                        <input type="text" name="fullName"
+                               class="form-control rounded-3"
+                               value="@Model.FullName" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="info-label">Địa chỉ Email hiện tại (Chỉ đọc)</label>
-                        <input type="email" class="form-control rounded-3 bg-light text-muted" value="@Model.Email" readonly />
+                        <input type="email"
+                               class="form-control rounded-3 bg-light text-muted"
+                               value="@Model.Email" readonly />
                     </div>
 
-                    @using (Html.BeginForm("ChangeEmail", "Account", FormMethod.Post))
-                    {
-                        @Html.AntiForgeryToken()
-                        <div class="mb-3">
-                            <label class="info-label">Địa chỉ Email Mới</label>
-                            <input type="email" name="newEmail" class="form-control rounded-3 py-2 fs-6" placeholder="nhapemailmoi@example.com" required />
-                        </div>
-                    }
+                    <div class="mb-4">
+                        <label class="info-label">Số Điện Thoại</label>
+                        <input type="tel" name="phone"
+                               class="form-control rounded-3"
+                               value="@Model.Phone"
+                               placeholder="Chưa cập nhật SĐT" />
+                    </div>
 
-                        <button type="submit" class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium shadow-sm">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
-                        </button>
-                    </form>
+                    <button type="submit"
+                            class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thay Đổi
+                    </button>
+                </form>
+
+                <hr class="my-4" />
+
+                <form action="@Url.Action("ChangeEmail", "Account")" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="info-label">Địa chỉ Email Mới</label>
+                        <input type="email" name="newEmail"
+                               class="form-control rounded-3 py-2 fs-6"
+                               placeholder="nhapemailmoi@example.com" required />
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-brown text-white w-100 rounded-pill py-2 fw-medium shadow-sm">
+                        <i class="fa-solid fa-envelope me-1"></i> Cập Nhật Email
+                    </button>
+                </form>
+
             </div>
 
             <!-- Form đổi mật khẩu -->
@@ -131,21 +150,25 @@
 
                     <div class="mb-3">
                         <label class="info-label">Mật Khẩu Hiện Tại</label>
-                        <input type="password" name="currentPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                        <input type="password" name="CurrentPassword"
+                               class="form-control rounded-3" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="info-label">Mật Khẩu Mới</label>
-                        <input type="password" name="newPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                        <input type="password" name="NewPassword"
+                               class="form-control rounded-3" required />
                     </div>
 
                     <div class="mb-4">
                         <label class="info-label">Xác Nhận Mật Khẩu Mới</label>
-                        <input type="password" name="confirmPassword" class="form-control rounded-3 py-2 fs-6" placeholder="••••••••" required />
+                        <input type="password" name="ConfirmPassword"
+                               class="form-control rounded-3" required />
                     </div>
 
-                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-medium shadow-sm">
-                        <i class="fa-solid fa-key me-1"></i> Cập Nhật Mật Khẩu
+                    <button type="submit"
+                            class="btn btn-dark w-100 rounded-pill py-2 fw-medium">
+                        <i class="fa-solid fa-key me-1"></i>Cập Nhật Mật Khẩu
                     </button>
                 }
             </div>

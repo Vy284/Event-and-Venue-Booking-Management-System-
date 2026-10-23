@@ -366,6 +366,21 @@ namespace EventVenueBooking.Controllers
 
                 string newEmail = model.NewEmail.Trim();
 
+                // Kiểm tra email mới có giống email hiện tại không
+                if (string.Equals(
+                    user.Email,
+                    newEmail,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError(
+                        "NewEmail",
+                        "Email mới phải khác email hiện tại.");
+
+                    TempData["ErrorMessage"] = "Email mới phải khác email hiện tại.";
+                    return RedirectToAction("Profile");
+                }
+
+                // Kiểm tra email đã được tài khoản khác sử dụng chưa
                 bool emailExists = db.Users.Any(u =>
                     u.Email == newEmail &&
                     u.UserId != user.UserId);
