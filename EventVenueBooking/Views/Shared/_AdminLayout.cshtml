@@ -261,7 +261,7 @@
                 </li>
 
                 <li>
-                    <a href="@Url.Action("Index", "EventTypes")" class="nav-link ">
+                    <a href="" class="nav-link @(ViewBag.ActiveMenu == "EventTypes" ? "active" : "")">
                         <i class='bx bx-calendar-event'></i> Event Types
                     </a>
                 </li>
@@ -271,12 +271,12 @@
                     </a>
                 </li>
                 <li>
-                    <a href="@Url.Action("Index", "VenueTypes")" class="nav-link ">
+                    <a href="" class="nav-link @(ViewBag.ActiveMenu == "VenueTypes" ? "active" : "")">
                         <i class='bx bx-category'></i> Venue Types
                     </a>
                 </li>
                 <li>
-                    <a href="@Url.Action("Index", "VenueImages")" class="nav-link ">
+                    <a href="" class="nav-link @(ViewBag.ActiveMenu == "VenueImages" ? "active" : "")">
                         <i class='bx bx-images'></i> Venue Images
                     </a>
                 </li>
