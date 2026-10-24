@@ -11,7 +11,7 @@ using System.Web.Mvc;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class VenueTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -40,6 +40,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: VenueTypes/Create
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
@@ -49,6 +50,7 @@ namespace EventVenueBooking.Controllers
         // SỬA: thêm [Bind], kiểm tra trùng tên (TypeName có unique index)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Create([Bind(Include = "TypeName,IsActive")] VenueType venueType)
         {
             if (ModelState.IsValid)
@@ -70,6 +72,7 @@ namespace EventVenueBooking.Controllers
         }
 
         //Get/Edit
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -90,6 +93,7 @@ namespace EventVenueBooking.Controllers
         // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa, kiểm tra trùng tên
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit([Bind(Include = "VenueTypeId,TypeName,IsActive")] VenueType venueType)
         {
             if (ModelState.IsValid)
@@ -118,6 +122,7 @@ namespace EventVenueBooking.Controllers
         }
 
         //delete
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -129,6 +134,7 @@ namespace EventVenueBooking.Controllers
         // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult DeleteConfirm(int id)
         {
             VenueType venueType = db.VenueTypes.Find(id);
