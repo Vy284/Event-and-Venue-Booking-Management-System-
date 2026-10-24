@@ -95,13 +95,18 @@ namespace EventVenueBooking.Controllers
                 Capacity = v.Capacity,
                 RentalRate = v.RentalRate,
                 RentalUnit = v.RentalUnit,
-                ImageUrl = db.VenueImages.FirstOrDefault(img => img.VenueId == v.VenueId && img.IsPrimary).ImageUrl
+                // Đã sửa lại phần lấy ảnh đúng chuẩn theo từng sảnh (Ưu tiên IsPrimary, sau đó đến ảnh bất kỳ, cuối cùng là ảnh mặc định)
+                ImageUrl = v.VenueImages
+                            .Where(img => img.IsPrimary)
+                            .Select(img => img.ImageUrl)
+                            .FirstOrDefault()
+                           ?? v.VenueImages.Select(img => img.ImageUrl).FirstOrDefault()
                            ?? "/Content/images/bg_landingpage.jpg"
             }).ToList();
 
             ViewBag.VenueSelectList = new SelectList(db.Venues.Where(v => v.Status == 1).Select(v => new { v.VenueId, v.Name }), "VenueId", "Name");
 
-            // Dịch vụ đi kèm đang hoạt động, cho Index.cshtml (thay cho việc gọi db trực tiếp trong View)
+            // Dịch vụ đi kèm đang hoạt động, cho Index.cshtml
             ViewBag.HomeAddOns = db.AddOnServices
                 .Where(a => a.IsActive)
                 .OrderBy(a => a.Category)
@@ -129,7 +134,6 @@ namespace EventVenueBooking.Controllers
                 bookingQuery = bookingQuery.Where(b => b.VenueId == venueId.Value);
             }
 
-            // Lấy dữ liệu ra trước rồi mới format ngày (ToString không dịch được sang SQL)
             var raw = bookingQuery
                 .Select(b => new
                 {
@@ -140,7 +144,6 @@ namespace EventVenueBooking.Controllers
                 })
                 .ToList();
 
-            // Chỉ trả thông tin tối thiểu, KHÔNG trả tên/SĐT khách vì trang này công khai
             var events = raw.Select(b => new
             {
                 id = b.BookingId,

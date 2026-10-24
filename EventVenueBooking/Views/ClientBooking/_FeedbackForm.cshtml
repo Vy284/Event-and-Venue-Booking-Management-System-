@@ -1,0 +1,91 @@
+﻿@* Partial: khung đánh giá của khách cho một booking. Model = Booking.
+    Dùng trong Views/ClientBooking/Details.cshtml:  @Html.Partial("_FeedbackForm", Model)
+    Chỉ hiện khi booking đã Completed (Status = 3). *@
+@model EventVenueBooking.Entities.Booking
+
+@{
+    var existingFeedback = ViewBag.ExistingFeedback as EventVenueBooking.Entities.Feedback;
+}
+
+@if (Model.Status == 3)
+{
+    <style>
+        .star-rating-input {
+            display: inline-flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+            .star-rating-input input {
+                position: absolute;
+                opacity: 0;
+                width: 1px;
+                height: 1px;
+            }
+
+            .star-rating-input label {
+                font-size: 1.8rem;
+                color: #cfcfcf;
+                cursor: pointer;
+                padding: 0 3px;
+                margin: 0;
+            }
+
+                .star-rating-input input:checked ~ label,
+                .star-rating-input label:hover,
+                .star-rating-input label:hover ~ label {
+                    color: #ffc107;
+                }
+
+            .star-rating-input input:focus-visible + label {
+                outline: 2px solid #8c6239;
+                border-radius: 4px;
+            }
+    </style>
+
+    <div id="feedback-section" class="bg-white p-4 rounded-4 shadow-sm mt-4">
+        <h5 class="fw-bold mb-3" style="color: var(--primary-brown);">
+            <i class="fa-regular fa-star-half-stroke me-2"></i>Đánh giá trải nghiệm
+        </h5>
+
+        @if (existingFeedback != null)
+        {
+            <div class="text-warning mb-2">
+                @for (int s = 1; s <= 5; s++)
+                {
+                    <i class="@(s <= existingFeedback.Rating ? "fa-solid" : "fa-regular") fa-star"></i>
+                }
+                <span class="text-muted small ms-2">Gửi ngày @existingFeedback.CreatedAt.ToString("dd/MM/yyyy")</span>
+            </div>
+            if (!string.IsNullOrWhiteSpace(existingFeedback.Comment))
+            {
+                <p class="mb-2 text-secondary">@existingFeedback.Comment</p>
+            }
+            <p class="small text-muted mb-0">Cảm ơn bạn đã đánh giá sảnh @(Model.Venue != null ? Model.Venue.Name : "")!</p>
+        }
+        else
+        {
+            using (Html.BeginForm("SubmitFeedback", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                <p class="text-muted small mb-2">Bạn thấy sảnh @(Model.Venue != null ? Model.Venue.Name : "") thế nào? Đánh giá của bạn sẽ hiện trên trang chi tiết sảnh.</p>
+
+                <div class="star-rating-input mb-3" role="radiogroup" aria-label="Số sao đánh giá">
+                    @for (int s = 5; s >= 1; s--)
+                    {
+                        <input type="radio" name="rating" id="feedback-rating-@s" value="@s" required />
+                        <label for="feedback-rating-@s" title="@s sao"><i class="fa-solid fa-star"></i></label>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <textarea name="comment" class="form-control" rows="3" maxlength="1000"
+                              placeholder="Chia sẻ cảm nhận của bạn (không bắt buộc)"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-brown px-4">Gửi đánh giá</button>
+            }
+        }
+    </div>
+}

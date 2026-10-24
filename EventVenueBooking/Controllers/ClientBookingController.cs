@@ -53,7 +53,7 @@ namespace EventVenueBooking.Controllers
             m.Capacity = venue.Capacity;
             m.EventTypes = db.EventTypes.Where(e => e.IsActive).ToList();
             m.AvailableAddOns = db.AddOnServices.Where(a => a.IsActive)
-                                  .OrderBy(a => a.Category).ThenBy(a => a.Name).ToList();
+                                          .OrderBy(a => a.Category).ThenBy(a => a.Name).ToList();
             return true;
         }
 
@@ -204,6 +204,10 @@ namespace EventVenueBooking.Controllers
         {
             var booking = GetOwnedBooking(id);
             if (booking == null) return HttpNotFound();
+
+            // THÊM: feedback đã gửi cho booking này (nếu có), để View hiện đánh giá thay vì form
+            ViewBag.ExistingFeedback = db.Feedbacks.FirstOrDefault(f => f.BookingId == id);
+
             return View(booking);
         }
 
@@ -254,6 +258,59 @@ namespace EventVenueBooking.Controllers
             {
                 TempData["BookingError"] = ex.Message;
             }
+            return RedirectToAction("Details", new { id });
+        }
+
+        // THÊM: POST ClientBooking/SubmitFeedback/5
+        // Chỉ khách sở hữu booking, booking đã Completed, mỗi booking 1 đánh giá
+        // (Feedback.BookingId còn có unique index ở DB làm lớp chặn cuối).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SubmitFeedback(int id, int? rating, string comment)
+        {
+            var booking = GetOwnedBooking(id);
+            if (booking == null) return HttpNotFound();
+
+            if (booking.Status != BookingStatuses.Completed)
+            {
+                TempData["BookingError"] = "Chỉ có thể đánh giá sau khi booking đã hoàn tất.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            if (rating == null || rating < 1 || rating > 5)
+            {
+                TempData["BookingError"] = "Vui lòng chọn số sao từ 1 đến 5.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            if (db.Feedbacks.Any(f => f.BookingId == id))
+            {
+                TempData["BookingError"] = "Bạn đã đánh giá booking này rồi.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            comment = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+            if (comment != null && comment.Length > 1000) comment = comment.Substring(0, 1000);
+
+            db.Feedbacks.Add(new Feedback
+            {
+                BookingId = id,
+                Rating = (byte)rating.Value,
+                Comment = comment,
+                CreatedAt = DateTime.Now
+            });
+
+            try
+            {
+                db.SaveChanges();
+                TempData["BookingSuccess"] = "Cảm ơn bạn đã gửi đánh giá!";
+            }
+            catch (System.Data.Entity.Infrastructure.DbUpdateException)
+            {
+                // Hai request cùng lúc: unique index trên BookingId chặn bản thứ hai
+                TempData["BookingError"] = "Không thể lưu đánh giá (có thể booking này đã được đánh giá).";
+            }
+
             return RedirectToAction("Details", new { id });
         }
 

@@ -31,7 +31,6 @@
         </ol>
     </nav>
 
-    @* Hiển thị thông báo từ controller (đặt sảnh / thanh toán / hủy) *@
     @if (TempData["BookingSuccess"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -70,7 +69,12 @@
                 }
             </div>
 
-            <!-- Chi tiết giá (đã chốt tại thời điểm đặt) -->
+            <!-- Khung Đánh giá & Phản hồi (Feedback Partial) -->
+            <div class="mb-4">
+                @Html.Partial("_FeedbackForm", Model)
+            </div>
+
+            <!-- Chi tiết giá -->
             <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
                 <h5 class="fw-bold mb-3" style="color: var(--primary-brown);">Chi tiết giá</h5>
                 <table class="table table-sm mb-0">
@@ -145,6 +149,7 @@
                 {
                     <h6 class="fw-bold">Đặt cọc @((int)(BookingService.DepositRate * 100))%</h6>
                     <p class="small text-muted">Cần đặt cọc @depositAmount.ToString("N0") VNĐ để xác nhận booking.</p>
+
                     using (Html.BeginForm("Pay", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post))
                     {
                         @Html.AntiForgeryToken()
@@ -161,6 +166,7 @@
                 else if (!isCancelled && Model.Status == BookingStatuses.Confirmed && remaining > 0)
                 {
                     <h6 class="fw-bold">Thanh toán phần còn lại</h6>
+
                     using (Html.BeginForm("Pay", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post))
                     {
                         @Html.AntiForgeryToken()
@@ -182,6 +188,7 @@
                 @if (Model.Status == BookingStatuses.Pending)
                 {
                     <hr />
+
                     using (Html.BeginForm("Cancel", "ClientBooking", new { id = Model.BookingId }, FormMethod.Post,
                         new { onsubmit = "return confirm('Bạn chắc chắn muốn hủy booking này?');" }))
                     {

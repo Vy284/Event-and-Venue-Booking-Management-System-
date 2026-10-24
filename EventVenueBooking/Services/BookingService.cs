@@ -271,8 +271,13 @@ namespace EventVenueBooking.Services
                 }
                 else if (paymentType == PaymentTypes.Final)
                 {
-                    if (booking.Status == BookingStatuses.Pending)
+                    bool hasCompletedDeposit = booking.Payments != null && booking.Payments.Any(p =>
+                        p.PaymentType == PaymentTypes.Deposit &&
+                        p.PaymentStatus == PaymentStatuses.Completed);
+
+                    if (!hasCompletedDeposit)
                         throw new BookingException("Cần đặt cọc trước khi thanh toán phần còn lại.");
+
                     amount = booking.TotalCost - paid;
                     if (amount <= 0)
                         throw new BookingException("Booking đã thanh toán đủ.");

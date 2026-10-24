@@ -8,7 +8,7 @@ using System.Data.Entity;
 
 namespace EventVenueBooking.Controllers
 {
-    [AllowAnonymous]                                // THÊM: khách chưa đăng nhập vẫn xem được sảnh và lịch
+    [AllowAnonymous] // THÊM: khách chưa đăng nhập vẫn xem được sảnh và lịch
     public class VenueController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -34,6 +34,18 @@ namespace EventVenueBooking.Controllers
             ViewBag.Images = db.VenueImages.Where(img => img.VenueId == id).ToList();
             ViewBag.AddOnServices = db.AddOnServices.Where(a => a.IsActive).ToList();
 
+            // THÊM: đánh giá của khách cho sảnh này. Feedback gắn với Booking nên lọc theo Booking.VenueId.
+            // Điểm trung bình và số đánh giá tính trên TẤT CẢ feedback; danh sách chỉ hiện 20 đánh giá mới nhất.
+            var venueFeedbacks = db.Feedbacks.Where(f => f.Booking.VenueId == id.Value);
+            int reviewCount = venueFeedbacks.Count();
+            ViewBag.ReviewCount = reviewCount;
+            ViewBag.AverageRating = reviewCount > 0 ? venueFeedbacks.Average(f => (double)f.Rating) : 0.0;
+            ViewBag.Feedbacks = venueFeedbacks
+                .Include(f => f.Booking.ClientUser)
+                .OrderByDescending(f => f.CreatedAt)
+                .Take(20)
+                .ToList();
+
             return View(venue);
         }
 
@@ -42,8 +54,6 @@ namespace EventVenueBooking.Controllers
         public JsonResult GetVenueBookings(int venueId)
         {
             // Lấy tất cả các Booking của sảnh này ngoại trừ các đơn đã bị Hủy (Status = 4)
-            // SỬA: lấy dữ liệu về bộ nhớ (ToList) rồi mới định dạng ngày. EF không dịch được
-            // DateTime.ToString("yyyy-MM-dd...") sang SQL nên bản cũ sẽ báo lỗi khi chạy.
             var bookings = db.Bookings
                 .Where(b => b.VenueId == venueId && b.Status != 4)
                 .Select(b => new { b.EventStartDateTime, b.EventEndDateTime })

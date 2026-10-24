@@ -5,6 +5,13 @@
     var images = ViewBag.Images as List<EventVenueBooking.Entities.VenueImage>;
     var addOns = ViewBag.AddOnServices as List<EventVenueBooking.Entities.AddOnService>;
 
+    // THÊM: đánh giá của khách cho sảnh này (do VenueController.Details nạp)
+    var feedbacks = ViewBag.Feedbacks as List<EventVenueBooking.Entities.Feedback>;
+    int reviewCount = ViewBag.ReviewCount ?? 0;
+    double averageRating = ViewBag.AverageRating ?? 0.0;
+    // Làm tròn tới 0.5 để vẽ nửa sao
+    double ratingRounded = Math.Round(averageRating * 2, MidpointRounding.AwayFromZero) / 2.0;
+
     // Lấy ảnh trong images nếu không tìm được ảnh hiển thị
     var primaryImage = images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
                ?? images?.FirstOrDefault()?.ImageUrl
@@ -141,7 +148,7 @@
                 <div id="venue-calendar" style="min-height: 400px;"></div>
             </div>
 
-            <!-- Facilities (SỬA: dùng VenueFacilities -> Facility) -->
+            <!-- Facilities -->
             <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
                 <h4 class="fw-bold mb-3" style="color: var(--primary-brown);">Trang thiết bị & Tiện ích</h4>
                 <div class="row g-3">
@@ -194,19 +201,64 @@
                         <i class="fa-regular fa-star-half-stroke me-2"></i>Đánh giá & Phản hồi từ khách hàng
                     </h4>
                     <div class="text-warning fs-6">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star-half-stroke"></i>
-                        <span class="text-dark fw-bold ms-1">0.0 / 5</span>
+                        @for (int s = 1; s <= 5; s++)
+                        {
+                            if (ratingRounded >= s)
+                            {
+                                <i class="fa-solid fa-star"></i>
+                            }
+                            else if (ratingRounded >= s - 0.5)
+                            {
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-star"></i>
+                            }
+                        }
+                        <span class="text-dark fw-bold ms-1">@averageRating.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) / 5</span>
+                        <span class="text-muted small ms-1">(@reviewCount đánh giá)</span>
                     </div>
                 </div>
 
-                <div class="d-flex flex-column gap-3">
-                    <div class="py-3">
-                        <p class="text-muted fs-5 mb-0">Hiện tại chưa có đánh giá nào cho sảnh này.</p>
-                    </div>
+                <div class="d-flex flex-column">
+                    @if (feedbacks != null && feedbacks.Any())
+                    {
+                        foreach (var fb in feedbacks)
+                        {
+                            string reviewer = (fb.Booking != null && fb.Booking.ClientUser != null && !string.IsNullOrWhiteSpace(fb.Booking.ClientUser.FullName))
+                                ? fb.Booking.ClientUser.FullName.Trim()
+                                : "Khách hàng";
+                            string initial = reviewer.Substring(0, 1).ToUpper();
+
+                            <div class="py-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
+                                         style="width: 40px; height: 40px; background-color: var(--primary-brown, #4a3b32);">@initial</div>
+                                        <div>
+                                            <div class="fw-bold">@reviewer</div>
+                                            <div class="small text-muted">@fb.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                        </div>
+                                        <div class="ms-auto text-warning small">
+                                            @for (int s = 1; s <= 5; s++)
+                                            {
+                                                <i class="@(s <= fb.Rating ? "fa-solid" : "fa-regular") fa-star"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(fb.Comment))
+                                    {
+                                        <p class="mb-0 text-secondary">@fb.Comment</p>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="py-3">
+                                <p class="text-muted fs-5 mb-0">Hiện tại chưa có đánh giá nào cho sảnh này.</p>
+                            </div>
+                        }
                 </div>
             </div>
 
@@ -224,7 +276,6 @@
                 <hr />
 
                 <div class="d-grid gap-3 mt-4">
-                    @* SỬA: trỏ sang ClientBookingController *@
                     <a href="javascript:void(0);" id="btn-book-now" class="btn btn-brown py-3 fs-6 fw-bold shadow">
                         <i class="fa-regular fa-calendar-check me-2"></i>ĐẶT SẢNH NGAY
                     </a>
@@ -260,7 +311,6 @@
                 week: 'Tuần'
             },
             locale: 'vi',
-            // Load các đơn đặt của sảnh này từ Controller API
             events: '/Venue/GetVenueBookings?venueId=' + venueId
         });
 
@@ -279,7 +329,6 @@
                 if (!isUserLoggedIn) {
                     showCustomToast("Vui lòng đăng nhập trước khi tiến hành đặt sảnh!");
 
-                    // Modal Login
                     var authModalEl = document.getElementById('authModal');
                     if (authModalEl) {
                         var authModal = new bootstrap.Modal(authModalEl);
