@@ -12,7 +12,7 @@ using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class EventTypesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -39,6 +39,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Create
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
@@ -61,6 +62,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Edit
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -79,6 +81,7 @@ namespace EventVenueBooking.Controllers
         // SỬA: thêm [Bind], nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit([Bind(Include = "EventTypeId,TypeName,IsActive")] EventType eventType)
         {
             if (ModelState.IsValid)
@@ -99,6 +102,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: EventTypes/Delete/5
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -116,6 +120,7 @@ namespace EventVenueBooking.Controllers
         // POST: Delete (không xóa thật, chỉ tắt IsActive)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             EventType eventType = db.EventTypes.Find(id);

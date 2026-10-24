@@ -12,7 +12,7 @@ using EventVenueBooking.Filters;
 
 namespace EventVenueBooking.Controllers
 {
-    [CustomAuthorize(Roles = "Admin")]
+    [CustomAuthorize(Roles = "Admin,Coordinator")]
     public class VenueImagesController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -40,6 +40,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Create
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Create()
         {
             ViewBag.VenueId = new SelectList(db.Venues, "VenueId", "Name");
@@ -49,6 +50,7 @@ namespace EventVenueBooking.Controllers
         // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Create([Bind(Include = "ImageId,VenueId,ImageUrl,IsPrimary")] VenueImage venueImage)
         {
             if (ModelState.IsValid)
@@ -79,6 +81,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Edit
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -98,6 +101,7 @@ namespace EventVenueBooking.Controllers
         // SỬA: nạp bản gốc từ DB rồi chỉ cập nhật các trường được phép sửa (có kiểm tra tồn tại)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Edit([Bind(Include = "ImageId,VenueId,ImageUrl,IsPrimary")] VenueImage venueImage)
         {
             if (ModelState.IsValid)
@@ -135,6 +139,7 @@ namespace EventVenueBooking.Controllers
         }
 
         // GET: Delete
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -153,6 +158,7 @@ namespace EventVenueBooking.Controllers
         // SỬA: ảnh chính không bị xóa ngầm nữa; phải chọn ảnh khác làm ảnh chính trước
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [CustomAuthorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             VenueImage venueImage = db.VenueImages.Find(id);
