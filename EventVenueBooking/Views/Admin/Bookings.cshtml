@@ -238,6 +238,11 @@
         color: #0288D1;
     }
 
+    .btn-edit {
+        background: #E8F4FD;
+        color: #1565C0;
+    }
+
     .btn-cancel-act {
         background: #FDE8E8;
         color: #E53935;
@@ -585,11 +590,17 @@
                                     }
 
                                     <div class="action-btns" style="justify-content: flex-end;">
-                                        <!-- Nút xuất hợp đồng (file thật là Word .doc) -->
+                                        <!-- Nút xuất hợp đồng (file Word .doc) -->
                                         <a class="btn-act btn-pdf" title="Xuất hợp đồng" href="@Url.Action("ExportContractPdf", "Bookings", new { id = item.BookingId })" target="_blank">
                                             <i class='bx bx-upload'></i>
                                         </a>
+                                        <!-- Nút Edit (Chỉnh sửa booking) -->
+                                        <a class="btn-act btn-edit" title="Sửa booking" href="@Url.Action("Edit", "Bookings", new { id = item.BookingId })">
+                                            <i class='bx bx-edit'></i>
+                                        </a>
+                                        <!-- Nút Chi tiết -->
                                         <a class="btn-act btn-view" title="Chi tiết" href="@Url.Action("Details", "Bookings", new { id = item.BookingId })"><i class='bx bx-show'></i></a>
+
                                         @if (item.Status == BookingStatuses.Pending || item.Status == BookingStatuses.Confirmed)
                                         {
                                             <button class="btn-act btn-cancel-act" title="Cancel Booking" onclick="openCancelModal('@item.BookingId')"><i class='bx bx-x-circle'></i></button>

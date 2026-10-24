@@ -475,7 +475,7 @@
 <!-- SCRIPTS KHỞI TẠO BIỂU ĐỒ BẰNG CHART.JS -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var ChartJs = /** @type {any} */ (window).Chart;
+        var ChartJs = /** @@type {any} */ (window).Chart;
         if (!ChartJs) return;
 
         // Dữ liệu thật do DashboardController truyền sang
@@ -487,7 +487,7 @@
         const addOnSeries = @Html.Raw(addOnSeriesJs);
 
         // 1. BIỂU ĐỒ TRÒN (DONUT CHART) - BOOKING STATUS
-        var donutCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('statusChart'));
+        var donutCanvas = /** @@type {HTMLCanvasElement|null} */ (document.getElementById('statusChart'));
         if (donutCanvas) {
             new ChartJs(donutCanvas.getContext('2d'), {
                 type: 'doughnut',
@@ -513,7 +513,7 @@
         }
 
         // 2. BIỂU ĐỒ CỘT (BAR CHART) - REVENUE BREAKDOWN
-        var barCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('revenueChart'));
+        var barCanvas = /** @@type {HTMLCanvasElement|null} */ (document.getElementById('revenueChart'));
         if (barCanvas) {
             new ChartJs(barCanvas.getContext('2d'), {
                 type: 'bar',
@@ -558,7 +558,7 @@
                             ticks: {
                                 color: '#738A7C',
                                 font: { size: 12 },
-                                /** @param {number|string} value */
+                                /** @@param {number|string} value */
                                 callback: function (value) {
                                     var n = Number(value);
                                     if (n === 0) return '0';
