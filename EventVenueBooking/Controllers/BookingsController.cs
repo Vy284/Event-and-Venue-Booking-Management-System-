@@ -35,19 +35,24 @@ namespace EventVenueBooking.Controllers
         }
 
         // Đổ dữ liệu dropdown cho View Create/Edit
+        // Khi sửa: luôn giữ lại sảnh / loại sự kiện / khách hiện tại của booking dù đã ngừng hoạt động
         private void PopulateDropdowns(Booking booking)
         {
+            int curClientId = booking != null ? booking.ClientUserId : -1;
+            int curEventTypeId = booking != null ? booking.EventTypeId : -1;
+            int curVenueId = booking != null ? booking.VenueId : -1;
+
             ViewBag.ClientUserId = new SelectList(
-                db.Users.Where(u => u.Role == 0 && u.IsActive),
-                "UserId", "FullName", booking?.ClientUserId);
+                db.Users.Where(u => (u.Role == 0 && u.IsActive) || u.UserId == curClientId),
+                "UserId", "FullName", curClientId);
 
             ViewBag.EventTypeId = new SelectList(
-                db.EventTypes.Where(e => e.IsActive),
-                "EventTypeId", "TypeName", booking?.EventTypeId);
+                db.EventTypes.Where(e => e.IsActive || e.EventTypeId == curEventTypeId),
+                "EventTypeId", "TypeName", curEventTypeId);
 
             ViewBag.VenueId = new SelectList(
-                db.Venues.Where(v => v.Status == VenueStatuses.Active),
-                "VenueId", "Name", booking?.VenueId);
+                db.Venues.Where(v => v.Status == VenueStatuses.Active || v.VenueId == curVenueId),
+                "VenueId", "Name", curVenueId);
         }
 
         // GET: Bookings
@@ -198,7 +203,7 @@ namespace EventVenueBooking.Controllers
             return View(booking);
         }
 
-        // POST: Edit (Đã nâng cấp cho phép sửa Sảnh, Thời gian, Số lượng khách, Loại sự kiện và Trạng thái)
+        // POST: Edit - sửa Sảnh, Thời gian, Số khách, Loại sự kiện (khi còn Pending, chưa thu tiền) và Trạng thái
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int bookingId, int venueId, int eventTypeId, int guestCount,
@@ -216,44 +221,59 @@ namespace EventVenueBooking.Controllers
 
             try
             {
-                if (eventEndDateTime <= eventStartDateTime)
-                    throw new BookingException("Thời gian kết thúc phải sau thời gian bắt đầu.");
+                bool hasPaid = booking.Payments.Any(p => p.PaymentStatus == PaymentStatuses.Completed);
 
-                if (guestCount < 1)
-                    throw new BookingException("Số lượng khách phải lớn hơn 0.");
-
-                var venue = db.Venues.Find(venueId);
-                if (venue == null) throw new BookingException("Sảnh không tồn tại.");
-
-                if (guestCount > venue.Capacity)
-                    throw new BookingException($"Số lượng khách vượt quá sức chứa sảnh ({venue.Capacity} người).");
+                // Có thay đổi thông tin đặt chỗ không? (so sánh giờ theo phút vì form không có giây)
+                bool detailsChanged =
+                    venueId != booking.VenueId
+                    || eventTypeId != booking.EventTypeId
+                    || guestCount != booking.GuestCount
+                    || Math.Abs((eventStartDateTime - booking.EventStartDateTime).TotalMinutes) >= 1
+                    || Math.Abs((eventEndDateTime - booking.EventEndDateTime).TotalMinutes) >= 1;
 
                 var bookingService = new BookingService(db);
 
-                // Kiểm tra trùng lịch sảnh (bỏ qua chính booking đang sửa)
-                if (bookingService.HasOverlap(venueId, eventStartDateTime, eventEndDateTime, bookingId))
-                    throw new BookingException("Sảnh này đã có sự kiện khác đặt trong khung giờ trên.");
+                if (detailsChanged)
+                {
+                    if (booking.Status != BookingStatuses.Pending || hasPaid)
+                        throw new BookingException("Chỉ được sửa sảnh, thời gian, số khách khi booking còn chờ cọc và chưa thu tiền. Bạn có thể đổi trạng thái hoặc hủy booking.");
 
-                // Tính toán lại giá sảnh và tổng tiền dựa trên thời gian/sảnh mới
-                int rentalQuantity = BookingService.CalculateRentalQuantity(venue.RentalUnit, eventStartDateTime, eventEndDateTime);
-                decimal venueCost = venue.RentalRate * rentalQuantity;
-                decimal addOnCost = booking.BookingAddOns != null ? booking.BookingAddOns.Sum(ba => ba.Subtotal) : 0;
+                    if (eventEndDateTime <= eventStartDateTime)
+                        throw new BookingException("Thời gian kết thúc phải sau thời gian bắt đầu.");
 
-                // Cập nhật thông tin đặt chỗ
-                booking.VenueId = venueId;
-                booking.EventTypeId = eventTypeId;
-                booking.GuestCount = guestCount;
-                booking.EventStartDateTime = eventStartDateTime;
-                booking.EventEndDateTime = eventEndDateTime;
-                booking.VenueRateAtBooking = venue.RentalRate;
-                booking.RentalUnitAtBooking = venue.RentalUnit;
-                booking.RentalQuantity = rentalQuantity;
-                booking.VenueCost = venueCost;
-                booking.TotalCost = venueCost + addOnCost;
-                booking.LastModifiedByUserId = CurrentUserId();
-                booking.LastModifiedAt = DateTime.Now;
+                    if (guestCount < 1)
+                        throw new BookingException("Số lượng khách phải lớn hơn 0.");
 
-                // Xử lý cập nhật trạng thái nếu có thay đổi
+                    var venue = db.Venues.Find(venueId);
+                    if (venue == null) throw new BookingException("Sảnh không tồn tại.");
+
+                    if (guestCount > venue.Capacity)
+                        throw new BookingException($"Số lượng khách vượt quá sức chứa sảnh ({venue.Capacity} người).");
+
+                    // Kiểm tra trùng lịch sảnh (bỏ qua chính booking đang sửa)
+                    if (bookingService.HasOverlap(venueId, eventStartDateTime, eventEndDateTime, bookingId))
+                        throw new BookingException("Sảnh này đã có sự kiện khác đặt trong khung giờ trên.");
+
+                    // Tính lại giá sảnh và tổng tiền theo sảnh/thời gian mới
+                    int rentalQuantity = BookingService.CalculateRentalQuantity(venue.RentalUnit, eventStartDateTime, eventEndDateTime);
+                    decimal venueCost = venue.RentalRate * rentalQuantity;
+                    decimal addOnCost = booking.BookingAddOns != null ? booking.BookingAddOns.Sum(ba => ba.Subtotal) : 0;
+
+                    booking.VenueId = venueId;
+                    booking.EventTypeId = eventTypeId;
+                    booking.GuestCount = guestCount;
+                    booking.EventStartDateTime = eventStartDateTime;
+                    booking.EventEndDateTime = eventEndDateTime;
+                    booking.VenueRateAtBooking = venue.RentalRate;
+                    booking.RentalUnitAtBooking = venue.RentalUnit;
+                    booking.RentalQuantity = rentalQuantity;
+                    booking.VenueCost = venueCost;
+                    booking.TotalCost = venueCost + addOnCost;
+                    booking.LastModifiedByUserId = CurrentUserId();
+                    booking.LastModifiedAt = DateTime.Now;
+                }
+
+                // Xử lý đổi trạng thái (nếu có)
                 if (status != booking.Status)
                 {
                     if (status == BookingStatuses.Cancelled)
@@ -265,7 +285,7 @@ namespace EventVenueBooking.Controllers
                         bookingService.ChangeStatus(bookingId, status, CurrentUserId());
                     }
                 }
-                else
+                else if (detailsChanged)
                 {
                     db.SaveChanges();
                 }

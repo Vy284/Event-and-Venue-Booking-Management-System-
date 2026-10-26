@@ -153,12 +153,22 @@
 
             <div class="form-group">
                 <label>Sảnh / Địa điểm (*)</label>
-                @Html.DropDownList("venueId", (SelectList)ViewBag.VenueId, new { @class = "form-control", required = "required" })
+                <select name="venueId" class="form-control" required>
+                    @foreach (var v in (SelectList)ViewBag.VenueId)
+                    {
+                        <option value="@v.Value" @(v.Value == Model.VenueId.ToString() ? "selected" : "")>@v.Text</option>
+                    }
+                </select>
             </div>
 
             <div class="form-group">
                 <label>Loại sự kiện (*)</label>
-                @Html.DropDownList("eventTypeId", (SelectList)ViewBag.EventTypeId, new { @class = "form-control", required = "required" })
+                <select name="eventTypeId" class="form-control" required>
+                    @foreach (var et in (SelectList)ViewBag.EventTypeId)
+                    {
+                        <option value="@et.Value" @(et.Value == Model.EventTypeId.ToString() ? "selected" : "")>@et.Text</option>
+                    }
+                </select>
             </div>
 
             <div class="form-group full">
@@ -182,7 +192,8 @@
                 <label>Trạng thái đơn hàng</label>
                 @Html.DropDownList("status", statusItems, new { @class = "form-control" })
                 <small class="text-muted" style="margin-top: 4px; font-size: 11px;">
-                    Thứ tự trạng thái: Pending (Chờ cọc) &rarr; Confirmed (Đã xác nhận) &rarr; InProgress (Đang diễn ra) &rarr; Completed (Hoàn tất). Chọn Cancelled để hủy đơn.
+                    Thứ tự trạng thái: Pending (Chờ cọc) &rarr; Confirmed (Đã xác nhận) &rarr; InProgress (Đang diễn ra) &rarr; Completed (Hoàn tất). Chọn Cancelled để hủy đơn.<br />
+                    Sảnh, loại sự kiện, số khách và thời gian chỉ sửa được khi booking còn Pending và chưa thu tiền.
                 </small>
             </div>
         </div>
