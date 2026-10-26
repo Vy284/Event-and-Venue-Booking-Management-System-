@@ -1,4 +1,4 @@
-﻿@model IEnumerable<EventVenueBooking.ViewModels.PaymentListViewModel>
+﻿@model IEnumerable<EventVenueBooking.ViewModels.PaymentRowViewModel>
 
 @{
     ViewBag.Title = "Payments Management";
@@ -156,7 +156,6 @@
         display: inline-block;
     }
 
-    /* Payment Status Badges */
     .badge-completed {
         background: #E8F5E9;
         color: #2E7D32;
@@ -172,7 +171,6 @@
         color: #C62828;
     }
 
-    /* Payment Type Badges */
     .badge-type-deposit {
         background: #E8F4FD;
         color: #1976D2;
@@ -334,6 +332,11 @@
         cursor: pointer;
     }
 
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
     .detail-row {
         display: flex;
         justify-content: space-between;
@@ -365,18 +368,21 @@
 </div>
 
 <div class="crud-card">
+    <!-- Anti-forgery token cho các request POST bằng fetch -->
+    <form id="antiForgeryForm" style="display:none">@Html.AntiForgeryToken()</form>
+
     <!-- TOOLBAR -->
     <div class="toolbar">
         <div class="filter-group">
             <input type="text" id="searchInput" class="custom-input" placeholder="Search Customer / Booking ID..." style="width: 250px;" onkeyup="filterTable()">
             <select class="custom-select" id="statusFilter" onchange="filterTable()">
                 <option value="">All Statuses</option>
-                <option value="Completed">Completed</option>
-                <option value="Pending">Pending</option>
-                <option value="Refunded">Refunded</option>
+                <option value="1">Completed</option>
+                <option value="0">Pending</option>
+                <option value="2">Refunded</option>
             </select>
         </div>
-        <button class="btn-create" onclick="openPaymentModal()">
+        <button type="button" class="btn-create" onclick="openPaymentModal()">
             <i class='bx bx-plus'></i> Record Payment
         </button>
     </div>
@@ -400,7 +406,15 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr data-id="@item.PaymentId"
+                        data-booking="@item.BookingId"
+                        data-customer="@item.CustomerName"
+                        data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                        data-type="@item.PaymentType"
+                        data-method="@item.PaymentMethod"
+                        data-date="@(item.PaymentDate.HasValue ? item.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "")"
+                        data-status="@item.PaymentStatus"
+                        data-recorder="@item.RecordedBy">
                         <td style="font-weight: 600; color: var(--text-muted);">#@item.PaymentId</td>
                         <td style="font-weight: 700; color: #2196F3;">B-@item.BookingId</td>
                         <td style="font-weight: 600;">@item.CustomerName</td>
@@ -435,15 +449,18 @@
                         </td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn-act btn-view" title="Details" onclick="openViewModal('@item.PaymentId', '@item.BookingId', '@item.CustomerName', '@item.Amount', '@item.PaymentType', '@item.PaymentMethod', '@(item.PaymentDate.HasValue ? item.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "")', '@item.PaymentStatus', '@item.RecordedBy')">
+                                <button type="button" class="btn-act btn-view" title="Details" onclick="openViewModal(this.closest('tr'))">
                                     <i class='bx bx-show'></i>
                                 </button>
-                                <button class="btn-act btn-edit" title="Edit Status" onclick="openEditModal('@item.PaymentId', '@item.PaymentStatus', '@item.PaymentMethod')">
-                                    <i class='bx bx-edit'></i>
-                                </button>
-                                @if (item.PaymentStatus != 2) // Không hiện nút Refund nếu đã Refund
+                                @if (item.PaymentStatus != 2)
                                 {
-                                    <button class="btn-act btn-refund" title="Issue Refund" onclick="openRefundModal('@item.PaymentId', '@item.Amount')">
+                                    <button type="button" class="btn-act btn-edit" title="Edit Status" onclick="openEditModal(this.closest('tr'))">
+                                        <i class='bx bx-edit'></i>
+                                    </button>
+                                }
+                                @if (item.PaymentStatus == 1)
+                                {
+                                    <button type="button" class="btn-act btn-refund" title="Issue Refund" onclick="openRefundModal(this.closest('tr'))">
                                         <i class='bx bx-undo'></i>
                                     </button>
                                 }
@@ -462,47 +479,44 @@
     <div class="modal-box">
         <div class="modal-header">
             <h3 id="pmtModalTitle">Record Payment</h3>
-            <button class="btn-close-modal" onclick="closeModal('paymentFormModal')">&times;</button>
+            <button type="button" class="btn-close-modal" onclick="closeModal('paymentFormModal')">&times;</button>
         </div>
-        <form onsubmit="event.preventDefault(); alert('Lưu giao dịch thành công!'); closeModal('paymentFormModal');">
+        <form onsubmit="return submitPayment(event)">
             <input type="hidden" id="pmtId" value="0">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div class="form-group" id="bookingRefGroup">
                     <label>Booking Ref ID (*)</label>
-                    <input type="number" class="form-control" id="pmtBookingId" required placeholder="Ex: 102">
+                    <input type="number" min="1" class="form-control" id="pmtBookingId" placeholder="Ex: 102">
                 </div>
-                <div class="form-group" id="pmtAmountGroup">
-                    <label>Amount ($) (*)</label>
-                    <input type="number" step="0.01" class="form-control" id="pmtAmount" required>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div class="form-group" id="pmtTypeGroup">
                     <label>Payment Type</label>
                     <select class="form-control" id="pmtType">
-                        <option value="0">0 - Deposit</option>
-                        <option value="1">1 - Final Payment</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Payment Method</label>
-                    <select class="form-control" id="pmtMethod">
-                        <option value="Bank Transfer">Bank Transfer</option>
-                        <option value="Credit Card">Credit Card</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Paypal">Paypal</option>
+                        <option value="0">0 - Deposit (30%)</option>
+                        <option value="1">1 - Final Payment (phần còn lại)</option>
                     </select>
                 </div>
             </div>
 
+            <p id="createHint" style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+                Số tiền được hệ thống tự tính: Deposit = 30% tổng chi phí booking; Final = phần còn lại sau khi trừ các khoản đã thanh toán. Giao dịch được ghi nhận ở trạng thái Completed.
+            </p>
+
             <div class="form-group">
+                <label>Payment Method</label>
+                <select class="form-control" id="pmtMethod">
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="E-Wallet">E-Wallet</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="statusGroup">
                 <label>Payment Status</label>
                 <select class="form-control" id="pmtStatus">
                     <option value="0">0 - Pending</option>
                     <option value="1">1 - Completed</option>
-                    <option value="2">2 - Refunded</option>
                 </select>
             </div>
 
@@ -519,7 +533,7 @@
     <div class="modal-box">
         <div class="modal-header">
             <h3>Transaction Details</h3>
-            <button class="btn-close-modal" onclick="closeModal('viewPmtModal')">&times;</button>
+            <button type="button" class="btn-close-modal" onclick="closeModal('viewPmtModal')">&times;</button>
         </div>
         <div>
             <div class="detail-row"><strong>Transaction ID:</strong> <span id="vPmtId" style="color:var(--text-muted); font-weight:600;"></span></div>
@@ -557,97 +571,152 @@
 </div>
 
 <script>
-    // Đóng mở modal cơ bản
+    const URLS = {
+        create: '@Url.Action("Create", "Payments")',
+        update: '@Url.Action("UpdateStatus", "Payments")',
+        refund: '@Url.Action("Refund", "Payments")'
+    };
+
     function openModal(id) { document.getElementById(id).classList.add('show'); }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-    // Tạo mới Payment
+    // Gửi POST (form-urlencoded + anti-forgery), luôn trả về { success, message }
+    async function postForm(url, data) {
+        const body = new URLSearchParams(data);
+        body.append('__RequestVerificationToken',
+            document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]').value);
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: body
+            });
+            const ct = res.headers.get('content-type') || '';
+            if (ct.indexOf('application/json') >= 0) return await res.json();
+            if (res.status === 403) return { success: false, message: 'Bạn không có quyền thực hiện thao tác này.' };
+            return { success: false, message: 'Lỗi máy chủ (' + res.status + ').' };
+        } catch (e) {
+            return { success: false, message: 'Không kết nối được máy chủ.' };
+        }
+    }
+
+    // ---------- Create ----------
     function openPaymentModal() {
         document.getElementById('pmtModalTitle').innerText = "Record New Payment";
         document.getElementById('pmtId').value = "0";
         document.getElementById('pmtBookingId').value = "";
-        document.getElementById('pmtAmount').value = "";
-        document.getElementById('pmtStatus').value = "1"; // Mặc định Completed
+        document.getElementById('pmtType').value = "0";
+        document.getElementById('pmtMethod').selectedIndex = 0;
 
-        // Hiện các field nhập liệu
         document.getElementById('bookingRefGroup').style.display = 'flex';
-        document.getElementById('pmtAmountGroup').style.display = 'flex';
         document.getElementById('pmtTypeGroup').style.display = 'flex';
+        document.getElementById('createHint').style.display = 'block';
+        document.getElementById('statusGroup').style.display = 'none';   // tạo mới luôn Completed
 
         openModal('paymentFormModal');
     }
 
-    // Chỉnh sửa (Thường admin chỉ sửa Trạng thái hoặc Phương thức, cấm sửa Tiền/BookingId để tránh lỗi dòng tiền)
-    function openEditModal(id, status, method) {
-        document.getElementById('pmtModalTitle').innerText = "Update Payment Status #" + id;
-        document.getElementById('pmtId').value = id;
-        document.getElementById('pmtStatus').value = status;
+    // ---------- Edit (chỉ đổi phương thức / Pending -> Completed) ----------
+    function openEditModal(row) {
+        const d = row.dataset;
+        document.getElementById('pmtModalTitle').innerText = "Update Payment #" + d.id;
+        document.getElementById('pmtId').value = d.id;
 
-        // Ẩn các field không được phép sửa
         document.getElementById('bookingRefGroup').style.display = 'none';
-        document.getElementById('pmtAmountGroup').style.display = 'none';
         document.getElementById('pmtTypeGroup').style.display = 'none';
+        document.getElementById('createHint').style.display = 'none';
+        document.getElementById('statusGroup').style.display = 'flex';
 
-        // Select method tương ứng
-        let methodSelect = document.getElementById('pmtMethod');
-        for (let i = 0; i < methodSelect.options.length; i++) {
-            if (methodSelect.options[i].value === method) {
-                methodSelect.selectedIndex = i;
-                break;
-            }
+        const statusSel = document.getElementById('pmtStatus');
+        statusSel.value = d.status;
+        // Đã Completed thì không cho chọn lại Pending
+        statusSel.querySelector('option[value="0"]').disabled = (d.status === '1');
+
+        const sel = document.getElementById('pmtMethod');
+        sel.selectedIndex = 0;
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === d.method) { sel.selectedIndex = i; break; }
+        }
+        openModal('paymentFormModal');
+    }
+
+    // ---------- Submit (Create hoặc Update) ----------
+    async function submitPayment(e) {
+        e.preventDefault();
+        const id = document.getElementById('pmtId').value;
+        const btn = e.target.querySelector('button[type="submit"]');
+
+        if (id === "0") {
+            const bookingId = document.getElementById('pmtBookingId').value;
+            if (!bookingId || parseInt(bookingId) <= 0) { alert('Vui lòng nhập Booking ID.'); return false; }
         }
 
-        openModal('paymentFormModal');
+        btn.disabled = true;
+        let result;
+        if (id === "0") {
+            result = await postForm(URLS.create, {
+                bookingId: document.getElementById('pmtBookingId').value,
+                paymentType: document.getElementById('pmtType').value,
+                paymentMethod: document.getElementById('pmtMethod').value
+            });
+        } else {
+            result = await postForm(URLS.update, {
+                id: id,
+                status: document.getElementById('pmtStatus').value,
+                method: document.getElementById('pmtMethod').value
+            });
+        }
+        btn.disabled = false;
+
+        if (result.success) { location.reload(); }
+        else { alert(result.message || 'Có lỗi xảy ra.'); }
+        return false;
     }
 
-    // Xem chi tiết
-    function openViewModal(id, ref, cust, amt, type, method, date, status, recorder) {
-        document.getElementById('vPmtId').innerText = "#" + id;
-        document.getElementById('vPmtRef').innerText = "B-" + ref;
-        document.getElementById('vPmtCust').innerText = cust;
-        document.getElementById('vPmtAmt').innerText = "$" + parseFloat(amt).toFixed(2);
-        document.getElementById('vPmtType').innerText = type == '0' ? "Deposit" : "Final Payment";
-        document.getElementById('vPmtMethod').innerText = method;
-        document.getElementById('vPmtDate').innerText = date || "N/A";
-        document.getElementById('vPmtRecorder').innerText = recorder;
+    // ---------- View ----------
+    function openViewModal(row) {
+        const d = row.dataset;
+        document.getElementById('vPmtId').innerText = "#" + d.id;
+        document.getElementById('vPmtRef').innerText = "B-" + d.booking;
+        document.getElementById('vPmtCust').innerText = d.customer;
+        document.getElementById('vPmtAmt').innerText = "$" + parseFloat(d.amount).toFixed(2);
+        document.getElementById('vPmtType').innerText = d.type === '0' ? "Deposit" : "Final Payment";
+        document.getElementById('vPmtMethod').innerText = d.method;
+        document.getElementById('vPmtDate').innerText = d.date || "N/A";
+        document.getElementById('vPmtRecorder').innerText = d.recorder;
 
-        let statusHtml = "";
-        if(status == '1') statusHtml = "<span class='status-badge badge-completed'>Completed</span>";
-        else if(status == '0') statusHtml = "<span class='status-badge badge-pending'>Pending</span>";
-        else statusHtml = "<span class='status-badge badge-refunded'>Refunded</span>";
-
-        document.getElementById('vPmtStatus').innerHTML = statusHtml;
+        let html;
+        if (d.status === '1') html = "<span class='status-badge badge-completed'>Completed</span>";
+        else if (d.status === '0') html = "<span class='status-badge badge-pending'>Pending</span>";
+        else html = "<span class='status-badge badge-refunded'>Refunded</span>";
+        document.getElementById('vPmtStatus').innerHTML = html;
         openModal('viewPmtModal');
     }
 
-    // Hoàn tiền
-    function openRefundModal(id, amount) {
-        document.getElementById('refundPmtId').value = id;
-        document.getElementById('refId').innerText = "#" + id;
-        document.getElementById('refAmount').innerText = "$" + parseFloat(amount).toFixed(2);
+    // ---------- Refund ----------
+    function openRefundModal(row) {
+        const d = row.dataset;
+        document.getElementById('refundPmtId').value = d.id;
+        document.getElementById('refId').innerText = "#" + d.id;
+        document.getElementById('refAmount').innerText = "$" + parseFloat(d.amount).toFixed(2);
         openModal('refundModal');
     }
 
-    function handleRefund() {
+    async function handleRefund() {
         const id = document.getElementById('refundPmtId').value;
-        alert("Đã xử lý hoàn tiền cho giao dịch #" + id + " thành công!");
-        closeModal('refundModal');
+        const result = await postForm(URLS.refund, { id: id });
+        if (result.success) { location.reload(); }
+        else { alert(result.message || 'Có lỗi xảy ra.'); closeModal('refundModal'); }
     }
 
-    // Bộ lọc Table
+    // ---------- Filter ----------
     function filterTable() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-        const rows = document.querySelectorAll('#paymentsTable tbody tr');
-
-        rows.forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const statusCell = row.children[7].innerText.toLowerCase(); // Cột Status
-
-            const matchesSearch = text.includes(search);
-            const matchesStatus = statusFilter === "" || statusCell.includes(statusFilter);
-
-            row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+        const search = document.getElementById('searchInput').value.toLowerCase().trim();
+        const status = document.getElementById('statusFilter').value;
+        document.querySelectorAll('#paymentsTable tbody tr').forEach(row => {
+            const okSearch = row.innerText.toLowerCase().includes(search);
+            const okStatus = status === "" || row.dataset.status === status;
+            row.style.display = (okSearch && okStatus) ? "" : "none";
         });
     }
 </script>

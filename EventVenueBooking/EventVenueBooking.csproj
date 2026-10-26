@@ -195,6 +195,8 @@
     <Compile Include="ViewModels\Dashboard_CalendarViewModel.cs" />
     <Compile Include="ViewModels\FeedbackViewModel.cs" />
     <Compile Include="ViewModels\LoginViewModel.cs" />
+    <Compile Include="ViewModels\PaymentCreateViewModel.cs" />
+    <Compile Include="ViewModels\PaymentRowViewModel.cs" />
     <Compile Include="ViewModels\ProfileViewModel.cs" />
     <Compile Include="ViewModels\RegisterViewModel.cs" />
     <Compile Include="ViewModels\UpdateProfileViewModel.cs" />
@@ -385,6 +387,7 @@
     <Folder Include="DAL\" />
     <Folder Include="Models\" />
     <Folder Include="Views\Feedback\" />
+    <Folder Include="Views\PaymentCreateViewModel\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />
